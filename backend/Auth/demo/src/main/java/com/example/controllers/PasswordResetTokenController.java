@@ -3,6 +3,7 @@ package com.example.controllers;
 
 import com.example.DAOs.IPasswordResetTokenDAO;
 import com.example.DTOs.PasswordResetTokenDTO;
+import com.example.entities.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

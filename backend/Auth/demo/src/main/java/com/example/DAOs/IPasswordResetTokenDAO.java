@@ -6,7 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
 
-public interface IPasswordResetTokenDAO extends JpaRepository<PasswordResetToken, Integer> {
+public interface IPasswordResetTokenDAO extends JpaRepository<PasswordResetToken, Long> {
     // Buscar un token por su valor (token)
     Optional<PasswordResetToken> findByToken(String token);
 
