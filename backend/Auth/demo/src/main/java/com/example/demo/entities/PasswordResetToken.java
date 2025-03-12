@@ -1,4 +1,4 @@
-package com.example.entities;
+package com.example.demo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,7 +15,7 @@ public class PasswordResetToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Ahora es un número autoincremental
+    private Long id;
 
     @Column(nullable = false, length = 255)
     private String token;

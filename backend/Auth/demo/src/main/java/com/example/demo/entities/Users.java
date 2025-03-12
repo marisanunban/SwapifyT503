@@ -1,4 +1,4 @@
-package com.example.entities;
+package com.example.demo.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,8 @@ public class Users implements UserDetails {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PasswordResetToken> passwordResetTokens = new ArrayList<>();
 
     public void setPassword(String rawPassword) {
         this.password = new BCryptPasswordEncoder().encode(rawPassword);
