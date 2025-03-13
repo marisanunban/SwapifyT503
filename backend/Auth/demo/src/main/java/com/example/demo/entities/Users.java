@@ -6,7 +6,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
-
 public class Users implements UserDetails {
 
     @Id
@@ -39,26 +37,45 @@ public class Users implements UserDetails {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PasswordResetToken> passwordResetTokens = new ArrayList<>();
 
-    public void setPassword(String rawPassword) {
-        this.password = new BCryptPasswordEncoder().encode(rawPassword);
+    // Setters y Getters manuales
+    public void setId(Long id) {
+        this.id = id;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password; // Solo asigna, el hasheo se hace en el controlador
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // Métodos de UserDetails
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("Role_ " + role.name().toUpperCase()));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override
     public String getPassword() {
-        return null;
+        return password; // Devuelve la contraseña hasheada
     }
 
     @Override
     public String getUsername() {
-        return null;
+        return email;
     }
 
     @Override
@@ -73,7 +90,7 @@ public class Users implements UserDetails {
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
+        return true; // Cambiado a true para que las credenciales sean válidas
     }
 
     @Override
@@ -81,6 +98,7 @@ public class Users implements UserDetails {
         return true;
     }
 
+    // Enum Role
     public enum Role {
         USER, ADMIN
     }
