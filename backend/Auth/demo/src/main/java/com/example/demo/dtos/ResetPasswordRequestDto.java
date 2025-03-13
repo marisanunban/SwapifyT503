@@ -4,5 +4,5 @@ import lombok.Data;
 
 @Data
 public class ResetPasswordRequestDto {
-    String email;
+   String email;
 }

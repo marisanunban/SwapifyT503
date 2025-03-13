@@ -1,9 +1,9 @@
 package com.example.demo.services;
 
 import com.example.demo.entities.Users;
-import com.example.demo.exceptions.UserNotFoundException;
 import com.example.demo.interfaces.UserService;
 import com.example.demo.repositories.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +16,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public Users findByEmail(String email) {
         if (!userRepository.existsByEmail(email)) {
-            //Puede que sea EntityNotFoundException
-            throw new UserNotFoundException("User not found."); //Todo
+            throw new EntityNotFoundException("User not found.");
         }
-        return userRepository.findByEmail(email).get(); // Sabemos que existe por el chequeo previo
+        return userRepository.findByEmail(email).get();
     }
 
     @Override
