@@ -1,16 +1,12 @@
 package com.example.demo.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "password_reset_tokens")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+
 public class PasswordResetToken {
 
     @Id
@@ -22,6 +18,38 @@ public class PasswordResetToken {
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
+    }
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)

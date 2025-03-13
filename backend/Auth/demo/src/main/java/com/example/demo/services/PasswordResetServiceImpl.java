@@ -9,19 +9,20 @@ import com.example.demo.interfaces.EmailService;
 import com.example.demo.interfaces.PasswordResetService;
 import com.example.demo.interfaces.UserService;
 import com.example.demo.repositories.PasswordResetRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class PasswordResetServiceImpl implements PasswordResetService {
-
-    private final UserService userService;
-    private final PasswordResetRepository tokenRepository;
-    private final EmailService emailService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private PasswordResetRepository tokenRepository;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public MessageDto requestPasswordReset(ResetPasswordRequestDto requestDto) {

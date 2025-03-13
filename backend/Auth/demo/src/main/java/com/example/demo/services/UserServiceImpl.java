@@ -4,14 +4,13 @@ import com.example.demo.entities.Users;
 import com.example.demo.interfaces.UserService;
 import com.example.demo.repositories.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-
-    private final UserRepository userRepository;
+    @Autowired
+    private  UserRepository userRepository;
 
     @Override
     public Users findByEmail(String email) {
