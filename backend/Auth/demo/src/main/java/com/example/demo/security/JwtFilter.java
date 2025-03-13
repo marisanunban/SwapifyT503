@@ -25,20 +25,27 @@ public class JwtFilter extends OncePerRequestFilter {
     private UserDetailsImpl userService;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.startsWith("/auth/register") ||
+                path.startsWith("/auth/login") ||
+                path.startsWith("/auth/reset-password");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
+        System.out.println("Procesando solicitud en JwtFilter para: " + request.getRequestURI());
         String token = extractToken(request);
+        System.out.println("Token extraído: " + token);
 
         if (StringUtils.hasText(token) && tokenProvider.isValidToken(token)) {
-
             String email = tokenProvider.getUsernameFromToken(token);
+            System.out.println("Email extraído del token: " + email);
             UserDetails user = userService.loadUserByUsername(email);
 
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                    user, // Pasamos el objeto UserDetails
-                    null, // No necesitamos las credenciales aquí
-                    user.getAuthorities()
+                    user, null, user.getAuthorities()
             );
 
             SecurityContextHolder.getContext().setAuthentication(auth);
