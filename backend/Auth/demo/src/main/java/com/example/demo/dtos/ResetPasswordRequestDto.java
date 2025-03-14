@@ -1,13 +1,10 @@
 package com.example.demo.dtos;
 
+import lombok.Data;
+
+@Data
+
 public class ResetPasswordRequestDto {
-   String email;
+ private  String email;
 
-   public String getEmail() {
-      return email;
-   }
-
-   public void setEmail(String email) {
-      this.email = email;
-   }
 }
