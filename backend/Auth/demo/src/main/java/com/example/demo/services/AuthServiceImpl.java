@@ -8,7 +8,6 @@ import com.example.demo.entities.Users.Role;
 import com.example.demo.interfaces.AuthService;
 import com.example.demo.interfaces.UserService;
 import com.example.demo.security.JwtTokenProvider;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,11 +43,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public MessageDto register(RegisterRequestDto registerRequest) {
         // Verificar si el email ya está en uso
-        try {
-            userService.findByEmail(registerRequest.getEmail());
+        if (userService.existsByEmail(registerRequest.getEmail())) {
             throw new IllegalArgumentException("El email ya está registrado");
-        } catch (EntityNotFoundException e) {
-            // El email no existe, podemos proceder
         }
 
         // Crear nuevo usuario

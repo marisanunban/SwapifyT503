@@ -4,5 +4,6 @@ import com.example.demo.entities.Users;
 
 public interface UserService {
     Users findByEmail(String email);
-    void save(Users user); // Necesario para confirmPasswordReset
+    boolean existsByEmail(String email);
+    void save(Users user);
 }

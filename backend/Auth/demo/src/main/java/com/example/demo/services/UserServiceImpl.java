@@ -10,14 +10,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
-    private  UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Override
     public Users findByEmail(String email) {
-        if (!userRepository.existsByEmail(email)) {
-            throw new EntityNotFoundException("User not found.");
-        }
-        return userRepository.findByEmail(email).get();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found."));
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     @Override
