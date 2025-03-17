@@ -1,6 +1,7 @@
 package com.example.demo.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Entity
+@Data
 @Table(name = "users")
 public class Users implements UserDetails {
 
@@ -23,6 +25,8 @@ public class Users implements UserDetails {
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
+
+
 
     @Column(nullable = false, length = 255)
     private String password;
