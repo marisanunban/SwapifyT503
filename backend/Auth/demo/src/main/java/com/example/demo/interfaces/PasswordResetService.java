@@ -6,5 +6,5 @@ import com.example.demo.dtos.ResetPasswordRequestDto;
 
 public interface PasswordResetService {
     MessageDto requestPasswordReset(ResetPasswordRequestDto requestDto);
-    void confirmPasswordReset(ConfirmResetRequestDto requestDto);
+    MessageDto confirmPasswordReset(ConfirmResetRequestDto requestDto);
 }

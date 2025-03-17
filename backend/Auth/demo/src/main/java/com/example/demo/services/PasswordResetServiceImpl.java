@@ -25,12 +25,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Autowired
     private EmailService emailService;
     @Autowired
-    private PasswordEncoder passwordEncoder; // Inyectamos el PasswordEncoder
+    private PasswordEncoder passwordEncoder; // Inyectamos para hashear la nueva contraseña
 
     @Override
     public MessageDto requestPasswordReset(ResetPasswordRequestDto requestDto) {
-        Users user = userService.findByEmail(requestDto.getEmail());
-        // EntityNotFoundException se lanza desde UserServiceImpl
+        Users user = userService.findByEmail(requestDto.getEmail()); // Lanza EntityNotFoundException si no existe
 
         String resetToken = UUID.randomUUID().toString();
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);
@@ -41,31 +40,31 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenEntity.setExpiresAt(expiresAt);
         tokenRepository.save(tokenEntity);
 
-        // Desactivar el envío de correo para pruebas
-        // emailService.sendResetPasswordEmail(requestDto.getEmail(), resetToken);
+        emailService.sendResetPasswordEmail(requestDto.getEmail(), resetToken);
 
-        return new MessageDto("Correo enviado (simulado para pruebas)");
+        return new MessageDto("Correo enviado");
     }
 
     @Override
-    public void confirmPasswordReset(ConfirmResetRequestDto requestDto) {
-        // Buscar el token en la base de datos
+    public MessageDto confirmPasswordReset(ConfirmResetRequestDto requestDto) {
+        // Buscar el token
         PasswordResetToken tokenEntity = tokenRepository.findByToken(requestDto.getToken())
                 .orElseThrow(() -> new IllegalArgumentException("Token inválido"));
 
-        // Verificar si el token ha expirado
+        // Verificar si ha expirado
         if (tokenEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
+            tokenRepository.delete(tokenEntity); // Opcional: limpiar tokens expirados
             throw new IllegalArgumentException("El token ha expirado");
         }
 
-        // Obtener el usuario asociado al token
+        // Actualizar la contraseña
         Users user = tokenEntity.getUser();
-
-        // Hashear la nueva contraseña con BCrypt antes de guardarla
         user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
         userService.save(user);
 
         // Eliminar el token usado
         tokenRepository.delete(tokenEntity);
+
+        return new MessageDto("Contraseña restablecida con éxito");
     }
 }
