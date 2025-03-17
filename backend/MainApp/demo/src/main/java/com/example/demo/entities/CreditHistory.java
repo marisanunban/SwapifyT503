@@ -1,27 +1,27 @@
 package com.example.demo.entities;
+
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "credit_history")
 @Data
+@NoArgsConstructor
 public class CreditHistory {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
-    private int amount; // Positivo para créditos adquiridos, negativo para gastos.
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    private int amount;
 
-    @PrePersist
-    public void setTransactionDate() {
-        this.transactionDate = LocalDateTime.now();
-    }
+    private String reason;
 
-    // Getters y Setters
+    private LocalDateTime timestamp;
 }
