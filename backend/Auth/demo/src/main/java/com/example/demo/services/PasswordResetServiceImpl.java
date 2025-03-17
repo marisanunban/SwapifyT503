@@ -23,9 +23,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Autowired
     private PasswordResetRepository tokenRepository;
     @Autowired
-    private EmailService emailService;
+    private EmailService emailService; // Todavía inyectado pero no usado
     @Autowired
-    private PasswordEncoder passwordEncoder; // Inyectamos para hashear la nueva contraseña
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public MessageDto requestPasswordReset(ResetPasswordRequestDto requestDto) {
@@ -40,29 +40,26 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenEntity.setExpiresAt(expiresAt);
         tokenRepository.save(tokenEntity);
 
-        emailService.sendResetPasswordEmail(requestDto.getEmail(), resetToken);
+        // Reemplazamos el envío de correo por un mensaje de prueba
+        System.out.println("Token generado (simulado): " + resetToken);
 
-        return new MessageDto("Correo enviado");
+        return new MessageDto("Correo enviado (simulado para pruebas)");
     }
 
     @Override
     public MessageDto confirmPasswordReset(ConfirmResetRequestDto requestDto) {
-        // Buscar el token
         PasswordResetToken tokenEntity = tokenRepository.findByToken(requestDto.getToken())
                 .orElseThrow(() -> new IllegalArgumentException("Token inválido"));
 
-        // Verificar si ha expirado
         if (tokenEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
-            tokenRepository.delete(tokenEntity); // Opcional: limpiar tokens expirados
+            tokenRepository.delete(tokenEntity);
             throw new IllegalArgumentException("El token ha expirado");
         }
 
-        // Actualizar la contraseña
         Users user = tokenEntity.getUser();
         user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
         userService.save(user);
 
-        // Eliminar el token usado
         tokenRepository.delete(tokenEntity);
 
         return new MessageDto("Contraseña restablecida con éxito");
