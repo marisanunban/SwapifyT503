@@ -3,13 +3,15 @@ package com.example.demo.controllers;
 import com.example.demo.dtos.LoginRequestDto;
 import com.example.demo.dtos.MessageDto;
 import com.example.demo.dtos.RegisterRequestDto;
+import com.example.demo.dtos.UserInfoDto;
+import com.example.demo.entities.Users;
 import com.example.demo.interfaces.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -32,5 +34,14 @@ public class AuthController {
     public ResponseEntity<MessageDto> register(@RequestBody RegisterRequestDto registerRequest) {
         MessageDto responseDto = authService.register(registerRequest);
         return ResponseEntity.ok(responseDto);
+    }
+    @GetMapping("/me")
+    public ResponseEntity<UserInfoDto> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Users user)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // Sin cuerpo, solo 401
+        }
+        UserInfoDto userInfo = new UserInfoDto(user.getId(), user.getUsername(), user.getRole().name());
+        return ResponseEntity.ok(userInfo);
     }
 }

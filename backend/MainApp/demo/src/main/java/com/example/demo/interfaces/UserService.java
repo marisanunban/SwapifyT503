@@ -7,4 +7,5 @@ public interface UserService {
     UserDto getUser(Long id);
     void updateUser(Long id, UpdateUserDto dto);
     void updateCredits(Long id, int amount);
+    UserDto createUser(String username);
 }

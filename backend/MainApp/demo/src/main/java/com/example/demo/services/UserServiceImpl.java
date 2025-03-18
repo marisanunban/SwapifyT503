@@ -41,4 +41,14 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
+
+    @Override
+    public UserDto createUser(String username) {
+        User user = new User();
+        user.setUsername(username);
+        user.setCredits(0); // Créditos iniciales en 0
+        user.setUpdatedAt(LocalDateTime.now());
+        User savedUser = userRepository.save(user);
+        return new UserDto(savedUser.getId(), savedUser.getUsername(), savedUser.getCredits());
+    }
 }
