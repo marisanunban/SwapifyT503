@@ -9,6 +9,7 @@ import com.example.demo.interfaces.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    @Autowired
+    AuthenticationManager authenticationManager;
 
     private final AuthService authService;
 
@@ -35,8 +39,9 @@ public class AuthController {
         MessageDto responseDto = authService.register(registerRequest);
         return ResponseEntity.ok(responseDto);
     }
-    @GetMapping("/me")
-    public ResponseEntity<UserInfoDto> getCurrentUser() {
+    @GetMapping("/validate-user")
+    public ResponseEntity<UserInfoDto> validateCurrentUser(@RequestParam String userId) {
+        //SecurityContextHolder.get
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Users user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // Sin cuerpo, solo 401
@@ -44,4 +49,6 @@ public class AuthController {
         UserInfoDto userInfo = new UserInfoDto(user.getId(), user.getUsername(), user.getRole().name());
         return ResponseEntity.ok(userInfo);
     }
+
+
 }

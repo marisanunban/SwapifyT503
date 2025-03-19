@@ -26,20 +26,13 @@ public class UserController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<UserDto>> getUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        return authClient.validateToken(token.replace("Bearer ", ""))
-                .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
-                    if (!userInfo.getId().equals(id)) {
-                        return Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(403).build());
-                    }
-                    UserDto userDto = userService.getUser(id);
-                    return Mono.<ResponseEntity<UserDto>>just(ResponseEntity.ok(userDto));
-                })
-                .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(401).build()));
+        UserInfoDto prueba = authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
+        return Mono.just(ResponseEntity.ok(userService.getUser(id)));
     }
 
     @PatchMapping("/{id}")
     public Mono<ResponseEntity<Void>> updateUser(@PathVariable Long id, @RequestBody UpdateUserDto dto, @RequestHeader("Authorization") String token) {
-        return authClient.validateToken(token.replace("Bearer ", ""))
+        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!userInfo.getId().equals(id)) {
                         return Mono.<ResponseEntity<Void>>just(ResponseEntity.status(403).build());
@@ -52,7 +45,7 @@ public class UserController {
 
     @PostMapping("/{id}/credits")
     public Mono<ResponseEntity<Void>> addCredits(@PathVariable Long id, @RequestBody CreditRequestDto dto, @RequestHeader("Authorization") String token) {
-        return authClient.validateToken(token.replace("Bearer ", ""))
+        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!userInfo.getId().equals(id)) {
                         return Mono.<ResponseEntity<Void>>just(ResponseEntity.status(403).build());
@@ -65,7 +58,7 @@ public class UserController {
 
     @GetMapping("/{id}/credits/history")
     public Mono<ResponseEntity<List<CreditHistoryDto>>> getCreditHistory(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        return authClient.validateToken(token.replace("Bearer ", ""))
+        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!userInfo.getId().equals(id)) {
                         return Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.status(403).build());
@@ -75,11 +68,12 @@ public class UserController {
                 })
                 .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.status(401).build()));
     }
+}
 
 
-    @PostMapping
+    /*@PostMapping
     public Mono<ResponseEntity<UserDto>> createUser(@RequestBody CreateUserDto createUserDto, @RequestHeader("Authorization") String token) {
-        return authClient.validateToken(token.replace("Bearer ", ""))
+        return authClient.validateUserToken(token.replace("Bearer ", ""))
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!"ADMIN".equals(userInfo.getRole())) {
                         return Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(403).build());
@@ -90,3 +84,4 @@ public class UserController {
                 .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(401).build()));
     }
 }
+     */

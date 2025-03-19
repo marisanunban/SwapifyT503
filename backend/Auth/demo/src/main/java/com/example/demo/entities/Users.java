@@ -27,7 +27,6 @@ public class Users implements UserDetails {
     private String email;
 
 
-
     @Column(nullable = false, length = 255)
     private String password;
 

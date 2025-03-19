@@ -1,9 +1,12 @@
 package com.example.demo.entities;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 
+@Data
 @Entity
 @Table(name = "password_reset_tokens")
 

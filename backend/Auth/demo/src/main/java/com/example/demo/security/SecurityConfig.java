@@ -1,5 +1,6 @@
 package com.example.demo.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,20 +18,25 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final UserDetailsImpl userDetailsService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final JwtFilter jwtFilter;
+    @Autowired
+    private UserDetailsImpl userDetailsService;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private JwtFilter jwtFilter;
 
-    public SecurityConfig(UserDetailsImpl userDetailsService, JwtTokenProvider jwtTokenProvider, JwtFilter jwtFilter) {
-        this.userDetailsService = userDetailsService;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.jwtFilter = jwtFilter;
-    }
+    @Autowired
+    private AuthEntryPoint jwtAuthenticationEntryPoint;
+
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint) // Maneja las excepciones de autenticación
+                )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -40,6 +46,7 @@ public class SecurityConfig {
                         .authenticated()
                 )
                  .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
 
         return http.build();
     }
