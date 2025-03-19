@@ -14,8 +14,12 @@ public class AuthClient {
     }
 
     public Mono<UserInfoDto> validateUserToken(String token, Long id) {
+        String uri = "/auth/validate-user";
+        if (id != null) {
+            uri += "?userId=" + id;
+        }
         return webClient.get()
-                .uri("/auth/validate-user?userId=" + id)
+                .uri(uri)
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .bodyToMono(UserInfoDto.class)

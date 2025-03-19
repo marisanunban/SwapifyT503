@@ -46,7 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
             String email = tokenProvider.getUsernameFromToken(token);
             System.out.println("Email extraído del token: " + email);
             Users user = (Users) userService.loadUserByUsername(email);
-            if (userId == 0 || user.getId() != userId) {
+            if (userId != 0 && user.getId() != userId) {
                 throw new BadCredentialsException("El token no pertenece al usuario proporcionado.");
             }
             Authentication auth = new UsernamePasswordAuthenticationToken(

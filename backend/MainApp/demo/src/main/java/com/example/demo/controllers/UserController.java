@@ -4,6 +4,7 @@ import com.example.demo.clients.AuthClient;
 import com.example.demo.dtos.*;
 import com.example.demo.interfaces.CreditHistoryService;
 import com.example.demo.interfaces.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -68,20 +69,14 @@ public class UserController {
                 })
                 .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.status(401).build()));
     }
-}
 
-
-    /*@PostMapping
-    public Mono<ResponseEntity<UserDto>> createUser(@RequestBody CreateUserDto createUserDto, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""))
-                .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
-                    if (!"ADMIN".equals(userInfo.getRole())) {
-                        return Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(403).build());
-                    }
-                    UserDto userDto = userService.createUser(createUserDto.getUsername());
-                    return Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(201).body(userDto));
-                })
-                .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<UserDto>>just(ResponseEntity.status(401).build()));
+    @PostMapping("/create")
+    public Mono<ResponseEntity<UserDto>> createUser(@RequestHeader("Authorization") String token) {
+        UserInfoDto respuesta = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+        return Mono.just(new ResponseEntity<>(userService.createUser(respuesta), HttpStatus.CREATED));
     }
 }
-     */
+
+
+
+

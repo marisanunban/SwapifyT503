@@ -1,7 +1,9 @@
 package com.example.demo.services;
 
+import com.example.demo.dtos.CreateUserDto;
 import com.example.demo.dtos.UpdateUserDto;
 import com.example.demo.dtos.UserDto;
+import com.example.demo.dtos.UserInfoDto;
 import com.example.demo.entities.User;
 import com.example.demo.interfaces.UserService;
 import com.example.demo.repositories.UserRepository;
@@ -42,13 +44,21 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    @Override
-    public UserDto createUser(String username) {
-        User user = new User();
-        user.setUsername(username);
-        user.setCredits(0); // Créditos iniciales en 0
+    public UserDto createUser(UserInfoDto userInfoDto) {
+        User user = new User();// Establecemos el ID del auth-service
+        user.setUsername(userInfoDto.getEmail());
+        user.setCredits(100);
         user.setUpdatedAt(LocalDateTime.now());
-        User savedUser = userRepository.save(user);
-        return new UserDto(savedUser.getId(), savedUser.getUsername(), savedUser.getCredits());
+
+        try {
+            user = userRepository.save(user);
+        } catch (Exception e) {
+            throw new RuntimeException("Error creando usuario: " + e.getMessage());
+        }
+
+        return new UserDto(user.getId(), user.getUsername(), user.getCredits());
     }
+
+    //todo hacer metodo para ver /me obtener usuario que esta logueado con token en vez de crear devolver
+    //comprobar que no se cree cuando ya esta
 }

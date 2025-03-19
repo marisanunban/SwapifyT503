@@ -1,37 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8fce1225-3073-43d6-9c36-6cc292ba0475" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/angular.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/angular.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/src/app/app.component.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/src/app/app.component.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/src/app/app.component.spec.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/src/app/app.component.spec.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/src/app/app.component.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/src/app/app.component.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/src/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/src/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/src/main.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/src/main.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/swapifyfront/src/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/swapifyfront/src/styles.css" afterDir="false" />
-    </list>
+    <list default="true" id="cf90843e-8239-4b55-8a15-9668546067a6" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
-    <favorite-branches>
-      <branch-storage>
-        <map>
-          <entry type="REMOTE">
-            <value>
-              <list>
-                <branch-info repo="$PROJECT_DIR$" source="origin/test" />
-              </list>
-            </value>
-          </entry>
-        </map>
-      </branch-storage>
-    </favorite-branches>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="main" />
@@ -39,43 +15,34 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;FxKroniK&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/marisanunban/SwapifyT503.git&quot;,
-    &quot;accountId&quot;: &quot;842ead73-de17-407b-b73d-2cac619966c2&quot;
-  }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 5
-}</component>
-  <component name="ProjectId" id="2uIgSo0yGoL4JiCRMtUDv0QqTvj" />
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 1
+}]]></component>
+  <component name="ProjectId" id="2uXmJdXvnqDnykvJVOl2qRLHN9j" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
+    "com.codeium.enabled": "true",
     "git-widget-placeholder": "test",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/GBX PROYECTO/SwapifyT503/backend/Auth/demo"
+    "last_opened_file_path": "C:/Users/Usuario/OneDrive/Público/Swapify/SwapifyT503/backend/Auth/demo"
   }
 }]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="8fce1225-3073-43d6-9c36-6cc292ba0475" name="Changes" comment="" />
-      <created>1741941505629</created>
+      <changelist id="cf90843e-8239-4b55-8a15-9668546067a6" name="Changes" comment="" />
+      <created>1742403224248</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1741941505629</updated>
+      <updated>1742403224248</updated>
     </task>
     <servers />
   </component>

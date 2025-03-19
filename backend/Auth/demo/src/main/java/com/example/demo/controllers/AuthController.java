@@ -40,8 +40,7 @@ public class AuthController {
         return ResponseEntity.ok(responseDto);
     }
     @GetMapping("/validate-user")
-    public ResponseEntity<UserInfoDto> validateCurrentUser(@RequestParam String userId) {
-        //SecurityContextHolder.get
+    public ResponseEntity<UserInfoDto> validateCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Users user)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // Sin cuerpo, solo 401
