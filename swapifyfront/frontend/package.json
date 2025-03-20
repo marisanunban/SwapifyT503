@@ -6,7 +6,11 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "Crear componente": "ng g c features/home/main", 
+    "Crear interface": "ng g i shared/interfaces/carrito",    
+    "Crear servicio": "ng g s services/user",
+    "Crear modulo": "ng g m services/main"
   },
   "private": true,
   "dependencies": {

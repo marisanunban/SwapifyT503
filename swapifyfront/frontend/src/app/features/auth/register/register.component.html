@@ -1,0 +1,62 @@
+<div class="flex h-screen w-full">
+    <!-- Panel izquierdo -->
+    <div class="bg-gradient-to-br justify-center from-green-400 hidden items-center md:flex md:w-1/2 to-green-600">
+      <div class="text-center text-white">
+        <h1 class="text-3xl font-bold">¡Bienvenido!</h1>
+        <p class="mt-2">Crea una cuenta para continuar</p>
+      </div>
+    </div>
+  
+    <!-- Panel derecho con formulario -->
+    <div class="flex flex-col bg-white justify-center w-full items-center md:px-16 md:w-1/2 px-6">
+      <div class="w-full max-w-md">
+        <h1 class="text-3xl text-center text-green-500 font-bold mb-6">Registro</h1>
+  
+        <!-- Formulario -->
+        <form (ngSubmit)="onSubmit()" class="space-y-6">
+          <!-- Campo de Correo Electrónico -->
+          <input
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          class="border border-gray-300 p-3 rounded w-full focus:border-green-500 focus:outline-none"
+          placeholder="Correo Electrónico"
+          required
+        >
+  
+          <!-- Campo de Contraseña -->
+          <input
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            class="border border-gray-300 p-3 rounded w-full focus:border-green-500 focus:outline-none"
+            placeholder="Contraseña"
+            required
+          >
+  
+          <!-- Mensaje de error -->
+          <div *ngIf="error" class="text-center text-red-500 text-sm">
+            {{ error }}
+          </div>
+  
+          <!-- Mensaje de éxito -->
+          <div *ngIf="successMessage" class="text-center text-green-500 text-sm">
+            {{ successMessage }}
+          </div>
+  
+          <!-- Botón de Registro -->
+          <button
+            type="submit"
+            class="bg-green-500 rounded text-white w-full font-medium hover:bg-green-600 py-3"
+          >
+            REGISTRARSE
+          </button>
+        </form>
+  
+        <!-- Enlace a login -->
+        <p class="text-center mt-4">
+          ¿Ya tienes cuenta? <a routerLink="/login" class="text-green-500 hover:underline">Inicia sesión aquí</a>
+        </p>
+      </div>
+    </div>
+  </div>
