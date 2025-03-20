@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -45,6 +46,12 @@ public class UserServiceImpl implements UserService {
     }
 
     public UserDto createUser(UserInfoDto userInfoDto) {
+
+        Optional<User> existingUser = userRepository.findByUsername(userInfoDto.getEmail());
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            return new UserDto(user.getId(), user.getUsername(), user.getCredits());
+        }
         User user = new User();// Establecemos el ID del auth-service
         user.setUsername(userInfoDto.getEmail());
         user.setCredits(100);
