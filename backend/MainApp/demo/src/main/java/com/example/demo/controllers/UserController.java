@@ -28,47 +28,29 @@ public class UserController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<UserDto>> getUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        UserInfoDto prueba = authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
+        UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
         return Mono.just(ResponseEntity.ok(userService.getUser(id)));
     }
 
     @PatchMapping("/{id}")
     public Mono<ResponseEntity<Void>> updateUser(@PathVariable Long id, @RequestBody UpdateUserDto dto, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
-                .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
-                    if (!userInfo.getId().equals(id)) {
-                        return Mono.<ResponseEntity<Void>>just(ResponseEntity.status(403).build());
-                    }
-                    userService.updateUser(id, dto);
-                    return Mono.<ResponseEntity<Void>>just(ResponseEntity.noContent().build());
-                })
-                .onErrorResume(Throwable.class, e -> Mono.just(ResponseEntity.status(401).build()));
+        authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
+        userService.updateUser(id, dto);
+        return Mono.just(ResponseEntity.noContent().build());
     }
 
     @PostMapping("/{id}/credits")
     public Mono<ResponseEntity<Void>> addCredits(@PathVariable Long id, @RequestBody CreditRequestDto dto, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
-                .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
-                    if (!userInfo.getId().equals(id)) {
-                        return Mono.<ResponseEntity<Void>>just(ResponseEntity.status(403).build());
-                    }
-                    creditHistoryService.addCredits(id, dto);
-                    return Mono.<ResponseEntity<Void>>just(ResponseEntity.noContent().build());
-                })
-                .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<Void>>just(ResponseEntity.status(401).build()));
+        authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
+        creditHistoryService.addCredits(id, dto);
+        return Mono.just(ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}/credits/history")
     public Mono<ResponseEntity<List<CreditHistoryDto>>> getCreditHistory(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
-                .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
-                    if (!userInfo.getId().equals(id)) {
-                        return Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.status(403).build());
-                    }
-                    List<CreditHistoryDto> history = creditHistoryService.getCreditHistory(id);
-                    return Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.ok(history));
-                })
-                .onErrorResume(Throwable.class, e -> Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.status(401).build()));
+        authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
+        List<CreditHistoryDto> history = creditHistoryService.getCreditHistory(id);
+        return Mono.just(ResponseEntity.ok(history));
     }
 
     @PostMapping("/create")
