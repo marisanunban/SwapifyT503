@@ -1,1 +1,44 @@
-<p>main works!</p>
+<!-- navbar.component.html -->
+<nav class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+    <!-- Logo -->
+    <a href="#" class=" text-2xl font-bold !text-green-700" >Swapify</a>
+    
+    <!-- Búsqueda -->
+    <div class="flex flex-1 mx-4 ">
+      <div class="relative flex items-center w-full max-w-3xl ">
+        <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Categorías
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Mujer</a></li>
+              <li><a class="dropdown-item" href="#">Hombre</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Tecnología</a></li>
+            </ul>
+          </div>
+        <input 
+          type="text" 
+          placeholder="Busca artículos" 
+          class="w-full m-2 px-3 py-2 bg-gray-100 rounded-r-md focus:outline-none">
+      </div>
+    </div>
+    
+    <!-- Acciones -->
+    <div class="flex items-center gap-3">
+      <button *ngIf="!user"  class="text-teal-600" (click)="irARegistro()">Regístrate</button>
+      <button *ngIf="!user" class="text-teal-600" (click)="irALogin()">Iniciar Sesión</button>
+      <button class="px-4 py-2 text-white bg-teal-600 rounded-md">Contáctanos</button>
+      <button class="p-2 text-gray-500 rounded-full hover:bg-gray-100">
+        <i class="fas fa-question"></i>
+      </button>
+      <div *ngIf="user" class="flex items-center space-x-4">
+        <span class="text-lg font-semibold">Hola, {{ user.email }}</span>
+        <span class="bg-green-600 px-3 py-1 rounded">Créditos: {{ user.credits }}</span>
+        <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded">Cerrar sesión</button>
+      </div>
+      <div class="flex items-center ml-2">
+        ES <i class="ml-1 fas fa-chevron-down text-xs"></i>
+      </div>
+    </div>
+  </nav>

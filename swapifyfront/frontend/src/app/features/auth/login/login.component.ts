@@ -37,6 +37,7 @@ export class LoginComponent {
     this.authService.login(loginData).subscribe({
       next: (response) => {
         console.log('Respuesta del backend:', response.message);
+        console.log(response)
         const token = response.message.split(': ')[1]; // Extrae el token
         console.log('Token extraído:', token);
 
