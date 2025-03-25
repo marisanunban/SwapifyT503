@@ -1,31 +1,47 @@
 package com.example.demo.entities;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
-@Data
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(nullable = false, unique = true)
+    private String username;
 
+    @Column(nullable = false)
+    private int credits;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "about_me")
+    private String aboutMe;
+
+    @Column(name = "profile_picture")
+    private String profilePicture;
+
+    // Constructor vacío (necesario para JPA)
     public User() {
     }
 
-    public User(Long id, String username, int credits, LocalDateTime updatedAt) {
-        this.id = id;
+    // Constructor con campos (opcional, para facilitar la creación de instancias)
+    public User(String username, int credits, LocalDateTime updatedAt, String aboutMe, String profilePicture) {
         this.username = username;
         this.credits = credits;
         this.updatedAt = updatedAt;
+        this.aboutMe = aboutMe;
+        this.profilePicture = profilePicture;
+    }
+
+    // Getters y setters
+    public Long getId() {
+        return id;
     }
 
     public void setId(Long id) {
@@ -56,11 +72,19 @@ public class User {
         this.updatedAt = updatedAt;
     }
 
-    @Column(unique = true)
-    private String username;
+    public String getAboutMe() {
+        return aboutMe;
+    }
 
-    @Column(columnDefinition = "INTEGER DEFAULT 0")
-    private int credits;
+    public void setAboutMe(String aboutMe) {
+        this.aboutMe = aboutMe;
+    }
 
-    private LocalDateTime updatedAt;
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
+    }
 }

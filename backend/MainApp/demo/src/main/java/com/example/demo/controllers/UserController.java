@@ -76,6 +76,39 @@ public class UserController {
         UserInfoDto respuesta = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
         return Mono.just(new ResponseEntity<>(userService.createUser(respuesta), HttpStatus.CREATED));
     }
+    @GetMapping("/me")
+    public Mono<ResponseEntity<UserProfileDto>> getCurrentUserProfile(@RequestHeader("Authorization") String token) {
+        try {
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+            if (userInfo == null || userInfo.getEmail() == null) {
+                return Mono.just(ResponseEntity.status(401).build());
+            }
+            UserProfileDto profileDto = userService.getUserProfileByEmail(userInfo.getEmail());
+            return Mono.just(ResponseEntity.ok(profileDto));
+        } catch (Exception e) {
+            System.out.println("Excepción al obtener el perfil: " + e.getMessage());
+            return Mono.just(ResponseEntity.status(401).build());
+        }
+    }
+
+    @PatchMapping("/me")
+    public Mono<ResponseEntity<Void>> updateCurrentUserProfile(
+            @RequestHeader("Authorization") String token,
+            @RequestBody UpdateUserProfileDto dto) {
+        try {
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+            if (userInfo == null || userInfo.getEmail() == null) {
+                return Mono.just(ResponseEntity.status(401).build());
+            }
+            // Buscar el usuario por email para obtener su ID
+            UserProfileDto userProfile = userService.getUserProfileByEmail(userInfo.getEmail());
+            userService.updateUserProfileReactively(userProfile.getId(), dto);
+            return Mono.just(ResponseEntity.noContent().build());
+        } catch (Exception e) {
+            System.out.println("Excepción al actualizar el perfil: " + e.getMessage());
+            return Mono.just(ResponseEntity.status(401).build());
+        }
+    }
 }
 
 

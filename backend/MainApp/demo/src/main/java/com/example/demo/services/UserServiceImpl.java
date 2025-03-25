@@ -1,9 +1,6 @@
 package com.example.demo.services;
 
-import com.example.demo.dtos.CreateUserDto;
-import com.example.demo.dtos.UpdateUserDto;
-import com.example.demo.dtos.UserDto;
-import com.example.demo.dtos.UserInfoDto;
+import com.example.demo.dtos.*;
 import com.example.demo.entities.User;
 import com.example.demo.interfaces.UserService;
 import com.example.demo.repositories.UserRepository;
@@ -28,6 +25,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserProfileDto getUserEntity(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return new UserProfileDto(
+                user.getId(),
+                user.getUsername(),
+                user.getAboutMe() != null ? user.getAboutMe() : "",
+                user.getProfilePicture() != null ? user.getProfilePicture() : ""
+        );
+    }
+
+    @Override
     public void updateUser(Long id, UpdateUserDto dto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -45,14 +54,14 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
     public UserDto createUser(UserInfoDto userInfoDto) {
-
         Optional<User> existingUser = userRepository.findByUsername(userInfoDto.getEmail());
         if (existingUser.isPresent()) {
             User user = existingUser.get();
             return new UserDto(user.getId(), user.getUsername(), user.getCredits());
         }
-        User user = new User();// Establecemos el ID del auth-service
+        User user = new User();
         user.setUsername(userInfoDto.getEmail());
         user.setCredits(100);
         user.setUpdatedAt(LocalDateTime.now());
@@ -66,6 +75,45 @@ public class UserServiceImpl implements UserService {
         return new UserDto(user.getId(), user.getUsername(), user.getCredits());
     }
 
-    //todo hacer metodo para ver /me obtener usuario que esta logueado con token en vez de crear devolver
-    //comprobar que no se cree cuando ya esta
+    @Override
+    public void updateUserProfile(Long id, UpdateUserProfileDto dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        if (dto.getAboutMe() != null) {
+            user.setAboutMe(dto.getAboutMe());
+        }
+        if (dto.getProfilePicture() != null) {
+            user.setProfilePicture(dto.getProfilePicture());
+        }
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Override
+    public UserProfileDto getUserProfile(Long id) {
+        UserProfileDto userProfile = getUserEntity(id);
+        return new UserProfileDto(
+                userProfile.getId(),
+                userProfile.getUsername(),
+                userProfile.getAboutMe() != null ? userProfile.getAboutMe() : "",
+                userProfile.getProfilePicture() != null ? userProfile.getProfilePicture() : ""
+        );
+    }
+
+    @Override
+    public void updateUserProfileReactively(Long id, UpdateUserProfileDto dto) {
+        updateUserProfile(id, dto);
+    }
+
+    @Override
+    public UserProfileDto getUserProfileByEmail(String email) {
+        User user = userRepository.findByUsername(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        return new UserProfileDto(
+                user.getId(),
+                user.getUsername(),
+                user.getAboutMe() != null ? user.getAboutMe() : "",
+                user.getProfilePicture() != null ? user.getProfilePicture() : ""
+        );
+    }
 }
