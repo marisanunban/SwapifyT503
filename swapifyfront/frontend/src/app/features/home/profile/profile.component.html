@@ -1,0 +1,527 @@
+<!-- Header -->
+<nav class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
+    <!-- Logo -->
+    <a href="#" class="text-2xl font-bold !text-green-700">Swapify</a>
+  
+    <!-- Búsqueda -->
+    <div class="flex flex-1 mx-4">
+      <div class="relative flex items-center w-full max-w-3xl">
+        <div class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Categorías
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">Mujer</a></li>
+            <li><a class="dropdown-item" href="#">Hombre</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#">Tecnología</a></li>
+          </ul>
+        </div>
+        <input
+          type="text"
+          placeholder="Busca artículos"
+          class="w-full m-2 px-3 py-2 bg-gray-100 rounded-r-md focus:outline-none">
+      </div>
+    </div>
+  
+    <!-- Acciones -->
+    <div class="flex items-center gap-3">
+      <button *ngIf="!user" class="text-teal-600" (click)="irARegistro()">Regístrate</button>
+      <button *ngIf="!user" class="text-teal-600" (click)="irALogin()">Iniciar Sesión</button>
+      <button class="px-4 py-2 text-white bg-teal-600 rounded-md">Contáctanos</button>
+      <button class="p-2 text-gray-500 rounded-full hover:bg-gray-100">
+        <i class="fas fa-question"></i>
+      </button>
+      <div *ngIf="user" class="flex items-center space-x-4">
+        <span class="text-lg font-semibold">Hola, {{ user.username }}</span>
+        <span class="bg-green-600 px-3 py-1 rounded text-white">Créditos: {{ user.credits }}</span>
+        <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded text-white">Cerrar sesión</button>
+        <button class="text-teal-600 m-2" (click)="irACrear()">Crear producto</button>
+      </div>
+      <div class="flex items-center ml-2">
+        ES <i class="ml-1 fas fa-chevron-down text-xs"></i>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Contenido principal - Perfil de vendedor -->
+  <div class="container mx-auto px-4 py-8 min-h-screen">
+    <!-- Encabezado del perfil -->
+    <div class="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
+      <!-- Portada -->
+      <div class="h-48 bg-gradient-to-r from-teal-400 to-green-500 relative" style="background-image: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'); background-size: cover; background-position: center;">
+        <!-- Botón de editar portada -->
+        <button class="absolute top-3 right-3 bg-white text-gray-700 px-3 py-1 rounded-md text-sm flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+          Editar portada
+        </button>
+      </div>
+      
+      <!-- Información del perfil -->
+      <div class="px-6 pb-6">
+        <div class="flex flex-wrap items-end">
+          <!-- Avatar -->
+          <div class="relative -mt-16 mr-6">
+            <img [src]="profileImageUrl" class="w-32 h-32 rounded-full border-4 border-white" alt="Foto de perfil">
+            <button class="absolute bottom-0 right-0 bg-teal-500 text-white p-1 rounded-full">
+              <svg xmlns="http://www.w3.org/2000/svg" (click)="enableEditing()" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Nombre e info -->
+          <div class="py-4 flex-grow">
+            <div class="flex flex-wrap items-center justify-between">
+              <div>
+                <h3 class="text-2xl font-bold">{{username}}</h3>
+                <p class="text-gray-500">Vendedor desde 2020 • <span class="text-green-600 font-medium"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg> 4.8</span> (120 valoraciones)</p>
+              </div>
+              <div class="flex mt-2 md:mt-0">
+                <div class="relative mr-2">
+                  <button class="flex items-center px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">3</span>
+                  </button>
+                  <div class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10">
+                    <div class="py-1">
+                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nuevo mensaje de comprador</a>
+                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Producto vendido: Cámara Canon</a>
+                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nueva valoración recibida</a>
+                    </div>
+                  </div>
+                </div>
+                <div class="relative">
+                  <button class="flex items-center px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+                  <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                    <div class="py-1">
+                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar perfil</a>
+                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Configuración</a>
+                      <div class="border-t border-gray-100"></div>
+                      <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Cerrar sesión</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Contenido principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Columna izquierda -->
+      <div class="lg:col-span-4">
+        <!-- Sobre mí -->
+        <div class="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h5 class="text-lg font-semibold">Sobre mí</h5>
+              <button class="text-teal-600 hover:text-teal-800">
+                <svg xmlns="http://www.w3.org/2000/svg" (click)="enableEditingMe()" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            </div>
+            <p class="text-gray-700 mb-4">{{this.aboutMe}}</p>
+            
+            <hr class="my-4">
+            
+            <!-- Detalles de contacto -->
+            <div class="mb-4">
+              <div class="flex items-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg"  class="h-5 w-5 text-teal-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span class="text-gray-700">Madrid, España</span>
+              </div>
+              <div class="flex items-center mb-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <span class="text-gray-700">Vendedor verificado</span>
+              </div>
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <a href="#" class="text-teal-600 hover:underline">Contactar</a>
+              </div>
+            </div>
+
+            <hr class="my-4">
+            
+            <!-- Estadísticas de vendedor -->
+            <h6 class="font-medium mb-3">Estadísticas de vendedor</h6>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <div class="border rounded-md p-2 text-center">
+                <h5 class="text-lg font-semibold mb-0">98%</h5>
+                <span class="text-xs text-gray-500">Respuesta</span>
+              </div>
+              <div class="border rounded-md p-2 text-center">
+                <h5 class="text-lg font-semibold mb-0">24h</h5>
+                <span class="text-xs text-gray-500">Envío</span>
+              </div>
+              <div class="border rounded-md p-2 text-center">
+                <h5 class="text-lg font-semibold mb-0">156</h5>
+                <span class="text-xs text-gray-500">Ventas</span>
+              </div>
+            </div>
+            
+            <!-- Valoraciones -->
+            <div class="flex justify-between items-center mb-2">
+              <h6 class="font-medium mb-0">Valoraciones</h6>
+              <a href="#" class="text-teal-600 text-sm hover:underline">Ver todas</a>
+            </div>
+            <div class="mb-2">
+              <div class="flex items-center mb-1">
+                <span class="w-8 text-sm">5 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg></span>
+                <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="bg-green-500 h-full" style="width: 85%"></div>
+                </div>
+                <span class="text-sm">85%</span>
+              </div>
+              <div class="flex items-center mb-1">
+                <span class="w-8 text-sm">4 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg></span>
+                <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="bg-green-500 h-full" style="width: 10%"></div>
+                </div>
+                <span class="text-sm">10%</span>
+              </div>
+              <div class="flex items-center mb-1">
+                <span class="w-8 text-sm">3 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg></span>
+                <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="bg-yellow-500 h-full" style="width: 3%"></div>
+                </div>
+                <span class="text-sm">3%</span>
+              </div>
+              <div class="flex items-center mb-1">
+                <span class="w-8 text-sm">2 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg></span>
+                <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="bg-red-500 h-full" style="width: 1%"></div>
+                </div>
+                <span class="text-sm">1%</span>
+              </div>
+              <div class="flex items-center">
+                <span class="w-8 text-sm">1 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg></span>
+                <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="bg-red-500 h-full" style="width: 1%"></div>
+                </div>
+                <span class="text-sm">1%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Categorías -->
+        <div class="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
+          <div class="p-6">
+            <h5 class="text-lg font-semibold mb-3">Categorías</h5>
+            <div class="flex flex-wrap gap-2">
+              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Electrónica</a>
+              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Fotografía</a>
+              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Smartphones</a>
+              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Accesorios</a>
+              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Ordenadores</a>
+              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Audio</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Columna derecha -->
+      <div class="lg:col-span-8">
+        <!-- Añadir producto -->
+        <div *ngIf="isEditing">
+          <label for="profileImageUrl">Añada un archivo de imagen</label>
+          <input type="file" id="profileImageUrl" [(ngModel)]="profileImageUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+          <button (click)="saveProfile()">Guardar</button>
+        </div>
+        <div *ngIf="isEditingMe">
+          <label for="aboutMeText">Sobre mi:</label>
+          <input id="aboutMeText" [(ngModel)]="aboutMe" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+          <button (click)="saveProfileAbout()">Guardar</button>
+        </div>
+        
+        <!-- Pestañas de contenido -->
+        <div class="border-b border-gray-200 mb-6">
+          <nav class="flex">
+            <a href="#" class="px-4 py-3 text-teal-600 border-b-2 border-teal-600 font-medium">Productos a la venta (8)</a>
+            <a href="#" class="px-4 py-3 text-gray-500 hover:text-gray-700">Vendidos (32)</a>
+            <a href="#" class="px-4 py-3 text-gray-500 hover:text-gray-700">Favoritos (12)</a>
+          </nav>
+        </div>
+        
+        <!-- Productos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Producto 1 -->
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" class="w-full h-48 object-cover" alt="Producto">
+              <span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded-full">Nuevo</span>
+              <button class="absolute bottom-2 right-2 p-1 bg-white rounded-full shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-2">
+                <h5 class="text-lg font-medium">Auriculares Bluetooth</h5>
+                <span class="font-bold text-teal-600">89,99 €</span>
+              </div>
+              <p class="text-gray-600 text-sm mb-3">Auriculares inalámbricos con cancelación de ruido, apenas usados, en perfecto estado.</p>
+              <div class="flex justify-between items-center">
+                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  45 visitas
+                </span>
+                <span class="text-gray-500 text-xs">Publicado hace 2 días</span>
+              </div>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+              <button class="flex items-center text-teal-600 hover:text-teal-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Editar
+              </button>
+              <button class="flex items-center text-red-500 hover:text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+          
+          <!-- Producto 2 -->
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1598327105666-5b89351aff97?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1527&q=80" class="w-full h-48 object-cover" alt="Producto">
+              <span class="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded-full">Usado</span>
+              <button class="absolute bottom-2 right-2 p-1 bg-white rounded-full shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-2">
+                <h5 class="text-lg font-medium">Cámara Canon EOS 2000D</h5>
+                <span class="font-bold text-teal-600">349,99 €</span>
+              </div>
+              <p class="text-gray-600 text-sm mb-3">Cámara réflex digital con objetivo 18-55mm. Usada pero en excelente estado, con todos los accesorios.</p>
+              <div class="flex justify-between items-center">
+                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  128 visitas
+                </span>
+                <span class="text-gray-500 text-xs">Publicado hace 1 semana</span>
+              </div>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+              <button class="flex items-center text-teal-600 hover:text-teal-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Editar
+              </button>
+              <button class="flex items-center text-red-500 hover:text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+          
+          <!-- Producto 3 -->
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1528&q=80" class="w-full h-48 object-cover" alt="Producto">
+              <span class="absolute top-2 right-2 bg-teal-500 text-white px-2 py-1 text-xs rounded-full">Como nuevo</span>
+              <button class="absolute bottom-2 right-2 p-1 bg-white rounded-full shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-2">
+                <h5 class="text-lg font-medium">iPhone 13 Pro 128GB</h5>
+                <span class="font-bold text-teal-600">699,99 €</span>
+              </div>
+              <p class="text-gray-600 text-sm mb-3">iPhone 13 Pro en color grafito, 128GB. Comprado hace 6 meses, sin arañazos, con caja y accesorios originales.</p>
+              <div class="flex justify-between items-center">
+                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  215 visitas
+                </span>
+                <span class="text-gray-500 text-xs">Publicado hace 3 días</span>
+              </div>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+              <button class="flex items-center text-teal-600 hover:text-teal-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Editar
+              </button>
+              <button class="flex items-center text-red-500 hover:text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+          
+          <!-- Producto 4 -->
+          <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="relative">
+              <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1632&q=80" class="w-full h-48 object-cover" alt="Producto">
+              <span class="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded-full">Usado</span>
+              <button class="absolute bottom-2 right-2 p-1 bg-white rounded-full shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-4">
+              <div class="flex justify-between items-center mb-2">
+                <h5 class="text-lg font-medium">Portátil ASUS ZenBook</h5>
+                <span class="font-bold text-teal-600">599,99 €</span>
+              </div>
+              <p class="text-gray-600 text-sm mb-3">Portátil ASUS ZenBook, i7, 16GB RAM, 512GB SSD. Usado durante 1 año, en perfecto estado de funcionamiento.</p>
+              <div class="flex justify-between items-center">
+                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                  87 visitas
+                </span>
+                <span class="text-gray-500 text-xs">Publicado hace 5 días</span>
+              </div>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+              <button class="flex items-center text-teal-600 hover:text-teal-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Editar
+              </button>
+              <button class="flex items-center text-red-500 hover:text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Paginación -->
+        <div class="mt-6 flex justify-center">
+          <nav class="inline-flex rounded-md shadow">
+            <a href="#" class="py-2 px-4 bg-white border border-gray-300 rounded-l-md text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+              Anterior
+            </a>
+            <a href="#" class="py-2 px-4 bg-teal-600 text-white border border-teal-600 hover:bg-teal-700">
+              1
+            </a>
+            <a href="#" class="py-2 px-4 bg-white border border-gray-300 text-gray-500 hover:bg-gray-50">
+              2
+            </a>
+            <a href="#" class="py-2 px-4 bg-white border border-gray-300 rounded-r-md text-gray-500 hover:bg-gray-50">
+              Siguiente
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <footer class="bg-green-900 text-white py-8">
+    <div class="container mx-auto px-4">
+      <!-- Logo y enlaces principales -->
+      <div class="row mb-8">
+        <!-- Logo -->
+        <div class="col-12 mb-6">
+          <h2 class="text-2xl font-bold">Swapify</h2>
+        </div>
+        
+        
+        <!-- Formulario de suscripción -->
+        <div class="col-12 col-md-6 mt-6 mt-md-0">
+          <p class="mb-3">Obtén las últimas novedades de nuestra plataforma</p>
+          
+          <div class="flex mb-3">
+            <input 
+              type="email" 
+              placeholder="Your email here" 
+              class="p-2 w-full bg-green-800 border border-green-700 text-white"
+            >
+            <button class="bg-white text-green-900 px-4 whitespace-nowrap">
+              Subscribe
+            </button>
+          </div>
+          
+          <div class="flex items-start gap-2">
+            <input type="checkbox" class="mt-1">
+            <p class="text-sm">Acepto las Normas y Términos de Condiciones</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Línea divisoria -->
+      <hr class="border-green-700 mb-4">
+      
+      <!-- Enlaces legales -->
+      <div class="text-sm flex flex-wrap gap-x-4 gap-y-2 mb-2">
+        <a href="#" class="hover:underline">Términos de la página web</a>
+        <span class="hidden md:inline">|</span>
+        <a href="#" class="hover:underline">Política de privacidad</a>
+      </div>
+      
+      <!-- Copyright -->
+      <div class="text-sm">
+        ©2025 Swapify, LLC. Todos los derechos reservados.
+      </div>
+    </div>
+  </footer>

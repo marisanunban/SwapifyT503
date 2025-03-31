@@ -1,3 +1,4 @@
+// auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -7,9 +8,10 @@ import { tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/auth'; // Ajusta el puerto si es necesario
-  private userSubject = new BehaviorSubject<{ email: string; credits: number } | null>(null);
-  public user$ = this.userSubject.asObservable(); // Observable para acceder al usuario
+  private apiUrl = 'http://localhost:8081/auth';
+  // Ajustamos el tipo para que coincida con los datos de /api/users/create
+  private userSubject = new BehaviorSubject<{ id: number; username: string; credits: number } | null>(null);
+  public user$ = this.userSubject.asObservable();
 
   constructor(private http: HttpClient) {
     this.loadUser();
@@ -20,22 +22,25 @@ export class AuthService {
   }
 
   login(loginData: { email: string; password: string }): Observable<any> {
-    return this.http.post<{ email: string; credits: number }>(`${this.apiUrl}/login`, loginData).pipe(
-      tap(userData => {
-        this.userSubject.next(userData); // Actualizar el estado del usuario
-        localStorage.setItem('user', JSON.stringify(userData)); // Guardar en localStorage
-      })
-    );
+    return this.http.post(`${this.apiUrl}/login`, loginData);
   }
+
+  // Nuevo método para actualizar el usuario después de /api/users/create
+  updateUser(userData: { id: number; username: string; credits: number }) {
+    this.userSubject.next(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  }
+
   logout() {
-    this.userSubject.next(null); // Borrar usuario en el frontend
-    localStorage.removeItem('user'); // Eliminar del almacenamiento local
+    this.userSubject.next(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   }
 
   private loadUser() {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      this.userSubject.next(JSON.parse(storedUser)); // Recuperar usuario si hay sesión activa
+      this.userSubject.next(JSON.parse(storedUser));
     }
-}
+  }
 }

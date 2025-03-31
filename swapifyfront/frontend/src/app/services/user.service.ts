@@ -18,4 +18,21 @@ export class UserService {
 
     return this.http.post(`${this.apiUrl}/create`, {}, { headers });
   }
+
+  getUserProfile(token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+    console.log(headers)
+    return this.http.get(`${this.apiUrl}/me`, { headers });
+  }
+  updateUserProfile(token: string, profileData: any): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    return this.http.patch(`${this.apiUrl}/me`, profileData, { headers });
+  }
 }

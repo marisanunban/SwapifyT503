@@ -1,9 +1,11 @@
+// main.component.ts
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common'; // Para ngIf
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
+
 @Component({
   selector: 'app-main',
   standalone: true,
@@ -12,8 +14,10 @@ import { AuthService } from '../../../services/auth.service';
   styleUrls: ['./main.component.css']
 })
 export class MainComponent implements OnInit {
-  user: { email: string; credits: number } | null = null;
+  user: { id: number; username: string; credits: number } | null = null;
+
   constructor(private router: Router, private authService: AuthService) {}
+
   ngOnInit() {
     this.authService.user$.subscribe(user => {
       this.user = user; // Se actualizará automáticamente cuando el usuario inicie sesión
@@ -22,10 +26,17 @@ export class MainComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+    this.router.navigate(['/login']); // Redirigir al login después de cerrar sesión
   }
+
   irARegistro() {
     this.router.navigate(['/register']);
   }
+  
+  irAProfile() {
+    this.router.navigate(['/profile']);
+  }
+
   irALogin() {
     this.router.navigate(['/login']);
   }
