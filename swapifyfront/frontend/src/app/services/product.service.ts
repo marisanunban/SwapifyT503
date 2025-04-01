@@ -6,18 +6,24 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ProductService {
-  private apiUrl = 'http://localhost:8083/products'; // URL de tu API de users
+  private apiUrl = 'http://localhost:8083/products'; // URL de tu API de productos
 
   constructor(private http: HttpClient) {}
 
-  create(token: string): Observable<any> {
+  createProduct(productData: any, token: string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
 
-    return this.http.post(`${this.apiUrl}/create`, {}, { headers });
+    return this.http.post(`${this.apiUrl}`, productData, { headers });
   }
+  getProductsByUser(token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
 
-
+    return this.http.get(`${this.apiUrl}`, { headers });
+  }
 }

@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { switchMap } from 'rxjs';
+import { ProductService } from '../../../services/product.service';
 
 @Component({
   selector: 'app-profile',
@@ -20,9 +21,10 @@ export class ProfileComponent {
   profileImageUrl: string = '';
   isEditing: boolean = false;
   isEditingMe: boolean = false;
+  products: any[] = []; 
   
 
-  constructor(private router: Router, private userService:UserService, private authService:AuthService) {}
+  constructor(private router: Router, private userService:UserService, private authService:AuthService, private productService:ProductService) {}
 
   ngOnInit() {
      this.authService.user$.subscribe(user => {
@@ -37,6 +39,7 @@ export class ProfileComponent {
           this.username = response.username;
           this.aboutMe = response.aboutMe;
           this.profileImageUrl = response.profilePicture;
+          this.recogerProductos(); // Llama a la función para recoger productos
         },
         error: error => {
           console.error('Error al obtener perfil:', error);
@@ -117,7 +120,20 @@ export class ProfileComponent {
       }
     });
   }
-
+  recogerProductos() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.productService.getProductsByUser(token).subscribe({
+        next: response => {
+          this.products = response; // Asignar la respuesta a la variable products
+          console.log('Productos:', this.products); // Para verificar qué se recibe realmente
+        },
+        error: error => {
+          console.error('Error al obtener productos:', error);
+        }
+      });
+    }
+  }
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']); // Redirigir al login después de cerrar sesión
