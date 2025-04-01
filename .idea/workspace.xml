@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a74fdb6e-c382-4673-b9f5-c9d1ba112bbe" name="Changes" comment="" />
+    <list default="true" id="226bb0f9-1fde-40f0-ab93-4531107a25ab" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
+    <favorite-branches>
+      <branch-storage>
+        <map>
+          <entry type="REMOTE">
+            <value>
+              <list>
+                <branch-info repo="$PROJECT_DIR$" source="origin/victortest" />
+              </list>
+            </value>
+          </entry>
+        </map>
+      </branch-storage>
+    </favorite-branches>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
         <entry key="$PROJECT_DIR$" value="main" />
@@ -24,13 +37,14 @@
   <component name="GithubPullRequestsUISettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "url": "https://github.com/marisanunban/SwapifyT503.git",
-    "accountId": "9dc38b90-098d-4232-8672-ecc0ed3e7e5a"
+    "accountId": "842ead73-de17-407b-b73d-2cac619966c2"
   }
 }]]></component>
   <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6
+  "customColor": "",
+  "associatedIndex": 1
 }]]></component>
-  <component name="ProjectId" id="2uoYidsY4hVV4yETfxIo1Wi0kex" />
+  <component name="ProjectId" id="2uuY1tyRUuXSVgeurhouYqROjXm" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -39,20 +53,19 @@
   "keyToString": {
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "com.codeium.enabled": "true",
     "git-widget-placeholder": "victortest",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Usuario/OneDrive/Público/Swapify/SwapifyT503/backend/MainApp/demo"
+    "last_opened_file_path": "C:/Users/Usuario/Documents/Swapify/SwapifyT503/backend/Products/demo"
   }
 }]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="a74fdb6e-c382-4673-b9f5-c9d1ba112bbe" name="Changes" comment="" />
-      <created>1742916523659</created>
+      <changelist id="226bb0f9-1fde-40f0-ab93-4531107a25ab" name="Changes" comment="" />
+      <created>1743099715757</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1742916523659</updated>
+      <updated>1743099715757</updated>
     </task>
     <servers />
   </component>

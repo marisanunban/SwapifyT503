@@ -33,7 +33,7 @@ public class JwtTokenProvider {
         }
 
         return Jwts.builder()
-                .header().type("JWT").and() // Método moderno para setHeaderParam
+                .header().type("JWT").and()
                 .subject(user.getUsername()) // getUsername() devuelve el email
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtDurationSeconds * 1000))

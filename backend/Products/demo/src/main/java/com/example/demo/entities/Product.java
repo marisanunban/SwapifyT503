@@ -14,7 +14,7 @@ public class Product {
     @Id
     private String id;
 
-    private Long ownerId; // Asegúrate de que sea Long aquí
+    private Long ownerId;
 
     private String title;
 

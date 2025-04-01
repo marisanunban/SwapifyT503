@@ -27,4 +27,3 @@ public class AuthClient {
     }
 }
 
-/// TODO: 18/03/2025 Feign Client en vez de WebClient;

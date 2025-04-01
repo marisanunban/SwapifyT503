@@ -14,7 +14,7 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200") // TODO: Implementar archivo de seguridad y quitar esta etiqueta
 @RestController
 @RequestMapping("/api/users")
-public class UserController {
+public class    UserController {
 
     private final UserService userService;
     private final CreditHistoryService creditHistoryService;
