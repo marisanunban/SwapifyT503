@@ -258,8 +258,13 @@
         <!-- Añadir producto -->
         <div *ngIf="isEditing">
           <label for="profileImageUrl">Añada un archivo de imagen</label>
-          <input type="file" id="profileImageUrl" [(ngModel)]="profileImageUrl" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
+          <input type="file" id="profileImageUrl" (change)="onFileSelected($event)" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
           <button (click)="saveProfile()">Guardar</button>
+
+          <div *ngIf="profileImageUrl">
+            <p>Vista previa:</p>
+            <img [src]="profileImageUrl" alt="Vista previa de la imagen" style="max-width: 200px; max-height: 200px;" />
+          </div>
         </div>
         <div *ngIf="isEditingMe">
           <label for="aboutMeText">Sobre mi:</label>

@@ -4,6 +4,7 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { MainComponent } from './features/home/main/main.component';
 import { ProfileComponent } from './features/home/profile/profile.component';
 import { CreateProductComponent } from './features/home/create-product/create-product.component';
+import { ContactComponent } from './features/home/contact/contact.component';
 
 export const routes: Routes = [
   {path: 'main' , component: MainComponent},
@@ -15,5 +16,6 @@ export const routes: Routes = [
     component: MainComponent
   },
   {path: 'profile', component: ProfileComponent},
-  {path: 'create', component: CreateProductComponent}
+  {path: 'create', component: CreateProductComponent},
+  {path: 'contact', component: ContactComponent},
 ];

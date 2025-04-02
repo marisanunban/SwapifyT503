@@ -28,7 +28,7 @@
   <div class="flex items-center gap-3">
     <button *ngIf="!user" class="text-teal-600" (click)="irARegistro()">Regístrate</button>
     <button *ngIf="!user" class="text-teal-600" (click)="irALogin()">Iniciar Sesión</button>
-    <button class="px-4 py-2 text-white bg-teal-600 rounded-md">Contáctanos</button>
+    <button class="px-4 py-2 text-white bg-teal-600 rounded-md" (click)="irAContacta()">Contáctanos</button>
     <button class="p-2 text-gray-500 rounded-full hover:bg-gray-100">
       <i class="fas fa-question"></i>
     </button>

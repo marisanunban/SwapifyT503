@@ -18,21 +18,20 @@ export class ProfileComponent {
   user: { id: number; username: string; credits: number } | null = null;
   username: string = '';
   aboutMe: string = '';
-  profileImageUrl: string = '';
+  profileImageUrl: string = ''; // Base64 de la imagen
   isEditing: boolean = false;
   isEditingMe: boolean = false;
   products: any[] = []; 
-  
 
-  constructor(private router: Router, private userService:UserService, private authService:AuthService, private productService:ProductService) {}
+  constructor(private router: Router, private userService: UserService, private authService: AuthService, private productService: ProductService) {}
 
   ngOnInit() {
-     this.authService.user$.subscribe(user => {
+    this.authService.user$.subscribe(user => {
       this.user = user; // Se actualizará automáticamente cuando el usuario inicie sesión
     });
 
     const token = localStorage.getItem('token');
-    console.log(token)
+    console.log(token);
     if (token) {
       this.userService.getUserProfile(token).subscribe({
         next: response => {
@@ -49,15 +48,38 @@ export class ProfileComponent {
       console.error('No hay token disponible.');
     }
   }
+
   enableEditing() {
     this.isEditing = true;
   }
+
   enableEditingMe() {
     this.isEditingMe = true;
   }
 
+  // Método para manejar la selección de archivo y convertirlo a base64
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      const reader = new FileReader();
+  
+      reader.onload = () => {
+        this.profileImageUrl = reader.result as string; // Guarda la imagen en base64
+        console.log('Imagen en base64:', this.profileImageUrl); // Verifica el valor
+      };
+  
+      reader.onerror = (error) => {
+        console.error('Error al leer el archivo:', error);
+      };
+  
+      reader.readAsDataURL(file); // Convierte la imagen a base64
+    }
+  }
+//TODO: ARREGLAR LA IMAGEN DE PERFIL
   saveProfile() {
     const token = localStorage.getItem('token');
+    console.log(token);
     if (!token) {
       console.error('No hay token disponible.');
       return;
@@ -67,7 +89,7 @@ export class ProfileComponent {
   
     // Agregar solo los campos modificados
     if (this.profileImageUrl) {
-      updatedProfile.profilePicture = this.profileImageUrl;
+      updatedProfile.profilePicture = this.profileImageUrl; // Imagen en base64
     }
   
     console.log(updatedProfile); // Para verificar qué se envía realmente
@@ -98,7 +120,7 @@ export class ProfileComponent {
     const updatedProfile: any = {};
   
     // Agregar solo los campos modificados
-    console.log(this.aboutMe)
+    console.log(this.aboutMe);
     if (this.aboutMe) {
       updatedProfile.aboutMe = this.aboutMe;
     }
@@ -120,6 +142,7 @@ export class ProfileComponent {
       }
     });
   }
+
   recogerProductos() {
     const token = localStorage.getItem('token');
     if (token) {
@@ -134,6 +157,7 @@ export class ProfileComponent {
       });
     }
   }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']); // Redirigir al login después de cerrar sesión
@@ -150,6 +174,7 @@ export class ProfileComponent {
   irALogin() {
     this.router.navigate(['/login']);
   }
+
   irACrear() {
     this.router.navigate(['/create']);
   }
