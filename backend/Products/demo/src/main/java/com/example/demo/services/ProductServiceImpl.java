@@ -90,6 +90,18 @@
 
             productRepository.delete(product);
         }
+        @Override
+        public void transferProduct(String id, Long fromUserId, Long toUserId) {
+            Product product = productRepository.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
+
+            if (!product.getOwnerId().equals(fromUserId)) {
+                throw new IllegalArgumentException("The product does not belong to the specified fromUserId");
+            }
+
+            product.setOwnerId(toUserId);
+            productRepository.save(product);
+        }
 
         private ProductDto mapToDto(Product product) {
             ProductDto dto = new ProductDto();

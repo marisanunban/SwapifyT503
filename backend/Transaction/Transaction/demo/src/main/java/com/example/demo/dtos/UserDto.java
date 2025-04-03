@@ -5,14 +5,15 @@ import lombok.Data;
 @Data
 public class UserDto {
     private Long id;
-    private String username;
+    private String email; // Cambiado de username a email
+    private int credits;
 
     public UserDto() {
     }
 
-    public UserDto(Long id, String username, int credits) {
+    public UserDto(Long id, String email, int credits) {
         this.id = id;
-        this.username = username;
+        this.email = email;
         this.credits = credits;
     }
 
@@ -24,12 +25,12 @@ public class UserDto {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getEmail() {
+        return email;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public int getCredits() {
@@ -39,7 +40,4 @@ public class UserDto {
     public void setCredits(int credits) {
         this.credits = credits;
     }
-
-    private int credits;
 }
-

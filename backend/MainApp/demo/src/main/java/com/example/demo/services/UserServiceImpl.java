@@ -88,6 +88,12 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
+    @Override
+    public UserDto getUserByEmail(String email) {
+        User user = userRepository.findByUsername(email)  // O findByEmail si tienes ese método
+                .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
+        return new UserDto(user.getId(), user.getUsername(), user.getCredits());
+    }
 
     @Override
     public UserProfileDto getUserProfile(Long id) {

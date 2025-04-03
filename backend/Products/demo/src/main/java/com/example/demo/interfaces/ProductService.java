@@ -17,4 +17,6 @@ public interface ProductService {
     ProductDto updateProduct(String id, UpdateProductDto dto, Long ownerId);
 
     void deleteProduct(String id, Long ownerId);
+
+    void transferProduct(String id, Long fromUserId, Long toUserId);
 }

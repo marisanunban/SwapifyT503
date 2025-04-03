@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/products")
@@ -39,6 +40,30 @@ public class ProductController {
             @RequestParam(required = false) String keyword) {
         List<ProductDto> products = productService.getAllProducts(category, keyword);
         return ResponseEntity.ok(products);
+    }
+    @PostMapping("/{id}/transfer")
+    public ResponseEntity<Void> transferProduct(
+            @PathVariable("id") String id,
+            @RequestParam("fromUserId") Long fromUserId,
+            @RequestParam("toUserId") Long toUserId,
+            @RequestHeader("Authorization") String token) {
+        try {
+            Long requesterId = getOwnerIdFromToken(token);
+            if (!requesterId.equals(fromUserId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            productService.transferProduct(id, fromUserId, toUserId);
+            return ResponseEntity.ok().build();
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (Exception e) {
+            System.out.println("ERROR en transferProduct: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/{id}")

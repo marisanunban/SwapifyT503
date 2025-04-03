@@ -12,4 +12,5 @@ public interface UserService {
     UserProfileDto getUserProfile(Long id);
     void updateUserProfileReactively(Long id, UpdateUserProfileDto dto);
     UserProfileDto getUserProfileByEmail(String email);
+    UserDto getUserByEmail(String email);
 }

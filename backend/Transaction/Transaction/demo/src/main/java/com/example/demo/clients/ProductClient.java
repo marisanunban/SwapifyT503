@@ -1,41 +1,23 @@
-package com.example.demo.clients;
+    package com.example.demo.clients;
 
-import com.example.demo.dtos.ProductDto;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+    import com.example.demo.dtos.ProductDto;
+    import org.springframework.cloud.openfeign.FeignClient;
+    import org.springframework.web.bind.annotation.*;
 
-@Service
-public class ProductClient {
-    private final WebClient webClient;
-    private final String baseUrl;
+    @FeignClient(name = "product-service", url = "${product.service.url}")
+    public interface ProductClient {
 
-    public ProductClient(
-            WebClient.Builder webClientBuilder,
-            @Value("${product.service.url}") String baseUrl
-    ) {
-        this.baseUrl = baseUrl;
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
+        @GetMapping("/{id}")
+        ProductDto getProduct(
+                @PathVariable("id") String productId
+                // ← Añadido
+        );
+
+        @PostMapping("/{id}/transfer")
+        void transferProduct(
+                @PathVariable("id") String productId,
+                @RequestParam("fromUserId") Long fromUserId,
+                @RequestParam("toUserId") Long toUserId,
+                @RequestHeader("Authorization") String token
+        );
     }
-
-    public Mono<ProductDto> getProduct(String productId) {
-        return webClient.get()
-                .uri("/products/{id}", productId)
-                .retrieve()
-                .bodyToMono(ProductDto.class)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Error fetching product: " + e.getMessage())));
-    }
-
-    public Mono<Void> transferProduct(String productId, Long fromUserId, Long toUserId) {
-        return webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/products/{id}/transfer")
-                        .queryParam("fromUserId", fromUserId)
-                        .queryParam("toUserId", toUserId)
-                        .build(productId))
-                .retrieve()
-                .bodyToMono(Void.class)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Error transferring product: " + e.getMessage())));
-    }
-}

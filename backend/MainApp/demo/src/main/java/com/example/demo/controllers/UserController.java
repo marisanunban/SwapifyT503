@@ -90,6 +90,27 @@ public class    UserController {
             return Mono.just(ResponseEntity.status(401).build());
         }
     }
+        @GetMapping("/by-email")
+        public ResponseEntity<UserDto> getUserByEmail(
+                @RequestParam String email,
+                @RequestHeader("Authorization") String token) {
+            try {
+                // 1. Validar el token
+                UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+
+                if (userInfo == null || !userInfo.getEmail().equals(email)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+
+                // 2. Obtener el usuario por email
+                UserDto user = userService.getUserByEmail(email);
+                return ResponseEntity.ok(user);
+
+            } catch (Exception e) {
+                // 3. Manejo de errores
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+        }
 
     @PatchMapping("/me")
     public Mono<ResponseEntity<Void>> updateCurrentUserProfile(

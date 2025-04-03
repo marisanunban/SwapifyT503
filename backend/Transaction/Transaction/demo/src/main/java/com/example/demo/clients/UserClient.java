@@ -1,42 +1,28 @@
 package com.example.demo.clients;
 
 import com.example.demo.dtos.UserDto;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.*;
 
-@Service
-public class UserClient {
-    private final WebClient webClient;
-    private final String baseUrl;
+@FeignClient(name = "user-service", url = "${user.service.url}")
+public interface UserClient {
+    @GetMapping("/{id}")
+    UserDto getUser(
+            @PathVariable("id") Long userId,
+            @RequestHeader("Authorization") String token
+    );
 
-    public UserClient(
-            WebClient.Builder webClientBuilder,
-            @Value("${user.service.url}") String baseUrl
-    ) {
-        this.baseUrl = baseUrl;
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-    }
+    @GetMapping("/by-email")
+    UserDto getUserByEmail(
+            @RequestParam("email") String email,
+            @RequestHeader("Authorization") String token
+    );
 
-    public Mono<UserDto> getUser(Long userId) {
-        return webClient.get()
-                .uri("/users/{id}", userId)
-                .retrieve()
-                .bodyToMono(UserDto.class)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Error fetching user: " + e.getMessage())));
-    }
-
-    public Mono<Void> transferCredits(Long fromUserId, Long toUserId, int amount) {
-        return webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/users/transfer-credits")
-                        .queryParam("fromUserId", fromUserId)
-                        .queryParam("toUserId", toUserId)
-                        .queryParam("amount", amount)
-                        .build())
-                .retrieve()
-                .bodyToMono(Void.class)
-                .onErrorResume(e -> Mono.error(new RuntimeException("Error transferring credits: " + e.getMessage())));
-    }
+    @PostMapping("/transfer-credits")
+    void transferCredits(
+            @RequestParam("fromUserId") Long fromUserId,
+            @RequestParam("toUserId") Long toUserId,
+            @RequestParam("amount") int amount,
+            @RequestHeader("Authorization") String token
+    );
 }
