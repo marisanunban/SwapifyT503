@@ -1,13 +1,20 @@
 package com.example.demo.dtos;
 
-
-import lombok.Data;
-
-import java.time.LocalDateTime;
 import java.util.Map;
 
-@Data
 public class ProductDto {
+    private String id;
+    private String ownerId;     // Añadido para reflejar el ownerId de MongoDB
+    private String ownerEmail;  // Ya lo tenías, para el email del propietario
+    private String title;
+    private String description;
+    private String category;
+    private String status;
+    private Map<String, Object> attributes;
+    private double price;
+    private String createdAt;
+
+    // Getters y setters
     public String getId() {
         return id;
     }
@@ -16,85 +23,75 @@ public class ProductDto {
         this.id = id;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public String getOwnerId() {
+        return ownerId;
     }
 
-    public void setPrice(Double price) {
-        this.price = price;
-    }
-
-    public void setAttributes(Map<String, String> attributes) {
-        this.attributes = attributes;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setOwnerId(Long ownerId) {
+    public void setOwnerId(String ownerId) {
         this.ownerId = ownerId;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getOwnerEmail() {
+        return ownerEmail;
     }
 
-    public Double getPrice() {
-        return price;
-    }
-
-    public Map<String, String> getAttributes() {
-        return attributes;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public String getDescription() {
-        return description;
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public Long getOwnerId() {
-        return ownerId;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
-    private String id;
+    public String getDescription() {
+        return description;
+    }
 
-    private Long ownerId; // Cambiado de UUID a Long
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    private String title;
+    public String getCategory() {
+        return category;
+    }
 
-    private String description;
+    public void setCategory(String category) {
+        this.category = category;
+    }
 
-    private String category;
+    public String getStatus() {
+        return status;
+    }
 
-    private String status;
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-    private Map<String, String> attributes;
+    public Map<String, Object> getAttributes() {
+        return attributes;
+    }
 
-    private Double price;
+    public void setAttributes(Map<String, Object> attributes) {
+        this.attributes = attributes;
+    }
 
-    private LocalDateTime createdAt;
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
 }

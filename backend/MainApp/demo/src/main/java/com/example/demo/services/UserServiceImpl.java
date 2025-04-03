@@ -56,14 +56,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserInfoDto userInfoDto) {
+        // Verificar si el usuario ya existe por email
         Optional<User> existingUser = userRepository.findByUsername(userInfoDto.getEmail());
         if (existingUser.isPresent()) {
             User user = existingUser.get();
             return new UserDto(user.getId(), user.getUsername(), user.getCredits());
         }
+
+        // Crear un nuevo usuario usando el ID del servicio de autenticación
         User user = new User();
-        user.setUsername(userInfoDto.getEmail());
-        user.setCredits(100);
+        user.setId(userInfoDto.getId()); // Establecer el ID del token (ej. "16")
+        user.setUsername(userInfoDto.getEmail()); // Usar el email como username
+        user.setCredits(100); // Créditos iniciales
         user.setUpdatedAt(LocalDateTime.now());
 
         try {
@@ -89,8 +93,26 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
     @Override
+    public void transferCredits(Long fromUserId, Long toUserId, int amount) {
+        User fromUser = userRepository.findById(fromUserId)
+                .orElseThrow(() -> new RuntimeException("Usuario origen no encontrado: " + fromUserId));
+        User toUser = userRepository.findById(toUserId)
+                .orElseThrow(() -> new RuntimeException("Usuario destino no encontrado: " + toUserId));
+
+        if (fromUser.getCredits() < amount) {
+            throw new RuntimeException("Créditos insuficientes para el usuario: " + fromUserId);
+        }
+
+        fromUser.setCredits(fromUser.getCredits() - amount);
+        toUser.setCredits(toUser.getCredits() + amount);
+
+        userRepository.save(fromUser);
+        userRepository.save(toUser);
+    }
+
+    @Override
     public UserDto getUserByEmail(String email) {
-        User user = userRepository.findByUsername(email)  // O findByEmail si tienes ese método
+        User user = userRepository.findByUsername(email) // O findByEmail si tienes ese método
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
         return new UserDto(user.getId(), user.getUsername(), user.getCredits());
     }

@@ -41,6 +41,7 @@ public class ProductController {
         List<ProductDto> products = productService.getAllProducts(category, keyword);
         return ResponseEntity.ok(products);
     }
+
     @PostMapping("/{id}/transfer")
     public ResponseEntity<Void> transferProduct(
             @PathVariable("id") String id,
@@ -48,16 +49,28 @@ public class ProductController {
             @RequestParam("toUserId") Long toUserId,
             @RequestHeader("Authorization") String token) {
         try {
+            System.out.println("Iniciando transferProduct - ID del producto: " + id);
+            System.out.println("Parámetros recibidos - fromUserId: " + fromUserId + ", toUserId: " + toUserId);
+            System.out.println("Token recibido: " + token);
+
             Long requesterId = getOwnerIdFromToken(token);
+            System.out.println("ID del usuario autenticado (requesterId): " + requesterId);
+
             if (!requesterId.equals(fromUserId)) {
+                System.out.println("403 Forbidden: El requesterId (" + requesterId + ") no coincide con fromUserId (" + fromUserId + ")");
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
 
+            System.out.println("Usuario autorizado. Procediendo con la transferencia...");
             productService.transferProduct(id, fromUserId, toUserId);
+            System.out.println("Transferencia completada exitosamente para el producto: " + id);
+
             return ResponseEntity.ok().build();
         } catch (NoSuchElementException e) {
+            System.out.println("404 Not Found: Producto no encontrado - " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         } catch (IllegalArgumentException e) {
+            System.out.println("403 Forbidden: Argumento inválido - " + e.getMessage());
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         } catch (Exception e) {
             System.out.println("ERROR en transferProduct: " + e.getMessage());
@@ -94,7 +107,7 @@ public class ProductController {
     private Long getOwnerIdFromToken(String token) {
         String bearerToken = token.replace("Bearer ", "");
         UserInfoDto userInfo = authClient.validateUserToken(bearerToken, null)
-                .block();
+                .block(); // Nota: .block() está bien para pruebas, pero considera alternativas asíncronas en producción
         if (userInfo == null || userInfo.getId() == null) {
             throw new IllegalArgumentException("Invalid token or user not found");
         }

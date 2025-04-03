@@ -18,7 +18,7 @@ public interface UserClient {
             @RequestHeader("Authorization") String token
     );
 
-    @PostMapping("/transfer-credits")
+    @PostMapping("/transfer")
     void transferCredits(
             @RequestParam("fromUserId") Long fromUserId,
             @RequestParam("toUserId") Long toUserId,

@@ -1,44 +1,24 @@
 package com.example.demo.dtos;
 
-import lombok.Data;
-
-@Data
 public class CreateTransactionDto {
-    private String sellerEmail; // Cambiamos de sellerId a sellerEmail
+    private String productOfferedId;  // ID del producto que el vendedor ofrece
 
-    public String getProductRequestedId() {
-        return productRequestedId;
-    }
-
-    public void setCreditsOffered(Integer creditsOffered) {
-        this.creditsOffered = creditsOffered;
+    public String getProductOfferedId() {
+        return productOfferedId;
     }
 
     public void setProductOfferedId(String productOfferedId) {
         this.productOfferedId = productOfferedId;
     }
 
-    public void setProductRequestedId(String productRequestedId) {
-        this.productRequestedId = productRequestedId;
-    }
-
-    public void setSellerEmail(String sellerEmail) {
-        this.sellerEmail = sellerEmail;
+    public void setCreditsOffered(Integer creditsOffered) {
+        this.creditsOffered = creditsOffered;
     }
 
     public Integer getCreditsOffered() {
         return creditsOffered;
     }
 
-    public String getProductOfferedId() {
-        return productOfferedId;
-    }
+    private Integer creditsOffered;  // Créditos ofrecidos (opcional)
 
-    public String getSellerEmail() {
-        return sellerEmail;
-    }
-
-    private String productRequestedId;
-    private String productOfferedId;
-    private Integer creditsOffered;
 }

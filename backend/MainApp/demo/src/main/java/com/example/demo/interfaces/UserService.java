@@ -13,4 +13,5 @@ public interface UserService {
     void updateUserProfileReactively(Long id, UpdateUserProfileDto dto);
     UserProfileDto getUserProfileByEmail(String email);
     UserDto getUserByEmail(String email);
+    void transferCredits(Long fromUserId, Long toUserId, int amount);
 }

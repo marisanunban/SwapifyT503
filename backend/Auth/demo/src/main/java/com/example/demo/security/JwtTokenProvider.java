@@ -37,8 +37,9 @@ public class JwtTokenProvider {
                 .subject(user.getUsername()) // getUsername() devuelve el email
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtDurationSeconds * 1000))
-                .claim("email", user.getUsername())
-                .signWith(Keys.hmacShaKeyFor(keyBytes), Jwts.SIG.HS512) // API moderna para signWith
+                .claim("email", user.getUsername()) // Email como claim
+                .claim("id", user.getId()) // Añadir el ID del usuario como claim
+                .signWith(Keys.hmacShaKeyFor(keyBytes), Jwts.SIG.HS512) // Firma con HS512
                 .compact();
     }
 
@@ -49,9 +50,9 @@ public class JwtTokenProvider {
 
         try {
             Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes())) // Reemplaza setSigningKey
+                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
                     .build()
-                    .parseSignedClaims(token); // Reemplaza parseClaimsJws
+                    .parseSignedClaims(token);
             return true;
         } catch (SignatureException e) {
             log.info("Error signing token", e);
@@ -75,6 +76,20 @@ public class JwtTokenProvider {
                     .getSubject();
         } catch (Exception e) {
             log.error("Error extracting username from token", e);
+            return null;
+        }
+    }
+
+    public Long getIdFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.get("id", Long.class); // Extraer el ID como Long
+        } catch (Exception e) {
+            log.error("Error extracting id from token", e);
             return null;
         }
     }

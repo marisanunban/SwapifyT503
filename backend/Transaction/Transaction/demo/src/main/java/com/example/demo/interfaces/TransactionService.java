@@ -7,7 +7,8 @@ import com.example.demo.dtos.UpdateTransactionStatusDto;
 import java.util.List;
 
 public interface TransactionService {
-    TransactionDto createTransaction(CreateTransactionDto dto, Long buyerId, String authToken);
+    // Eliminamos buyerId para reflejar que el vendedor inicia sin comprador
+    TransactionDto createTransaction(CreateTransactionDto dto, String authToken);
 
     TransactionDto getTransaction(Long id, String authToken);
 

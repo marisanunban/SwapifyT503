@@ -15,27 +15,30 @@ public class Transaction {
     @GeneratedValue
     private Long id;
 
-    @Column(name = "buyer_id", nullable = false)
-    private Long buyerId;
+    @Column(name = "buyer_id", nullable = true)
+    private Long buyerId;  // Puede ser null hasta que un comprador acepte
 
     @Column(name = "seller_id", nullable = false)
     private Long sellerId;
 
-    @Column(name = "seller_email", nullable = false) // Nuevo campo
+    @Column(name = "seller_email", nullable = false)
     private String sellerEmail;
+
+    @Column(name = "buyer_email", nullable = true)
+    private String buyerEmail;  // Puede ser null hasta que un comprador acepte
 
     @Column(name = "product_offered_id")
     private String productOfferedId;  // Nullable (para trueques con créditos)
 
-    @Column(name = "product_requested_id", nullable = false)
-    private String productRequestedId;
+    @Column(name = "product_requested_id", nullable = true)  // Corregido: ahora puede ser null
+    private String productRequestedId;  // Puede ser null hasta que el comprador acepte
 
     @Column(name = "credits_offered", nullable = false)
     private Integer creditsOffered = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Status status = Status.PENDING;
+    @Column(nullable = true)
+    private Status status;  // Null hasta que se acepte
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -49,7 +52,7 @@ public class Transaction {
         PENDING, ACCEPTED, REJECTED, COMPLETED
     }
 
-    // Getters y setters existentes
+    // Getters y setters
     public Long getId() {
         return id;
     }
@@ -58,76 +61,83 @@ public class Transaction {
         this.id = id;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setCreditsOffered(Integer creditsOffered) {
-        this.creditsOffered = creditsOffered;
-    }
-
-    public void setProductRequestedId(String productRequestedId) {
-        this.productRequestedId = productRequestedId;
-    }
-
-    public void setSellerId(Long sellerId) {
-        this.sellerId = sellerId;
+    public Long getBuyerId() {
+        return buyerId;
     }
 
     public void setBuyerId(Long buyerId) {
         this.buyerId = buyerId;
     }
 
-    public void setProductOfferedId(String productOfferedId) {
-        this.productOfferedId = productOfferedId;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public Integer getCreditsOffered() {
-        return creditsOffered;
-    }
-
-    public String getProductRequestedId() {
-        return productRequestedId;
-    }
-
-    public String getProductOfferedId() {
-        return productOfferedId;
-    }
-
     public Long getSellerId() {
         return sellerId;
     }
 
-    public Long getBuyerId() {
-        return buyerId;
+    public void setSellerId(Long sellerId) {
+        this.sellerId = sellerId;
     }
 
-    // Getter y setter para el nuevo campo
     public String getSellerEmail() {
         return sellerEmail;
     }
 
     public void setSellerEmail(String sellerEmail) {
         this.sellerEmail = sellerEmail;
+    }
+
+    public String getBuyerEmail() {
+        return buyerEmail;
+    }
+
+    public void setBuyerEmail(String buyerEmail) {
+        this.buyerEmail = buyerEmail;
+    }
+
+    public String getProductOfferedId() {
+        return productOfferedId;
+    }
+
+    public void setProductOfferedId(String productOfferedId) {
+        this.productOfferedId = productOfferedId;
+    }
+
+    public String getProductRequestedId() {
+        return productRequestedId;
+    }
+
+    public void setProductRequestedId(String productRequestedId) {
+        this.productRequestedId = productRequestedId;
+    }
+
+    public Integer getCreditsOffered() {
+        return creditsOffered;
+    }
+
+    public void setCreditsOffered(Integer creditsOffered) {
+        this.creditsOffered = creditsOffered;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

@@ -130,6 +130,37 @@ public class    UserController {
             return Mono.just(ResponseEntity.status(401).build());
         }
     }
+    @PostMapping("/transfer")
+    public ResponseEntity<Void> transferCredits(
+            @RequestParam("fromUserId") Long fromUserId,
+            @RequestParam("toUserId") Long toUserId,
+            @RequestParam("amount") int amount,
+            @RequestHeader("Authorization") String token) {
+
+        try {
+            // Validación síncrona del token usando .block()
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null)
+                    .block();
+
+            if (userInfo == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            // Verificación opcional de participación en la transacción
+            if (!userInfo.getId().equals(fromUserId) && !userInfo.getId().equals(toUserId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            // Transferencia síncrona
+            userService.transferCredits(fromUserId, toUserId, amount);
+
+            return ResponseEntity.noContent().build();
+
+        } catch (Exception e) {
+            System.out.println("Error al transferir créditos: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
 }
 
 
