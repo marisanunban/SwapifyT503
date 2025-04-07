@@ -24,6 +24,8 @@ public class Product {
 
     private String status;
 
+    private String imageUrl;
+
     private Map<String, String> attributes;
     private Double price;
 

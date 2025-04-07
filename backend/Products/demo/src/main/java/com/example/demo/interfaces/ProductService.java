@@ -19,4 +19,7 @@ public interface ProductService {
     void deleteProduct(String id, Long ownerId);
 
     void transferProduct(String id, Long fromUserId, Long toUserId);
+    ProductDto getProductsByOwnerAndId(long ownerId, String productId);
+
+    List<ProductDto> findByOwnerId(long ownerId);
 }

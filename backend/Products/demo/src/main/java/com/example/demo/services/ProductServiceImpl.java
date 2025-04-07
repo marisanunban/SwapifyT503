@@ -102,6 +102,22 @@
             product.setOwnerId(toUserId);
             productRepository.save(product);
         }
+        @Override
+        public ProductDto getProductsByOwnerAndId(long ownerId, String productId) {
+            Product product = productRepository.findByOwnerIdAndId(ownerId, productId);
+            if (product != null){
+                return mapToDto(product);
+            }
+            return null;
+        }
+
+        public List<ProductDto> findByOwnerId(long ownerId){
+            List<Product> products = productRepository.findByOwnerId(ownerId);
+
+            return products.stream()
+                    .map(this::mapToDto)
+                    .toList();
+        }
 
         private ProductDto mapToDto(Product product) {
             ProductDto dto = new ProductDto();
