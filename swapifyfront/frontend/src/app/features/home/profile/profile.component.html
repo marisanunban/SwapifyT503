@@ -286,7 +286,7 @@
           <!-- Producto 1 -->
           <div *ngFor="let product of products" class="bg-white rounded-lg shadow-sm overflow-hidden">
             <div class="relative">
-              <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80" class="w-full h-48 object-cover" alt="Producto">
+              <img [src]="product.imageUrl" class="w-full h-48 object-cover" alt="Producto">
               <span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded-full">Nuevo</span>
               <button class="absolute bottom-2 right-2 p-1 bg-white rounded-full shadow">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

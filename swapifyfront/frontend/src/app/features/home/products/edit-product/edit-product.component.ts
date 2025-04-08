@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms'; // Importa FormsModule
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../../services/product.service';
+import { CloudinaryService } from '../../../../services/cloudinary.service'; // Importa el servicio de Cloudinary
 
 @Component({
   selector: 'app-edit-product',
@@ -16,12 +17,15 @@ export class EditProductComponent implements OnInit {
   category = '';
   description = '';
   price = 0;
+  imageUrl: string = ''; // URL de la imagen actual
+  imageFile: File | null = null; // Archivo de imagen seleccionado
 
   token = ''; // Token del usuario
   productId: string | null = null; // ID del producto a editar
 
   constructor(
     private productService: ProductService,
+    private cloudinaryService: CloudinaryService, // Inyecta el servicio de Cloudinary
     private route: ActivatedRoute,
     public router: Router
   ) {}
@@ -49,6 +53,7 @@ export class EditProductComponent implements OnInit {
           this.category = product.category;
           this.description = product.description;
           this.price = product.price;
+          this.imageUrl = product.imageUrl; // URL de la imagen actual
         },
         error: (error) => {
           console.error('Error al cargar el producto:', error);
@@ -63,6 +68,13 @@ export class EditProductComponent implements OnInit {
     }
   }
 
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.imageFile = input.files[0];
+    }
+  }
+
   editProduct(): void {
     // Validación básica para asegurarse de que todos los campos estén completos
     if (!this.title || !this.category || !this.description || this.price <= 0) {
@@ -70,12 +82,31 @@ export class EditProductComponent implements OnInit {
       return;
     }
 
-    // Construir los datos del producto a partir de las propiedades individuales
+    if (this.imageFile) {
+      // Si se seleccionó una nueva imagen, súbela a Cloudinary
+      this.cloudinaryService.uploadImage(this.imageFile, this.token).subscribe({
+        next: (uploadResponse) => {
+          console.log('Imagen subida exitosamente:', uploadResponse);
+          this.imageUrl = uploadResponse.url; // Actualiza la URL de la imagen
+          this.updateProduct(); // Llama a la función para actualizar el producto
+        },
+        error: (error) => {
+          console.error('Error al subir la imagen:', error);
+        }
+      });
+    } else {
+      // Si no se seleccionó una nueva imagen, actualiza directamente el producto
+      this.updateProduct();
+    }
+  }
+
+  private updateProduct(): void {
     const productData = {
       title: this.title,
       category: this.category,
       description: this.description,
-      price: this.price
+      price: this.price,
+      imageUrl: this.imageUrl // URL de la imagen actualizada o existente
     };
 
     console.log('Datos del producto a actualizar:', productData);

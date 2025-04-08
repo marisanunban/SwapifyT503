@@ -7,6 +7,7 @@ import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { switchMap } from 'rxjs';
 import { ProductService } from '../../../services/product.service';
+import { CloudinaryService } from '../../../services/cloudinary.service';
 
 @Component({
   selector: 'app-profile',
@@ -23,7 +24,7 @@ export class ProfileComponent {
   isEditingMe: boolean = false;
   products: any[] = []; 
 
-  constructor(private router: Router, private userService: UserService, private authService: AuthService, private productService: ProductService) {}
+  constructor(private router: Router, private userService: UserService, private authService: AuthService, private productService: ProductService, private cloudinaryService: CloudinaryService) {}
 
   ngOnInit() {
     this.authService.user$.subscribe(user => {
@@ -162,11 +163,15 @@ export class ProfileComponent {
     const token = localStorage.getItem('token');
     if (token && this.user?.id) { // Verifica que el token y el ID del usuario existan
       this.productService.getProductsByOwner(this.user.id, token).subscribe({
-        next: response => {
-          this.products = response; // Asigna los productos recuperados a la variable products
+        next: (response) => {
+          // Asigna los productos recuperados a la variable products
+          this.products = response.map((product: any) => ({
+            ...product,
+            imageUrl: product.imageUrl || 'assets/default-product.png' // Usa una imagen por defecto si no hay URL
+          }));
           console.log('Productos del propietario:', this.products); // Para verificar qué se recibe realmente
         },
-        error: error => {
+        error: (error) => {
           console.error('Error al obtener productos del propietario:', error);
         }
       });
