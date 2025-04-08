@@ -35,7 +35,7 @@ export class ProductService {
       'Content-Type': 'application/json'
     });
 
-    return this.http.get(`${this.apiUrl}/owner/${ownerId}`, { headers });
+    return this.http.get(`${this.apiUrl}/ownerId/${ownerId}`, { headers });
   }
 
   deleteProduct(productId: string, token: string): Observable<void> {

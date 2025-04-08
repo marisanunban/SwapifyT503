@@ -20,10 +20,10 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 
-
-@RestController
 @CrossOrigin(origins = "http://localhost:4200")
+@RestController
 @RequestMapping("/products")
+
 public class ProductController {
     @Autowired
     private ProductRepository productRepository;
