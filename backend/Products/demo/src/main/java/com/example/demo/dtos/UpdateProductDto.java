@@ -45,4 +45,14 @@ public class UpdateProductDto {
     private Map<String, String> attributes;
 
     private Double price;
+
+    private String imageUrl;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

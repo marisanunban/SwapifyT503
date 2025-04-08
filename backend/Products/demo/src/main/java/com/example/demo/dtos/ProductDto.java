@@ -88,6 +88,16 @@ public class ProductDto {
 
     private String category;
 
+    private String imageUrl;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     private String status;
 
     private Map<String, String> attributes;
