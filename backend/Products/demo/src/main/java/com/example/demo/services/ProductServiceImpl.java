@@ -120,7 +120,9 @@
                     .map(this::mapToDto)
                     .toList();
         }
-
+        public List<Product> findByKeyword(String keyword) {
+            return productRepository.findByKeyword(keyword);
+        }
         public ProductDto mapToDto(Product product) {
             ProductDto dto = new ProductDto();
             dto.setId(product.getId());
