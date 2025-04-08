@@ -110,7 +110,7 @@
             }
             return null;
         }
-
+        @Override
         public List<ProductDto> findByOwnerId(long ownerId){
             List<Product> products = productRepository.findByOwnerId(ownerId);
 

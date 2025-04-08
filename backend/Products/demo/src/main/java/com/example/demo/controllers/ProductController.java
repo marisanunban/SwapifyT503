@@ -14,8 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+
 
 
 @RestController
@@ -90,7 +93,7 @@ public class ProductController {
         return ResponseEntity.ok(product);
     }
 
-    @Override
+//Por ahora este nos da igual
     public ProductDto getProductsByOwnerAndId(long ownerId, String productId) {
         Product product = productRepository.findByOwnerIdAndId(ownerId, productId);
         if (product != null){
@@ -99,11 +102,9 @@ public class ProductController {
         }
         return null;
     }
-
-    public List<ProductDto> findByOwnerId(long ownerId) {
-        return productRepository.findByOwnerId(ownerId).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+@GetMapping("/ownerId/{ownerId}")
+    public List<ProductDto> getProductByOwnerId(@PathVariable long ownerId) {
+        return productService.findByOwnerId(ownerId);
     }
 
 
