@@ -53,4 +53,7 @@ export class RegisterComponent {
       }
     });
   }
+  irAMain() {
+    this.router.navigate(['/main']);
+  }
 }

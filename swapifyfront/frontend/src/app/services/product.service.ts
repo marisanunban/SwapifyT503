@@ -18,12 +18,50 @@ export class ProductService {
 
     return this.http.post(`${this.apiUrl}`, productData, { headers });
   }
-  getProductsByUser(token: string): Observable<any> {
+  getAllProducts(token?: string): Observable<any> {
+    const headers = token
+      ? new HttpHeaders({
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        })
+      : undefined;
+  
+    return this.http.get(`${this.apiUrl}`, { headers });
+  }
+
+  getProductsByOwner(ownerId: number, token: string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
 
-    return this.http.get(`${this.apiUrl}`, { headers });
+    return this.http.get(`${this.apiUrl}/ownerId/${ownerId}`, { headers });
+  }
+
+  deleteProduct(productId: string, token: string): Observable<void> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  
+    return this.http.delete<void>(`${this.apiUrl}/${productId}`, { headers });
+  }
+
+  getProductById(productId: string, token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  
+    return this.http.get(`${this.apiUrl}/${productId}`, { headers });
+  }
+
+  updateProduct(productId: string, productData: any, token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+  
+    return this.http.patch(`${this.apiUrl}/${productId}`, productData, { headers });
   }
 }

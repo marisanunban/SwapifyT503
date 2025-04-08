@@ -7,6 +7,7 @@ import { UserService } from '../../../services/user.service';
 import { AuthService } from '../../../services/auth.service';
 import { switchMap } from 'rxjs';
 import { ProductService } from '../../../services/product.service';
+import { CloudinaryService } from '../../../services/cloudinary.service';
 
 @Component({
   selector: 'app-profile',
@@ -23,7 +24,7 @@ export class ProfileComponent {
   isEditingMe: boolean = false;
   products: any[] = []; 
 
-  constructor(private router: Router, private userService: UserService, private authService: AuthService, private productService: ProductService) {}
+  constructor(private router: Router, private userService: UserService, private authService: AuthService, private productService: ProductService, private cloudinaryService: CloudinaryService) {}
 
   ngOnInit() {
     this.authService.user$.subscribe(user => {
@@ -38,7 +39,7 @@ export class ProfileComponent {
           this.username = response.username;
           this.aboutMe = response.aboutMe;
           this.profileImageUrl = response.profilePicture;
-          this.recogerProductos(); // Llama a la función para recoger productos
+          this.recuperarProductosPropietario(); // Llama a la función para recoger productos
         },
         error: error => {
           console.error('Error al obtener perfil:', error);
@@ -76,7 +77,7 @@ export class ProfileComponent {
       reader.readAsDataURL(file); // Convierte la imagen a base64
     }
   }
-//TODO: ARREGLAR LA IMAGEN DE PERFIL
+
   saveProfile() {
     const token = localStorage.getItem('token');
     console.log(token);
@@ -146,7 +147,7 @@ export class ProfileComponent {
   recogerProductos() {
     const token = localStorage.getItem('token');
     if (token) {
-      this.productService.getProductsByUser(token).subscribe({
+      this.productService.getAllProducts(token).subscribe({
         next: response => {
           this.products = response; // Asignar la respuesta a la variable products
           console.log('Productos:', this.products); // Para verificar qué se recibe realmente
@@ -158,9 +159,48 @@ export class ProfileComponent {
     }
   }
 
+  recuperarProductosPropietario() {
+    const token = localStorage.getItem('token');
+    if (token && this.user?.id) { // Verifica que el token y el ID del usuario existan
+      this.productService.getProductsByOwner(this.user.id, token).subscribe({
+        next: (response) => {
+          // Asigna los productos recuperados a la variable products
+          this.products = response.map((product: any) => ({
+            ...product,
+            imageUrl: product.imageUrl || 'assets/default-product.png' // Usa una imagen por defecto si no hay URL
+          }));
+          console.log('Productos del propietario:', this.products); // Para verificar qué se recibe realmente
+        },
+        error: (error) => {
+          console.error('Error al obtener productos del propietario:', error);
+        }
+      });
+    } else {
+      console.error('No hay token o ID de usuario disponible.');
+    }
+  }
+
+  eliminarProducto(productId: string) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.productService.deleteProduct(productId, token).subscribe({
+        next: () => {
+          console.log(`Producto con ID ${productId} eliminado correctamente.`);
+          // Actualiza la lista de productos después de eliminar
+          this.recuperarProductosPropietario();
+        },
+        error: error => {
+          console.error('Error al eliminar el producto:', error);
+        }
+      });
+    } else {
+      console.error('No hay token disponible.');
+    }
+  }
+
   logout() {
     this.authService.logout();
-    this.router.navigate(['/login']); // Redirigir al login después de cerrar sesión
+    this.router.navigate(['/main']); // Redirigir al login después de cerrar sesión
   }
 
   irARegistro() {
@@ -170,6 +210,9 @@ export class ProfileComponent {
   irAProfile() {
     this.router.navigate(['/profile']);
   }
+  irAContacta() {
+    this.router.navigate(['/contact']);
+  }
 
   irALogin() {
     this.router.navigate(['/login']);
@@ -177,5 +220,9 @@ export class ProfileComponent {
 
   irACrear() {
     this.router.navigate(['/create']);
+  }
+  irAEditar(productId: string): void {
+    this.router.navigate(['/edit', productId]);
+    console.log(productId) // Redirige a la URL con el ID del producto
   }
 }

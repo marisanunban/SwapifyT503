@@ -35,7 +35,7 @@
     <div *ngIf="user" class="flex items-center space-x-4">
       <span class="text-lg font-semibold"><a (click)="irAProfile()"> {{ user.username }}</a></span>
       <span class="bg-green-600 px-3 py-1 rounded">Créditos: {{ user.credits }}</span>
-      <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded">Cerrar sesión</button>
+      <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded" >Cerrar sesión</button>
     </div>
     <div class="flex items-center ml-2">
       ES <i class="ml-1 fas fa-chevron-down text-xs"></i>
@@ -95,17 +95,17 @@
               <div class="card-body p-4 position-relative">
                 <!-- Textos -->
                 <div class="text-white mb-5">
-                  <p class="mb-0 small">Next</p>
-                  <h3 class="fw-bold mb-0">Devices</h3>
-                  <h2 class="display-5 fw-bold text-uppercase" style="color: #ff6b72;">LAPTOP</h2>
+                  <p class="mb-0 small">Muebles y decoración</p>
+                  <h3 class="fw-bold mb-0">Hogar</h3>
+                  <h2 class="display-5 fw-bold text-uppercase" style="color: #ff6b72;">Última Moda</h2>
                 </div>
                 
                 <!-- Botón -->
-                <button class="btn btn-light rounded-pill px-4 py-2 fw-medium">Browse</button>
+                <button class="btn btn-light rounded-pill px-4 py-2 fw-medium">Ver más</button>
                 
                 <!-- Imagen -->
-                <div class="position-absolute" style="right: -20px; bottom: -20px; width: 60%;">
-                  <img src="https://i.imgur.com/JR0SMZs.png" alt="Laptop" class="img-fluid" style="transform: rotate(-10deg);">
+                <div class="position-absolute" style="right: -20px; bottom: -20px; width: 43%;">
+                  <img src="https://phantom-elmundo.unidadeditorial.es/3f37fc986379d01f90d9dae7ca63c728/crop/117x3/785x894/resize/1280/f/webp/assets/multimedia/imagenes/2022/11/13/16683296483748.png" alt="Laptop" class="img-fluid" style="transform: rotate(-10deg);">
                 </div>
               </div>
             </div>
@@ -117,17 +117,17 @@
               <div class="card-body p-4 position-relative">
                 <!-- Textos -->
                 <div class="text-white mb-5">
-                  <p class="mb-0 small">Smart</p>
-                  <h3 class="fw-bold mb-0">Wearable</h3>
-                  <h2 class="display-5 fw-bold text-uppercase" style="color: #ffd740;">WATCH</h2>
+                  <p class="mb-0 small">Electrónica</p>
+                  <h3 class="fw-bold mb-0">Ordenadores</h3>
+                  <h2 class="display-5 fw-bold text-uppercase" style="color: #ffd740;">Tendencia</h2>
                 </div>
                 
                 <!-- Botón -->
-                <button class="btn btn-light rounded-pill px-4 py-2 fw-medium">Discover</button>
+                <button class="btn btn-light rounded-pill px-4 py-2 fw-medium">Descubre más</button>
                 
                 <!-- Imagen -->
-                <div class="position-absolute" style="right: -20px; bottom: -20px; width: 60%;">
-                  <img src="https://i.imgur.com/8QEQHS7.png" alt="Smartwatch" class="img-fluid" style="transform: rotate(-10deg);">
+                <div class="position-absolute" style="right: -20px; bottom: -20px; width: 60%;height: 38%;">
+                  <img src="https://cdn.hobbyconsolas.com/sites/navi.axelspringer.es/public/media/image/2019/10/lg-34gk950g-analisis_2.jpg?tf=1200x" alt="Smartwatch" class="img-fluid" style="transform: rotate(-10deg);">
                 </div>
               </div>
             </div>
@@ -139,17 +139,17 @@
               <div class="card-body p-4 position-relative">
                 <!-- Textos -->
                 <div class="text-white mb-5">
-                  <p class="mb-0 small">Premium</p>
-                  <h3 class="fw-bold mb-0">Audio</h3>
-                  <h2 class="display-5 fw-bold text-uppercase" style="color: #75a7ff;">HEADSET</h2>
+                  <p class="mb-0 small">Ropa y accesorios</p>
+                  <h3 class="fw-bold mb-0">Prendas</h3>
+                  <h2 class="display-5 fw-bold text-uppercase" style="color: #75a7ff;">Últimas tendencias</h2>
                 </div>
                 
                 <!-- Botón -->
-                <button class="btn btn-light rounded-pill px-4 py-2 fw-medium">Shop Now</button>
+                <button class="btn btn-light rounded-pill px-4 py-2 fw-medium">Encuentra más</button>
                 
                 <!-- Imagen -->
-                <div class="position-absolute" style="right: -20px; bottom: -20px; width: 60%;">
-                  <img src="https://i.imgur.com/JYtSIKO.png" alt="Headphones" class="img-fluid" style="transform: rotate(-10deg);">
+                <div class="position-absolute" style="right: -20px; bottom: -20px; width: 50%;">
+                  <img src="https://phantom-telva.unidadeditorial.es/9ae910515d5f1f5979623756092e7145/resize/670/f/webp/assets/multimedia/imagenes/2023/01/20/16741799118166.jpg" alt="Headphones" class="img-fluid" style="transform: rotate(-10deg);">
                 </div>
               </div>
             </div>
@@ -158,17 +158,45 @@
       </div>
     </div>
     
-
-    <div class="produtos">
-      <div class="card" style="width: 18rem;">
-        <img src="https://mbmobles.es/wp-content/uploads/2020/06/cuadro-bow-blanco-40x30-1.jpg" class="card-img-top" alt="...">
-        <div class="card-body gradient-custom">
-          <h5 class="card-title">Cuadro A4 Madera Aclarada</h5>
-          <p class="card-text">Marco totalmente nuevo para cualquier fotografía o ilustración. Perfecto para pared o sobremesa.</p>
-          <a href="#" class="btn btn-light">Ver el producto</a>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div class="max-w-xs rounded-xl overflow-hidden shadow-lg bg-white" *ngFor="let product of products">
+        <!-- Imagen del producto con gradiente y botón de favoritos -->
+        <div class="relative h-64 bg-gradient-to-r from-indigo-700 to-purple-400">
+          <img 
+            [src]="product.image" 
+            alt="product" 
+            class="h-full w-full object-contain p-4"
+          >
+          <button class="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Información del producto -->
+        <div class="p-5">
+          <h2 class="text-xl font-semibold text-gray-800 mb-2">{{product.title}}</h2>
+          
+          <!-- Descripción del producto -->
+          <p class="text-gray-600 text-sm mb-4">
+            {{product.description}}
+          </p>
+          
+          <!-- Precio y botón de añadir al carrito -->
+          <div class="flex items-center justify-between mt-4">
+            <div>
+              <p class="text-xs text-gray-500 uppercase font-medium">{{product.price}} swapicoins</p>
+              <p class="text-xl font-bold text-gray-900">{{product.price}}</p>
+            </div>
+            <button class="bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-6 rounded-md transition-colors">
+              Comprar
+            </button>
+          </div>
         </div>
       </div>
     </div>
+    
 </main>
 
 

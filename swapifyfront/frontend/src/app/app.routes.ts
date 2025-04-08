@@ -3,8 +3,9 @@ import { RegisterComponent } from './features/auth/register/register.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { MainComponent } from './features/home/main/main.component';
 import { ProfileComponent } from './features/home/profile/profile.component';
-import { CreateProductComponent } from './features/home/create-product/create-product.component';
+import { CreateProductComponent } from './features/home/products/create-product/create-product.component';
 import { ContactComponent } from './features/home/contact/contact.component';
+import { EditProductComponent } from './features/home/products/edit-product/edit-product.component';
 
 export const routes: Routes = [
   {path: 'main' , component: MainComponent},
@@ -17,5 +18,6 @@ export const routes: Routes = [
   },
   {path: 'profile', component: ProfileComponent},
   {path: 'create', component: CreateProductComponent},
+  {path: 'edit/:id', component: EditProductComponent},
   {path: 'contact', component: ContactComponent},
 ];
