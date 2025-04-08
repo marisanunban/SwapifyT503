@@ -35,17 +35,27 @@ public class CloudinaryController {
 
     @PostMapping("/upload")
     @ResponseBody
-    public ResponseEntity<String> upload(@RequestParam MultipartFile multipartFile) throws IOException {
+    public ResponseEntity<Map<String, String>> upload(@RequestParam MultipartFile multipartFile) throws IOException {
         BufferedImage bi = ImageIO.read(multipartFile.getInputStream());
         if (bi == null){
-            return new ResponseEntity<>("No valid image", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(Map.of("error", "No valid image"), HttpStatus.BAD_REQUEST);
         }
         Map result = cloudinaryService.upload(multipartFile);
-        Image image = new Image((String) result.get("original_filename"),
+        Image image = new Image(
+                (String) result.get("original_filename"),
                 (String) result.get("url"),
-                (String) result.get("public_id"));
+                (String) result.get("public_id")
+        );
         imageService.save(image);
-        return new ResponseEntity<>("Image saved succesfully", HttpStatus.OK);
+
+        return new ResponseEntity<>(
+                Map.of(
+                        "message", "Image saved successfully",
+                        "url", image.getImageUrl(),
+                        "public_id", image.getImageId()
+                ),
+                HttpStatus.OK
+        );
     }
 
     @DeleteMapping("/delete/{id}")

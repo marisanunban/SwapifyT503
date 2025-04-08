@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../../services/product.service';
 import { FormsModule } from '@angular/forms'; // Importa FormsModule
+import { TransactionService } from '../../../../services/transaction.service';
 
 @Component({
   selector: 'app-create-product',
@@ -20,6 +21,7 @@ export class CreateProductComponent {
 
   constructor(
     private productService: ProductService,
+    private transactionService: TransactionService,
     public router: Router
   ) {}
 
@@ -49,12 +51,23 @@ export class CreateProductComponent {
       description: this.description,
       price: this.price
     };
-console.log(productData , this.token)
+
     // Llamada al servicio para crear el producto
     this.productService.createProduct(productData, this.token).subscribe({
       next: (response) => {
         console.log('Producto creado exitosamente:', response);
-        this.router.navigate(['/home']); // Redirige al usuario a la página de inicio o donde prefieras
+
+        // Crear la transacción después de crear el producto
+        const productId = response.id; // Asegúrate de que el backend devuelva el ID del producto creado
+        this.transactionService.createTransaction(productId, this.token).subscribe({
+          next: (transactionResponse) => {
+            console.log('Transacción creada exitosamente:', transactionResponse);
+            this.router.navigate(['/home']); // Redirige al usuario a la página de inicio o donde prefieras
+          },
+          error: (transactionError) => {
+            console.error('Error al crear la transacción:', transactionError);
+          }
+        });
       },
       error: (error) => {
         console.error('Error al crear el producto:', error);
