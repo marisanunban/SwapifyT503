@@ -16,4 +16,9 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
     List<Product> findByOwnerId(long ownerId);
     Product findByOwnerIdAndId(long ownerId, String productId);
+
+
+    Product findByOwnerIdAndId(long ownerId, String productId);
+
+    List<Product> findByOwnerId(long ownerId);
 }

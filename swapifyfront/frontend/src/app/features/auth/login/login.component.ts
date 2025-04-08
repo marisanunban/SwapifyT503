@@ -1,10 +1,11 @@
+// login.component.ts
 import { Component } from '@angular/core';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { CommonModule } from '@angular/common'; // Para ngIf
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-login',
@@ -37,20 +38,29 @@ export class LoginComponent {
     this.authService.login(loginData).subscribe({
       next: (response) => {
         console.log('Respuesta del backend:', response.message);
+        console.log(response);
         const token = response.message.split(': ')[1]; // Extrae el token
         console.log('Token extraído:', token);
+
+        localStorage.setItem('token', token);
 
         this.successMessage = '¡Login exitoso! Creando usuario...';
         this.email = '';
         this.password = '';
 
-        // Llamada automática a /api/users/create
+        // Llamada a /api/users/create
         this.userService.create(token).subscribe({
           next: (userInfo) => {
             console.log('Usuario creado/recuperado:', userInfo);
+            // Actualizamos el usuario en el AuthService
+            this.authService.updateUser({
+              id: userInfo.id,
+              username: userInfo.username,
+              credits: userInfo.credits
+            });
             this.successMessage = '¡Usuario creado! Redirigiendo a home...';
             setTimeout(() => {
-              this.router.navigate(['/home']); // Cambiado de /main a /home
+              this.router.navigate(['/home']);
             }, 1000);
           },
           error: (err) => {
@@ -68,5 +78,8 @@ export class LoginComponent {
 
   irARegistro() {
     this.router.navigate(['/register']);
+  }
+  irAMain() {
+    this.router.navigate(['/main']);
   }
 }

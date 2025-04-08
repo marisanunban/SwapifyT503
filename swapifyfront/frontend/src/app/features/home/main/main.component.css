@@ -1,0 +1,8 @@
+.gradient-custom {
+    background: rgb(195,235,189);
+background: radial-gradient(circle, rgba(195,235,189,1) 0%, rgba(69,196,41,0.7259278711484594) 35%, rgba(19,82,23,1) 100%);
+  }
+
+  .hueco{
+    height: 200px;
+  }

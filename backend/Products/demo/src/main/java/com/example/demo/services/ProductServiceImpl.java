@@ -119,7 +119,7 @@
                     .toList();
         }
 
-        private ProductDto mapToDto(Product product) {
+        public ProductDto mapToDto(Product product) {
             ProductDto dto = new ProductDto();
             dto.setId(product.getId());
             dto.setOwnerId(product.getOwnerId());

@@ -5,7 +5,9 @@ import com.example.demo.dtos.CreateProductDto;
 import com.example.demo.dtos.ProductDto;
 import com.example.demo.dtos.UpdateProductDto;
 import com.example.demo.dtos.UserInfoDto;
+import com.example.demo.entities.Product;
 import com.example.demo.interfaces.ProductService;
+import com.example.demo.repositories.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,10 +17,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+
 @RestController
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/products")
 public class ProductController {
-
+    @Autowired
+    private ProductRepository productRepository;
     @Autowired
     private ProductService productService;
 
@@ -84,6 +89,23 @@ public class ProductController {
         ProductDto product = productService.getProductById(id);
         return ResponseEntity.ok(product);
     }
+
+    @Override
+    public ProductDto getProductsByOwnerAndId(long ownerId, String productId) {
+        Product product = productRepository.findByOwnerIdAndId(ownerId, productId);
+        if (product != null){
+            ProductDto dto = productService.mapToDto(product);
+            return dto;
+        }
+        return null;
+    }
+
+    public List<ProductDto> findByOwnerId(long ownerId) {
+        return productRepository.findByOwnerId(ownerId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
 
     @PatchMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(
