@@ -12,6 +12,16 @@ public class UpdateProductDto {
         return title;
     }
 
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
+
+    private String imageId;
+
     public void setTitle(String title) {
         this.title = title;
     }

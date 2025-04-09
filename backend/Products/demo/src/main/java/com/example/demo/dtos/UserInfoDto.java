@@ -5,6 +5,15 @@ public class UserInfoDto {
     private String email;
     private String role;
 
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
+
+    private String imageId;
     private String imageUrl;
 
     public String getImageUrl() {

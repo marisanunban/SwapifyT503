@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms'; // Importa FormsModule
 import { CommonModule } from '@angular/common';
-import { ProductService } from '../../../../services/product.service';
-import { CloudinaryService } from '../../../../services/cloudinary.service'; // Importa el servicio de Cloudinary
+import { ProductService } from '../../../../services/product-service/product.service';
+import { CloudinaryService } from '../../../../services/cloudinary-service/cloudinary.service'; // Importa el servicio de Cloudinary
 
 @Component({
   selector: 'app-edit-product',

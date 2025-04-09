@@ -14,6 +14,16 @@ public class ProductDto {
         this.id = id;
     }
 
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
+
+    private String imageId;
+
     public Long getOwnerId() {
         return ownerId;
     }

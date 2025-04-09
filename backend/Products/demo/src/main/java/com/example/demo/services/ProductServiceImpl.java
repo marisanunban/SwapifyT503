@@ -29,6 +29,7 @@
             product.setOwnerId(ownerId);
             product.setTitle(dto.getTitle());
             product.setDescription(dto.getDescription());
+            product.setImageId(dto.getImageId());
             product.setCategory(dto.getCategory());
             product.setAttributes(dto.getAttributes());
             product.setPrice(dto.getPrice());
@@ -76,6 +77,7 @@
             if (dto.getAttributes() != null) product.setAttributes(dto.getAttributes());
             if (dto.getPrice() != null) product.setPrice(dto.getPrice());
             if (dto.getImageUrl() != null) product.setImageUrl(dto.getImageUrl());
+            if(dto.getImageId() != null) product.setImageId(dto.getImageId());
 
             product = productRepository.save(product);
             return mapToDto(product);
@@ -127,6 +129,7 @@
             dto.setOwnerId(product.getOwnerId());
             dto.setTitle(product.getTitle());
             dto.setImageUrl(product.getImageUrl());
+            dto.setImageId(product.getImageId());
             dto.setDescription(product.getDescription());
             dto.setCategory(product.getCategory());
             dto.setStatus(product.getStatus());

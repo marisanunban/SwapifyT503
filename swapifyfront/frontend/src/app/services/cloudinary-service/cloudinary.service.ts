@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class CloudinaryService {
-  private apiUrl = 'http://localhost:8088/cloudinary/upload';
+  private apiUrl = 'http://localhost:8088/cloudinary';
   constructor( private http: HttpClient) { }
 
   uploadImage(file: File, token: string): Observable<any> {
@@ -17,6 +17,11 @@ export class CloudinaryService {
       Authorization: `Bearer ${token}`,
     });
 
-    return this.http.post(this.apiUrl, formData, { headers });
+    return this.http.post(`${this.apiUrl}/upload`, formData, { headers });
+  }
+
+  deleteImage(imageId: string): Observable<any> {
+    console.log('Id desde el servicio:', imageId);
+    return this.http.delete(`${this.apiUrl}/delete/${imageId}`, { responseType: 'text' });
   }
 }

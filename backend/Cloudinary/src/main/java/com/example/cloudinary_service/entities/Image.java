@@ -4,9 +4,8 @@ package com.example.cloudinary_service.entities;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "cloudinary-images")
+
 public class Image {
-    @Id
     private String id;
     private String name;
     private String imageUrl;
