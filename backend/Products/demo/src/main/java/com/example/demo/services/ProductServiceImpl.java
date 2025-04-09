@@ -33,10 +33,12 @@
             product.setAttributes(dto.getAttributes());
             product.setPrice(dto.getPrice());
             product.setImageUrl(dto.getImageUrl());
+            product.setImageUrl(dto.getImageUrl());
 
             product = productRepository.save(product);
             return mapToDto(product);
         }
+
 
         @Override
         public List<ProductDto> getAllProducts(String category, String keyword) {
@@ -76,6 +78,7 @@
             if (dto.getAttributes() != null) product.setAttributes(dto.getAttributes());
             if (dto.getPrice() != null) product.setPrice(dto.getPrice());
             if (dto.getImageUrl() != null) product.setImageUrl(dto.getImageUrl());
+            if (dto.getImageId() != null) product.setImageId(dto.getImageId());
 
             product = productRepository.save(product);
             return mapToDto(product);
@@ -135,6 +138,7 @@
             dto.setAttributes(product.getAttributes());
             dto.setPrice(product.getPrice());
             dto.setCreatedAt(product.getCreatedAt());
+            dto.setImageId(product.getImageId());
             return dto;
         }
     }
