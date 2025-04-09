@@ -86,19 +86,17 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
 
-        // Obtener la información del usuario autenticado desde el token
         UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
         if (userInfo == null) {
             throw new EntityNotFoundException("Token inválido o usuario no encontrado");
         }
 
-        // Primera actualización (comprador establece estado PENDING)
+        // Primera actualización (comprador establece PENDING)
         if (transaction.getBuyerEmail() == null) {
             if (!dto.getStatus().equalsIgnoreCase("PENDING")) {
                 throw new IllegalArgumentException("First update must be to PENDING");
             }
 
-            // Validar producto solicitado solo si se proporciona
             if (dto.getProductRequestedId() != null) {
                 ProductDto requestedProduct = productClient.getProduct(dto.getProductRequestedId());
                 if (requestedProduct == null) {
@@ -107,11 +105,18 @@ public class TransactionServiceImpl implements TransactionService {
                 if (!requestedProduct.getOwnerId().equals(String.valueOf(userInfo.getId()))) {
                     throw new IllegalArgumentException("Requested product doesn't belong to buyer");
                 }
+                // Transferir el producto del comprador al vendedor
+                productClient.transferProduct(
+                        dto.getProductRequestedId(), // "67f6a5fcfa6592457586be97"
+                        userInfo.getId(),            // 53 (Ezy)
+                        transaction.getSellerId(),   // 54 (Mini)
+                        authToken                    // Token de Ezy
+                );
                 transaction.setProductRequestedId(dto.getProductRequestedId());
             }
 
             transaction.setBuyerId(userInfo.getId());
-            transaction.setBuyerEmail(userInfo.getEmail());  // Usar email del token
+            transaction.setBuyerEmail(userInfo.getEmail());
             transaction.setStatus(Transaction.Status.PENDING);
 
             Transaction updatedTransaction = transactionRepository.save(transaction);
@@ -121,11 +126,10 @@ public class TransactionServiceImpl implements TransactionService {
                     id,
                     dto.getProductRequestedId() != null ? productClient.getProduct(dto.getProductRequestedId()).getTitle() : "No product offered"
             );
-
             return mapToDto(updatedTransaction);
         }
 
-        // Segunda actualización (solo el vendedor puede aceptar/rechazar)
+        // Segunda actualización (vendedor acepta/rechaza)
         else {
             if (!transaction.getSellerId().equals(userInfo.getId())) {
                 throw new IllegalArgumentException("Only the seller can accept/reject the transaction");
@@ -137,24 +141,15 @@ public class TransactionServiceImpl implements TransactionService {
 
             String newStatus = dto.getStatus().toUpperCase();
             if (newStatus.equals("ACCEPTED")) {
-                if (transaction.getProductRequestedId() != null) {
-                    productClient.transferProduct(
-                            transaction.getProductRequestedId(),
-                            transaction.getBuyerId(),  // Cambiado de user.getId() a buyerId ya seteado
-                            transaction.getSellerId(),
-                            authToken
-                    );
-                }
-
+                // El productRequestedId ya fue transferido por el comprador
                 if (transaction.getProductOfferedId() != null) {
                     productClient.transferProduct(
-                            transaction.getProductOfferedId(),
-                            transaction.getSellerId(),
-                            transaction.getBuyerId(),
-                            authToken
+                            transaction.getProductOfferedId(), // "67f6a5cafa6592457586be96"
+                            transaction.getSellerId(),         // 54 (Mini)
+                            transaction.getBuyerId(),          // 53 (Ezy)
+                            authToken                          // Token de Mini
                     );
                 }
-
                 if (transaction.getCreditsOffered() > 0) {
                     userClient.transferCredits(
                             transaction.getBuyerId(),
@@ -163,7 +158,6 @@ public class TransactionServiceImpl implements TransactionService {
                             authToken
                     );
                 }
-
                 transaction.setStatus(Transaction.Status.COMPLETED);
             } else if (newStatus.equals("REJECTED")) {
                 transaction.setStatus(Transaction.Status.REJECTED);
@@ -179,7 +173,6 @@ public class TransactionServiceImpl implements TransactionService {
                     id,
                     updatedTransaction.getStatus().toString()
             );
-
             return mapToDto(updatedTransaction);
         }
     }

@@ -143,7 +143,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         Conversation conversation = conversationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Conversación no encontrada"));
 
-        Long sellerId = Long.valueOf(userInfo.getId().toString()); // Corregido de UUID a Long
+        Long sellerId = Long.valueOf(userInfo.getId().toString());
         if (!sellerId.equals(conversation.getSellerId())) {
             throw new IllegalArgumentException("Solo el vendedor puede aceptar propuestas");
         }
@@ -152,43 +152,24 @@ public class NegotiationServiceImpl implements NegotiationService {
             throw new IllegalStateException("No hay una propuesta pendiente para aceptar");
         }
 
-        // Crear la transacción
+        // Crear la transacción con los datos del vendedor
         CreateTransactionDto transactionDto = new CreateTransactionDto();
         transactionDto.setProductOfferedId(conversation.getProductId());
         transactionDto.setCreditsOffered(conversation.getProposalCreditsOffered() != null ? conversation.getProposalCreditsOffered() : 0);
         TransactionDto createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
 
-        // Actualizar la transacción con los productos ofrecidos por el comprador y aceptarla
-        UpdateTransactionStatusDto statusDto = new UpdateTransactionStatusDto();
-        statusDto.setStatus("PENDING"); // Primero el comprador confirma con los productos ofrecidos
-        String proposalProductIds = conversation.getProposalProductIds();
-        if (proposalProductIds != null && !proposalProductIds.isEmpty()) {
-            try {
-                List<String> productIds = objectMapper.readValue(proposalProductIds, List.class);
-                if (!productIds.isEmpty()) {
-                    statusDto.setProductRequestedId(productIds.get(0)); // Asumimos un solo producto por simplicidad
-                }
-            } catch (Exception e) {
-                throw new IllegalStateException("Error al deserializar proposalProductIds", e);
-            }
-        }
-        transactionClient.updateTransactionStatus(createdTransaction.getId(), statusDto, authToken);
+        // Actualizar la conversación con el ID de la transacción creada
+        // (Opcional: podrías agregar un campo transactionId en Conversation si quieres vincularlos)
+        conversation.setStatus(ConversationStatus.PROPOSAL_SENT); // Mantenemos el estado hasta que se complete la transacción
 
-        // El vendedor acepta la transacción
-        statusDto.setStatus("ACCEPTED");
-        TransactionDto acceptedTransaction = transactionClient.updateTransactionStatus(createdTransaction.getId(), statusDto, authToken);
-
-        // Verificar que la transacción se completó
-        if (!"COMPLETED".equals(acceptedTransaction.getStatus())) {
-            throw new IllegalStateException("La transacción no se completó correctamente");
-        }
-
-        // Cerrar la conversación
-        conversation.setStatus(ConversationStatus.CLOSED);
         Conversation updated = conversationRepository.save(conversation);
-
         ConversationDto dto = mapToDto(updated);
         messagingTemplate.convertAndSend("/topic/conversations/" + id, dto);
+
+        // Notificar al comprador (María) para que actualice la transacción
+        // Esto podría ser un mensaje WebSocket o una notificación manual
+        messagingTemplate.convertAndSend("/topic/users/" + conversation.getBuyerId(),
+                "Por favor, confirma la transacción " + createdTransaction.getId() + " con tu producto.");
 
         return dto;
     }
