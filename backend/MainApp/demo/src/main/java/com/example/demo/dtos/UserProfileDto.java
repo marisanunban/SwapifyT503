@@ -6,15 +6,6 @@ public class UserProfileDto {
     private String aboutMe;
     private String profilePicture;
     private String pictureId;
-    private String pictureUrl;
-
-    public String getPictureUrl() {
-        return pictureUrl;
-    }
-
-    public void setPictureUrl(String pictureUrl) {
-        this.pictureUrl = pictureUrl;
-    }
 
     public String getPictureId() {
         return pictureId;
@@ -24,17 +15,19 @@ public class UserProfileDto {
         this.pictureId = pictureId;
     }
 
-    public UserProfileDto(String username, String aboutMe, String profilePicture) {
+    public UserProfileDto(String username, String aboutMe, String profilePicture, String pictureId) {
         this.username = username;
         this.aboutMe = aboutMe;
         this.profilePicture = profilePicture;
+        this.pictureId = pictureId;
     }
 
-    public UserProfileDto(Long id, String username, String aboutMe, String profilePicture) {
+    public UserProfileDto(Long id, String username, String aboutMe, String profilePicture, String pictureId) {
         this.id = id;
         this.username = username;
         this.aboutMe = aboutMe;
         this.profilePicture = profilePicture;
+        this.pictureId = pictureId;
     }
 
     // Getters y setters
