@@ -4,6 +4,24 @@ public class UserInfoDto {
     private Long id;
     private String email;
     private String role;
+    private String imageUrl;
+    private String imageId;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
 
     // Constructor vacío (necesario para deserialización con WebClient)
     public UserInfoDto() {

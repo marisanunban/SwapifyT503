@@ -21,7 +21,7 @@ public class UserServiceImpl implements UserService {
     public UserDto getUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        return new UserDto(user.getId(), user.getUsername(), user.getCredits());
+        return new UserDto(user.getId(), user.getUsername(), user.getCredits(), user.getProfilePictureUrl(), user.getProfilePictureId());
     }
 
     @Override
@@ -32,7 +32,7 @@ public class UserServiceImpl implements UserService {
                 user.getId(),
                 user.getUsername(),
                 user.getAboutMe() != null ? user.getAboutMe() : "",
-                user.getProfilePicture() != null ? user.getProfilePicture() : ""
+                user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : ""
         );
     }
 
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
         Optional<User> existingUser = userRepository.findByUsername(userInfoDto.getEmail());
         if (existingUser.isPresent()) {
             User user = existingUser.get();
-            return new UserDto(user.getId(), user.getUsername(), user.getCredits());
+            return new UserDto(user.getId(), user.getUsername(), user.getCredits(), user.getProfilePictureUrl(), user.getProfilePictureId());
         }
 
         // Crear un nuevo usuario usando el ID del servicio de autenticación
@@ -69,6 +69,7 @@ public class UserServiceImpl implements UserService {
         user.setUsername(userInfoDto.getEmail()); // Usar el email como username
         user.setCredits(100); // Créditos iniciales
         user.setUpdatedAt(LocalDateTime.now());
+        user.setProfilePictureId(userInfoDto.getImageId());
 
         try {
             user = userRepository.save(user);
@@ -76,7 +77,7 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("Error creando usuario: " + e.getMessage());
         }
 
-        return new UserDto(user.getId(), user.getUsername(), user.getCredits());
+        return new UserDto(user.getId(), user.getUsername(), user.getCredits(), user.getProfilePictureUrl(), user.getProfilePictureId());
     }
 
     @Override
@@ -86,8 +87,11 @@ public class UserServiceImpl implements UserService {
         if (dto.getAboutMe() != null) {
             user.setAboutMe(dto.getAboutMe());
         }
-        if (dto.getProfilePicture() != null) {
-            user.setProfilePicture(dto.getProfilePicture());
+        if (dto.getProfilePictureUrl() != null) {
+            user.setProfilePictureUrl(dto.getProfilePictureUrl());
+        }
+        if(dto.getProfilePictureId() != null){
+            user.setProfilePictureId(dto.getProfilePictureId());
         }
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
@@ -114,7 +118,7 @@ public class UserServiceImpl implements UserService {
     public UserDto getUserByEmail(String email) {
         User user = userRepository.findByUsername(email) // O findByEmail si tienes ese método
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-        return new UserDto(user.getId(), user.getUsername(), user.getCredits());
+        return new UserDto(user.getId(), user.getUsername(), user.getCredits(), user.getProfilePictureUrl(), user.getProfilePictureId());
     }
 
     @Override
@@ -141,7 +145,7 @@ public class UserServiceImpl implements UserService {
                 user.getId(),
                 user.getUsername(),
                 user.getAboutMe() != null ? user.getAboutMe() : "",
-                user.getProfilePicture() != null ? user.getProfilePicture() : ""
+                user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : ""
         );
     }
 }

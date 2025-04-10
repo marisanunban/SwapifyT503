@@ -33,7 +33,7 @@
             product.setAttributes(dto.getAttributes());
             product.setPrice(dto.getPrice());
             product.setImageUrl(dto.getImageUrl());
-            product.setImageUrl(dto.getImageUrl());
+            product.setImageId(dto.getImageId());
 
             product = productRepository.save(product);
             return mapToDto(product);

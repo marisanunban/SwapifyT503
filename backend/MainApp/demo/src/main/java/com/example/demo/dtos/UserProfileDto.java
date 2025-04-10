@@ -5,6 +5,24 @@ public class UserProfileDto {
     private String username;
     private String aboutMe;
     private String profilePicture;
+    private String pictureId;
+    private String pictureUrl;
+
+    public String getPictureUrl() {
+        return pictureUrl;
+    }
+
+    public void setPictureUrl(String pictureUrl) {
+        this.pictureUrl = pictureUrl;
+    }
+
+    public String getPictureId() {
+        return pictureId;
+    }
+
+    public void setPictureId(String pictureId) {
+        this.pictureId = pictureId;
+    }
 
     public UserProfileDto(String username, String aboutMe, String profilePicture) {
         this.username = username;
