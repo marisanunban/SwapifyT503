@@ -24,4 +24,6 @@ public interface ProductService {
     ProductDto getProductsByOwnerAndId(long ownerId, String productId);
 
     List<ProductDto> findByOwnerId(long ownerId);
+
+    List<Product> findByKeyword(String keyword);
 }

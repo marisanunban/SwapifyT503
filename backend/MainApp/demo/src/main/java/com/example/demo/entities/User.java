@@ -23,7 +23,18 @@ public class User {
     private String aboutMe;
 
     @Column(name = "profile_picture")
-    private String profilePicture;
+    private String profilePictureUrl;
+
+    @Column(name = "profile_picture_id")
+    private String profilePictureId;
+
+    public String getProfilePictureId() {
+        return profilePictureId;
+    }
+
+    public void setProfilePictureId(String profilePictureId) {
+        this.profilePictureId = profilePictureId;
+    }
 
     // Constructor vacío (necesario para JPA)
     public User() {
@@ -35,7 +46,7 @@ public class User {
         this.credits = credits;
         this.updatedAt = updatedAt;
         this.aboutMe = aboutMe;
-        this.profilePicture = profilePicture;
+        this.profilePictureUrl = profilePicture;
     }
 
     // Getters y setters
@@ -79,11 +90,11 @@ public class User {
         this.aboutMe = aboutMe;
     }
 
-    public String getProfilePicture() {
-        return profilePicture;
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
     }
 
-    public void setProfilePicture(String profilePicture) {
-        this.profilePicture = profilePicture;
+    public void setProfilePictureUrl(String profilePicture) {
+        this.profilePictureUrl = profilePicture;
     }
 }

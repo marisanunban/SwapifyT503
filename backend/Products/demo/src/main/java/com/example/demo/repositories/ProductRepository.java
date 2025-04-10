@@ -11,7 +11,7 @@ public interface ProductRepository extends MongoRepository<Product, String> {
 
     List<Product> findByCategory(String category);
 
-    @Query("{'title': {$regex: ?0, $options: 'i'}}")
+    @Query("{'$or': [ {'title': {$regex: ?0, $options: 'i'}}, {'description': {$regex: ?0, $options: 'i'}} ]}")
     List<Product> findByKeyword(String keyword);
 
     Product findByOwnerIdAndId(long ownerId, String productId);

@@ -3,11 +3,11 @@ import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { UserService } from '../../../services/user.service';
-import { AuthService } from '../../../services/auth.service';
-import { switchMap } from 'rxjs';
-import { ProductService } from '../../../services/product.service';
-import { CloudinaryService } from '../../../services/cloudinary.service';
+import { HttpClient } from '@angular/common/http';
+import { UserService } from '../../../services/user-service/user.service';
+import { AuthService } from '../../../services/auth-service/auth.service';
+import { ProductService } from '../../../services/product-service/product.service';
+import { CloudinaryService } from '../../../services/cloudinary-service/cloudinary.service';
 
 @Component({
   selector: 'app-profile',
@@ -15,24 +15,36 @@ import { CloudinaryService } from '../../../services/cloudinary.service';
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   user: { id: number; username: string; credits: number } | null = null;
   username: string = '';
   aboutMe: string = '';
-  profileImageUrl: string = ''; // Base64 de la imagen
+  profileImageUrl: string = ''; // URL de la imagen actual del perfil
+  imageFile: File | null = null; // Archivo de imagen seleccionado
   isEditing: boolean = false;
   isEditingMe: boolean = false;
-  products: any[] = []; 
+  products: any[] = [];
+  latitude: number | null = null;
+  longitude: number | null = null;
+  municipio: string | null = null;
+  pais: string | null = null;
 
-  constructor(private router: Router, private userService: UserService, private authService: AuthService, private productService: ProductService, private cloudinaryService: CloudinaryService) {}
+  constructor(
+    private router: Router,
+    private userService: UserService,
+    private authService: AuthService,
+    private productService: ProductService,
+    private cloudinaryService: CloudinaryService,
+    private http: HttpClient
+  ) {}
 
   ngOnInit() {
     this.authService.user$.subscribe(user => {
       this.user = user; // Se actualizará automáticamente cuando el usuario inicie sesión
+
     });
 
     const token = localStorage.getItem('token');
-    console.log(token);
     if (token) {
       this.userService.getUserProfile(token).subscribe({
         next: response => {
@@ -41,12 +53,58 @@ export class ProfileComponent {
           this.profileImageUrl = response.profilePicture;
           this.recuperarProductosPropietario(); // Llama a la función para recoger productos
         },
+
         error: error => {
           console.error('Error al obtener perfil:', error);
         }
+        
       });
+      console.log(this.profileImageUrl)
     } else {
       console.error('No hay token disponible.');
+    }
+
+    // Obtener la ubicación del usuario
+    this.obtenerUbicacion();
+  }
+
+  obtenerUbicacion(): void {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.latitude = position.coords.latitude;
+          this.longitude = position.coords.longitude;
+          console.log(`Ubicación obtenida: Latitud ${this.latitude}, Longitud ${this.longitude}`);
+          this.obtenerMunicipio(); // Llama al método para obtener el municipio y el país
+        },
+        (error) => {
+          console.error('Error al obtener la ubicación:', error);
+        }
+      );
+    } else {
+      console.error('La geolocalización no es compatible con este navegador.');
+    }
+  }
+
+  obtenerMunicipio(): void {
+    if (this.latitude && this.longitude) {
+      const url = `https://nominatim.openstreetmap.org/reverse?lat=${this.latitude}&lon=${this.longitude}&format=json`;
+
+      this.http.get<any>(url).subscribe({
+        next: (response) => {
+          console.log('Respuesta de Nominatim:', response);
+          // Extraer municipio y país de la respuesta
+          this.municipio = response.address.city || response.address.town || response.address.village || 'Municipio no encontrado';
+          this.pais = response.address.country || 'País no encontrado';
+          console.log(`Municipio: ${this.municipio}`);
+          console.log(`País: ${this.pais}`);
+        },
+        error: (error) => {
+          console.error('Error al obtener el municipio y el país:', error);
+        }
+      });
+    } else {
+      console.error('Latitud o longitud no están definidas.');
     }
   }
 
@@ -58,48 +116,55 @@ export class ProfileComponent {
     this.isEditingMe = true;
   }
 
-  // Método para manejar la selección de archivo y convertirlo a base64
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const reader = new FileReader();
-  
-      reader.onload = () => {
-        this.profileImageUrl = reader.result as string; // Guarda la imagen en base64
-        console.log('Imagen en base64:', this.profileImageUrl); // Verifica el valor
-      };
-  
-      reader.onerror = (error) => {
-        console.error('Error al leer el archivo:', error);
-      };
-  
-      reader.readAsDataURL(file); // Convierte la imagen a base64
+      this.imageFile = input.files[0];
     }
   }
 
   saveProfile() {
     const token = localStorage.getItem('token');
-    console.log(token);
     if (!token) {
       console.error('No hay token disponible.');
       return;
     }
-  
-    const updatedProfile: any = {};
-  
-    // Agregar solo los campos modificados
-    if (this.profileImageUrl) {
-      updatedProfile.profilePicture = this.profileImageUrl; // Imagen en base64
+
+    if (this.imageFile) {
+      // Subir la nueva imagen a Cloudinary
+      this.cloudinaryService.uploadImage(this.imageFile, token).subscribe({
+        next: (uploadResponse) => {
+          console.log('Imagen subida exitosamente:', uploadResponse);
+          this.profileImageUrl = uploadResponse.imageUrl; // Actualiza la URL de la imagen
+          console.log(this.profileImageUrl)
+          this.updateProfile(token); // Llama a la función para guardar el perfil
+        },
+        error: (error) => {
+          console.error('Error al subir la imagen:', error);
+        }
+      });
+    } else {
+      // Si no se seleccionó una nueva imagen, guarda directamente el perfil
+      this.updateProfile(token);
     }
+  }
+
   
-    console.log(updatedProfile); // Para verificar qué se envía realmente
-  
+
+  private updateProfile(token: string): void {
+    
+    const updatedProfile: any = {
+      profilePictureUrl: this.profileImageUrl // URL de la imagen actualizada o existente
+      
+    }; 
+    console.log('foto de perfil:' ,this.profileImageUrl)
+   console.log('update' , updatedProfile)
+
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
         console.log('Perfil actualizado:', response);
         setTimeout(() => {
-          this.isEditing = false; // 🔹 Cierra la edición después de actualizar
+          this.isEditing = false;
         }, 0);
       },
       error: error => {
@@ -117,22 +182,18 @@ export class ProfileComponent {
       console.error('No hay token disponible.');
       return;
     }
-  
+
     const updatedProfile: any = {};
-  
-    // Agregar solo los campos modificados
-    console.log(this.aboutMe);
+
     if (this.aboutMe) {
       updatedProfile.aboutMe = this.aboutMe;
     }
-  
-    console.log(updatedProfile); // Para verificar qué se envía realmente
-  
+
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
         console.log('Perfil actualizado:', response);
         setTimeout(() => {
-          this.isEditingMe = false; // 🔹 Cierra la edición después de actualizar
+          this.isEditingMe = false;
         }, 0);
       },
       error: error => {
@@ -149,8 +210,8 @@ export class ProfileComponent {
     if (token) {
       this.productService.getAllProducts(token).subscribe({
         next: response => {
-          this.products = response; // Asignar la respuesta a la variable products
-          console.log('Productos:', this.products); // Para verificar qué se recibe realmente
+          this.products = response;
+          console.log('Productos:', this.products);
         },
         error: error => {
           console.error('Error al obtener productos:', error);
@@ -161,15 +222,18 @@ export class ProfileComponent {
 
   recuperarProductosPropietario() {
     const token = localStorage.getItem('token');
-    if (token && this.user?.id) { // Verifica que el token y el ID del usuario existan
+    if (token && this.user?.id) {
       this.productService.getProductsByOwner(this.user.id, token).subscribe({
         next: (response) => {
-          // Asigna los productos recuperados a la variable products
-          this.products = response.map((product: any) => ({
-            ...product,
-            imageUrl: product.imageUrl || 'assets/default-product.png' // Usa una imagen por defecto si no hay URL
-          }));
-          console.log('Productos del propietario:', this.products); // Para verificar qué se recibe realmente
+          console.log('Respuesta completa del backend:', response);
+          this.products = response.map((product: any) => {
+            return {
+              ...product,
+              imageUrl: product.imageUrl,
+              imageId: product.imageId
+            };
+          });
+          console.log('Productos del propietario:', this.products);
         },
         error: (error) => {
           console.error('Error al obtener productos del propietario:', error);
@@ -180,36 +244,43 @@ export class ProfileComponent {
     }
   }
 
-  eliminarProducto(productId: string) {
+  eliminarProducto(productId: string, imageId: string) {
     const token = localStorage.getItem('token');
-    if (token) {
-      this.productService.deleteProduct(productId, token).subscribe({
-        next: () => {
-          console.log(`Producto con ID ${productId} eliminado correctamente.`);
-          // Actualiza la lista de productos después de eliminar
-          this.recuperarProductosPropietario();
-        },
-        error: error => {
-          console.error('Error al eliminar el producto:', error);
-        }
-      });
-    } else {
+    if (!token) {
       console.error('No hay token disponible.');
+      return;
     }
+
+    this.cloudinaryService.deleteImage(imageId).subscribe({
+      next: () => {
+        this.productService.deleteProduct(productId, token).subscribe({
+          next: () => {
+            this.recuperarProductosPropietario();
+          },
+          error: error => {
+            console.error('Error al eliminar el producto:', error);
+          }
+        });
+      },
+      error: error => {
+        console.error('Error al eliminar la imagen de Cloudinary:', error);
+      }
+    });
   }
 
   logout() {
     this.authService.logout();
-    this.router.navigate(['/main']); // Redirigir al login después de cerrar sesión
+    this.router.navigate(['/main']);
   }
 
   irARegistro() {
     this.router.navigate(['/register']);
   }
-  
+
   irAProfile() {
     this.router.navigate(['/profile']);
   }
+
   irAContacta() {
     this.router.navigate(['/contact']);
   }
@@ -221,8 +292,8 @@ export class ProfileComponent {
   irACrear() {
     this.router.navigate(['/create']);
   }
+
   irAEditar(productId: string): void {
     this.router.navigate(['/edit', productId]);
-    console.log(productId) // Redirige a la URL con el ID del producto
   }
 }

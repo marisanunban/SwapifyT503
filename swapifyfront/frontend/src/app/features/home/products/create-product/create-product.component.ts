@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { ProductService } from '../../../../services/product.service';
+import { ProductService } from '../../../../services/product-service/product.service';
 import { FormsModule } from '@angular/forms'; // Importa FormsModule
-import { TransactionService } from '../../../../services/transaction.service';
-import { CloudinaryService } from '../../../../services/cloudinary.service'; // Importa el servicio de Cloudinary
+import { TransactionService } from '../../../../services/transaction-service/transaction.service';
+import { CloudinaryService } from '../../../../services/cloudinary-service/cloudinary.service'; // Importa el servicio de Cloudinary
 
 @Component({
   selector: 'app-create-product',
@@ -64,7 +64,8 @@ export class CreateProductComponent {
           category: this.category,
           description: this.description,
           price: this.price,
-          imageUrl: uploadResponse.url // URL de la imagen subida
+          imageUrl: uploadResponse.imageUrl, // URL de la imagen subida
+          imageId: uploadResponse.publicId // ID de la imagen subida
         };
 
         // Llamada al servicio para crear el producto
