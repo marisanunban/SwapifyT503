@@ -39,8 +39,9 @@ public class NegotiationController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ConversationDto> getNegotiation(
-            @PathVariable("id") Long id) {
-        ConversationDto conversation = negotiationService.getNegotiation(id);
+            @PathVariable("id") Long id,
+            @RequestHeader("Authorization") String authToken) {
+        ConversationDto conversation = negotiationService.getNegotiation(id, authToken);
         return new ResponseEntity<>(conversation, HttpStatus.OK);
     }
 

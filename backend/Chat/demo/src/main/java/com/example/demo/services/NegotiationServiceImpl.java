@@ -98,9 +98,25 @@ public class NegotiationServiceImpl implements NegotiationService {
     }
 
     @Override
-    public ConversationDto getNegotiation(Long id) {
+    public ConversationDto getNegotiation(Long id, String authToken) {
+        // Validar el token y obtener la información del usuario
+        UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
+        if (userInfo == null) {
+            throw new EntityNotFoundException("Token inválido o usuario no encontrado");
+        }
+
+        // Buscar la conversación
         Conversation conversation = conversationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Conversación no encontrada"));
+
+        // Convertir el ID del usuario a Long para comparación
+        Long requesterId = Long.valueOf(userInfo.getId().toString());
+
+        // Verificar si el usuario es el comprador o el vendedor
+        if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
+            throw new IllegalArgumentException("Solo los participantes de la conversación pueden verla");
+        }
+
         return mapToDto(conversation);
     }
 
@@ -160,7 +176,7 @@ public class NegotiationServiceImpl implements NegotiationService {
 
         // Actualizar la conversación con el ID de la transacción creada
         // (Opcional: podrías agregar un campo transactionId en Conversation si quieres vincularlos)
-        conversation.setStatus(ConversationStatus.PROPOSAL_SENT); // Mantenemos el estado hasta que se complete la transacción
+        conversation.setStatus(ConversationStatus.ACTIVE); // Mantenemos el estado hasta que se complete la transacción
 
         Conversation updated = conversationRepository.save(conversation);
         ConversationDto dto = mapToDto(updated);
