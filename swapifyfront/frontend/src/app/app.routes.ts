@@ -6,6 +6,7 @@ import { ProfileComponent } from './features/home/profile/profile.component';
 import { CreateProductComponent } from './features/home/products/create-product/create-product.component';
 import { ContactComponent } from './features/home/contact/contact.component';
 import { EditProductComponent } from './features/home/products/edit-product/edit-product.component';
+import { ChatComponent } from './features/home/chat/chat.component';
 
 export const routes: Routes = [
   {path: 'main' , component: MainComponent},
@@ -20,4 +21,5 @@ export const routes: Routes = [
   {path: 'create', component: CreateProductComponent},
   {path: 'edit/:id', component: EditProductComponent},
   {path: 'contact', component: ContactComponent},
+  {path: 'chat', component: ChatComponent},
 ];
