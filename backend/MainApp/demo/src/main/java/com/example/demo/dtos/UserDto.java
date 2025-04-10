@@ -6,6 +6,8 @@ import lombok.Data;
 public class UserDto {
     private Long id;
     private String username;
+    private int credits;
+
 
     public UserDto() {
     }
@@ -15,6 +17,7 @@ public class UserDto {
         this.username = username;
         this.credits = credits;
     }
+
 
     public Long getId() {
         return id;
@@ -40,5 +43,5 @@ public class UserDto {
         this.credits = credits;
     }
 
-    private int credits;
+
 }

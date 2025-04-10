@@ -5,15 +5,25 @@ import lombok.Data;
 @Data
 public class UpdateUserProfileDto {
     private String aboutMe;
-    private String profilePicture;
+    private String profilePictureUrl;
+    private String profilePictureId;
+
+    public String getProfilePictureId() {
+        return profilePictureId;
+    }
+
+    public void setProfilePictureId(String profilePictureId) {
+        this.profilePictureId = profilePictureId;
+    }
 
     // Constructor vacío (necesario para deserialización JSON)
     public UpdateUserProfileDto() {
     }
 
-    public UpdateUserProfileDto(String aboutMe, String profilePicture) {
+    public UpdateUserProfileDto(String aboutMe, String profilePicture, String profilePictureId) {
         this.aboutMe = aboutMe;
-        this.profilePicture = profilePicture;
+        this.profilePictureUrl = profilePicture;
+        this.profilePictureId = profilePictureId;
     }
 
     // Getters y setters
@@ -25,11 +35,11 @@ public class UpdateUserProfileDto {
         this.aboutMe = aboutMe;
     }
 
-    public String getProfilePicture() {
-        return profilePicture;
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
     }
 
-    public void setProfilePicture(String profilePicture) {
-        this.profilePicture = profilePicture;
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
     }
 }

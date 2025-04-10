@@ -23,6 +23,24 @@ public class Product {
 
     private String status;
 
+    private String imageUrl;
+
+    private String imageId;
+
+    public String getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = imageId;
+    }
+
+    private Map<String, String> attributes;
+    private Double price;
+
+    private LocalDateTime createdAt;
+
+
     public String getId() {
         return id;
     }
@@ -103,12 +121,6 @@ public class Product {
         this.createdAt = createdAt;
     }
 
-    private String imageUrl;
-
-    private Map<String, String> attributes;
-    private Double price;
-
-    private LocalDateTime createdAt;
 
     public Product() {
         this.createdAt = LocalDateTime.now();

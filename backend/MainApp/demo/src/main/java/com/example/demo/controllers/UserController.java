@@ -124,6 +124,7 @@ public class    UserController {
             // Buscar el usuario por email para obtener su ID
             UserProfileDto userProfile = userService.getUserProfileByEmail(userInfo.getEmail());
             userService.updateUserProfileReactively(userProfile.getId(), dto);
+
             return Mono.just(ResponseEntity.noContent().build());
         } catch (Exception e) {
             System.out.println("Excepción al actualizar el perfil: " + e.getMessage());
