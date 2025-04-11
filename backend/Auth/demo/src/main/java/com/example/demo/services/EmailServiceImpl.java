@@ -13,7 +13,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendResetPasswordEmail(String toEmail, String token) {
-        String resetLink = "https://tuapp.com/reset-password?token=" + token;
+        String resetLink = "http://localhost:8081/reset-password.html?token=" + token;
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("Restablecer tu contraseña");
