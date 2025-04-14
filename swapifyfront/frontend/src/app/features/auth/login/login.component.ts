@@ -82,6 +82,7 @@ export class LoginComponent {
   }
 
   enviarSolicitudReset() {
+    console.log(this.email)
     this.resetPasswordService.requestPasswordReset(this.email).subscribe({
       next: (response) => {
         console.log('Correo de reseteo enviado:', response.message);

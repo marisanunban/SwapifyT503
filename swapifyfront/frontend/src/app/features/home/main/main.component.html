@@ -33,7 +33,7 @@
       <i class="fas fa-question"></i>
     </button>
     <div *ngIf="user" class="flex items-center space-x-4">
-      <span class="text-lg font-semibold"><a (click)="irAProfile()">Hola , {{ user.username }}</a></span>
+      <span class="text-lg font-semibold"><a (click)="irAProfile()"> {{ user.username }}</a></span>
       <span class="bg-green-600 px-3 py-1 rounded">Créditos: {{ user.credits }}</span>
       <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded" >Cerrar sesión</button>
     </div>
@@ -189,7 +189,7 @@
               <p class="text-xs text-gray-500 uppercase font-medium">{{product.price}} swapicoins</p>
               <p class="text-xl font-bold text-gray-900">{{product.price}}</p>
             </div>
-            <button (click)="comprarProducto(product.id)" class="bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-6 rounded-md transition-colors">
+            <button class="bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-6 rounded-md transition-colors">
               Comprar
             </button>
           </div>

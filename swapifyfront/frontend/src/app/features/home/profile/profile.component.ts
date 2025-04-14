@@ -41,6 +41,7 @@ export class ProfileComponent implements OnInit {
   ngOnInit() {
     this.authService.user$.subscribe(user => {
       this.user = user; // Se actualizará automáticamente cuando el usuario inicie sesión
+
     });
 
     const token = localStorage.getItem('token');
@@ -52,11 +53,13 @@ export class ProfileComponent implements OnInit {
           this.profileImageUrl = response.profilePicture;
           this.recuperarProductosPropietario(); // Llama a la función para recoger productos
         },
+
         error: error => {
           console.error('Error al obtener perfil:', error);
         }
+        
       });
-      console.log(this.profileImageUrl);
+      console.log(this.profileImageUrl)
     } else {
       console.error('No hay token disponible.');
     }
@@ -128,58 +131,34 @@ export class ProfileComponent implements OnInit {
     }
 
     if (this.imageFile) {
-      // Verifica si hay una imagen anterior para eliminar
-      if (this.profileImageUrl) {
-        const imageId = this.extractImageIdFromUrl(this.profileImageUrl); // Extrae el imageId de la URL
-        if (imageId) {
-          this.cloudinaryService.deleteImage(imageId).subscribe({
-            next: () => {
-              console.log('Imagen anterior eliminada exitosamente.');
-              this.uploadNewImage(token); // Subir la nueva imagen
-            },
-            error: (error) => {
-              console.error('Error al eliminar la imagen anterior:', error);
-              this.uploadNewImage(token); // Continúa con la subida de la nueva imagen incluso si falla la eliminación
-            }
-          });
-        } else {
-          console.warn('No se pudo extraer el imageId de la URL.');
-          this.uploadNewImage(token); // Continúa con la subida de la nueva imagen
+      // Subir la nueva imagen a Cloudinary
+      this.cloudinaryService.uploadImage(this.imageFile, token).subscribe({
+        next: (uploadResponse) => {
+          console.log('Imagen subida exitosamente:', uploadResponse);
+          this.profileImageUrl = uploadResponse.imageUrl; // Actualiza la URL de la imagen
+          console.log(this.profileImageUrl)
+          this.updateProfile(token); // Llama a la función para guardar el perfil
+        },
+        error: (error) => {
+          console.error('Error al subir la imagen:', error);
         }
-      } else {
-        this.uploadNewImage(token); // Si no hay imagen anterior, sube la nueva directamente
-      }
+      });
     } else {
       // Si no se seleccionó una nueva imagen, guarda directamente el perfil
       this.updateProfile(token);
     }
   }
 
-  private uploadNewImage(token: string): void {
-    this.cloudinaryService.uploadImage(this.imageFile!, token).subscribe({
-      next: (uploadResponse) => {
-        console.log('Imagen subida exitosamente:', uploadResponse);
-        this.profileImageUrl = uploadResponse.imageUrl; // Actualiza la URL de la imagen
-        this.updateProfile(token); // Llama a la función para guardar el perfil
-      },
-      error: (error) => {
-        console.error('Error al subir la imagen:', error);
-      }
-    });
-  }
-
-  private extractImageIdFromUrl(url: string): string | null {
-    // Implementa la lógica para extraer el imageId de la URL de Cloudinary
-    const match = url.match(/\/([^/]+)\.[a-z]+$/i);
-    return match ? match[1] : null;
-  }
+  
 
   private updateProfile(token: string): void {
+    
     const updatedProfile: any = {
       profilePictureUrl: this.profileImageUrl // URL de la imagen actualizada o existente
-    };
-    console.log('foto de perfil:', this.profileImageUrl);
-    console.log('update', updatedProfile);
+      
+    }; 
+    console.log('foto de perfil:' ,this.profileImageUrl)
+   console.log('update' , updatedProfile)
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
