@@ -1,182 +1,178 @@
 <div class="flex h-screen bg-gray-100">
-    <!-- Left sidebar -->
-    <div class="w-72 bg-indigo-900 text-white flex flex-col">
-      <!-- Current user profile -->
-      <div class="p-4 flex items-center justify-between border-b border-indigo-800">
-        <div class="flex items-center">
-          <div class="relative">
-            <img [src]="currentUser.avatar" alt="Profile" class="w-10 h-10 rounded-full object-cover">
-            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-indigo-900"></div>
-          </div>
-          <div class="ml-3">
-            <div class="font-semibold">{{ currentUser.name }}</div>
-            <div class="text-xs text-indigo-300">{{ currentUser.status }}</div>
-          </div>
-        </div>
-        <button class="text-indigo-300 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Navigation icons -->
-      <div class="flex justify-around py-3 border-b border-indigo-800">
-        <button class="p-2 rounded-md bg-indigo-800 text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
-            <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
-          </svg>
-        </button>
-        <button class="p-2 text-indigo-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-          </svg>
-        </button>
-        <button class="p-2 text-indigo-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
-        </button>
-        <button class="p-2 text-indigo-400 hover:text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Search bar -->
-      <div class="p-4">
+  <!-- Left sidebar -->
+  <div class="w-72 bg-indigo-900 text-white flex flex-col">
+    <!-- Current user profile -->
+    <div class="p-4 flex items-center justify-between border-b border-indigo-800">
+      <div class="flex items-center">
         <div class="relative">
-          <input type="text" placeholder="Search" class="w-full bg-indigo-800 text-white rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-sm">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+          <img
+            [src]="currentUser?.avatar || '/placeholder.svg?height=40&width=40'"
+            alt="Profile"
+            class="w-10 h-10 rounded-full object-cover"
+          />
+          <div
+            class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-indigo-900"
+            *ngIf="currentUser?.online"
+          ></div>
         </div>
-      </div>
-      
-      <!-- Chat list -->
-      <div class="flex-1 overflow-y-auto">
-        <div *ngFor="let user of users" class="px-4 py-3 hover:bg-indigo-800 cursor-pointer">
-          <div class="flex items-center">
-            <div class="relative">
-              <img [src]="user.avatar" alt="Profile" class="w-10 h-10 rounded-full object-cover">
-              <div *ngIf="user.online" class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-indigo-900"></div>
-            </div>
-            <div class="ml-3 flex-1">
-              <div class="flex justify-between">
-                <span class="font-medium">{{ user.name }}</span>
-                <span class="text-xs text-indigo-300">{{ user.time }}</span>
-              </div>
-              <div class="text-xs text-indigo-300 truncate">{{ user.status }}</div>
-            </div>
-          </div>
+        <div class="ml-3">
+          <div class="font-semibold">{{ currentUser?.name || 'Usuario' }}</div>
+          <div class="text-xs text-indigo-300">{{ currentUser?.status || 'Offline' }}</div>
         </div>
       </div>
     </div>
-    
-    <!-- Main chat area -->
-    <div class="flex-1 flex flex-col">
-      <!-- Chat header -->
-      <div class="bg-white border-b p-4 flex items-center justify-between">
+
+    <!-- Chat list -->
+    <div class="flex-1 overflow-y-auto">
+      <div
+        *ngFor="let user of users"
+        class="px-4 py-3 hover:bg-indigo-800 cursor-pointer"
+        (click)="selectUser(user)"
+      >
         <div class="flex items-center">
-          <img [src]="selectedChat.avatar" alt="Chat" class="w-10 h-10 rounded-full object-cover">
-          <div class="ml-3">
-            <div class="font-semibold">{{ selectedChat.name }}</div>
-            <div class="text-xs text-gray-500">{{ selectedChat.description }}</div>
+          <div class="relative">
+            <img
+              [src]="user.avatar"
+              alt="Profile"
+              class="w-10 h-10 rounded-full object-cover"
+            />
+            <div
+              *ngIf="user.online"
+              class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-indigo-900"
+            ></div>
           </div>
-        </div>
-        <div class="flex items-center space-x-4">
-          <span class="text-sm text-gray-500">{{ selectedChat.participants }} participants</span>
-          <button class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-            </svg>
-          </button>
-          <button class="text-gray-500 hover:text-gray-700">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      
-      <!-- Chat messages -->
-      <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
-        <div class="space-y-4">
-          <!-- Image message -->
-          <div class="flex justify-center">
-            <div class="rounded-lg overflow-hidden max-w-xs">
-              <img src="/placeholder.svg?height=200&width=300" alt="Chat image" class="w-full h-auto">
+          <div class="ml-3 flex-1">
+            <div class="flex justify-between">
+              <span class="font-medium">{{ user.name }}</span>
             </div>
-          </div>
-          
-          <!-- Regular messages -->
-          <div *ngFor="let message of messages" class="flex" [ngClass]="{'justify-end': isCurrentUser(message.senderId), 'justify-start': !isCurrentUser(message.senderId) && !message.isSystem}">
-            <!-- System message -->
-            <div *ngIf="message.isSystem" class="w-full text-center text-sm text-gray-500 my-2">
-              {{ message.text }}
-            </div>
-            
-            <!-- User message -->
-            <div *ngIf="!message.isSystem" class="flex max-w-xs md:max-w-md" [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}">
-              <div *ngIf="!isCurrentUser(message.senderId)" class="flex-shrink-0 h-8 w-8">
-                <img [src]="getMessageSender(message.senderId)?.avatar" alt="Avatar" class="h-8 w-8 rounded-full">
-              </div>
-              
-              <div class="px-4 py-2 rounded-lg mx-2" 
-                  [ngClass]="{'bg-indigo-800 text-white': isCurrentUser(message.senderId), 'bg-white text-gray-800': !isCurrentUser(message.senderId)}">
-                <div class="text-sm">{{ message.text }}</div>
-                <div class="text-xs mt-1 text-right" 
-                    [ngClass]="{'text-indigo-300': isCurrentUser(message.senderId), 'text-gray-500': !isCurrentUser(message.senderId)}">
-                  {{ message.time }}
-                </div>
-              </div>
-              
-              <div *ngIf="isCurrentUser(message.senderId)" class="flex-shrink-0 h-8 w-8">
-                <img [src]="currentUser.avatar" alt="Avatar" class="h-8 w-8 rounded-full">
-              </div>
-            </div>
-          </div>
-          
-          <!-- Typing indicator -->
-          <div class="text-center text-sm text-gray-500">
-            Jonathon and Kevin are typing
-          </div>
-        </div>
-      </div>
-      
-      <!-- Message input -->
-      <div class="bg-white p-4 border-t">
-        <div class="flex items-center">
-          <input 
-            type="text" 
-            [(ngModel)]="newMessage"
-            placeholder="Write a message" 
-            class="flex-1 border border-gray-300 rounded-l-md py-2 px-4 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            (keyup.enter)="sendMessage()">
-          <div class="flex">
-            <button class="bg-gray-100 text-gray-500 p-2 border-t border-b border-r border-gray-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clip-rule="evenodd" />
-              </svg>
-            </button>
-            <button class="bg-gray-100 text-gray-500 p-2 border-t border-b border-gray-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4a.5.5 0 01-.5-.5v-6.813l3.287 3.287a1 1 0 001.414 0L12 7.207l4.5 4.5V14.5a.5.5 0 01-.5.5zM4.5 6.207V5.5a.5.5 0 01.5-.5h12a.5.5 0 01.5.5v.707l-4.5 4.5L9.207 6.914a1 1 0 00-1.414 0L4.5 10.207V6.207z" clip-rule="evenodd" />
-              </svg>
-            </button>
-            <button (click)="sendMessage()" class="bg-indigo-600 text-white p-2 rounded-r-md hover:bg-indigo-700">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            </button>
+            <div class="text-xs text-indigo-300 truncate">{{ user.status }}</div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  
+
+  <!-- Main chat area -->
+  <div class="flex-1 flex flex-col">
+    <!-- Chat header -->
+    <div class="bg-white border-b p-4 flex items-center justify-between">
+      <div class="flex items-center">
+        <img
+          [src]="selectedChat.avatar"
+          alt="Chat"
+          class="w-10 h-10 rounded-full object-cover"
+        />
+        <div class="ml-3">
+          <div class="font-semibold">{{ selectedChat.name }}</div>
+          <div class="text-xs text-gray-500">{{ selectedChat.description }}</div>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-sm text-gray-500">{{ selectedChat.participants }} participantes</span>
+      </div>
+    </div>
+
+    <!-- Chat messages -->
+    <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
+      <div class="space-y-4">
+        <div *ngIf="messages.length === 0" class="text-center text-gray-500">
+          No hay mensajes aún. ¡Empieza la conversación!
+        </div>
+        <div
+          *ngFor="let message of messages"
+          class="flex"
+          [ngClass]="{
+            'justify-end': isCurrentUser(message.senderId),
+            'justify-start': !isCurrentUser(message.senderId) && !message.isSystem
+          }"
+        >
+          <!-- System message -->
+          <div
+            *ngIf="message.isSystem"
+            class="w-full text-center text-sm text-gray-500 my-2"
+          >
+            {{ message.text }}
+          </div>
+
+          <!-- User message -->
+          <div
+            *ngIf="!message.isSystem"
+            class="flex max-w-xs md:max-w-md"
+            [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}"
+          >
+            <div
+              *ngIf="!isCurrentUser(message.senderId)"
+              class="flex-shrink-0 h-8 w-8"
+            >
+              <img
+                [src]="getMessageSender(message.senderId)?.avatar"
+                alt="Avatar"
+                class="h-8 w-8 rounded-full"
+              />
+            </div>
+
+            <div
+              class="px-4 py-2 rounded-lg mx-2"
+              [ngClass]="{
+                'bg-indigo-800 text-white': isCurrentUser(message.senderId),
+                'bg-white text-gray-800': !isCurrentUser(message.senderId)
+              }"
+            >
+              <div class="text-sm">{{ message.text }}</div>
+              <div
+                class="text-xs mt-1 text-right"
+                [ngClass]="{
+                  'text-indigo-300': isCurrentUser(message.senderId),
+                  'text-gray-500': !isCurrentUser(message.senderId)
+                }"
+              >
+                {{ message.time }}
+              </div>
+            </div>
+
+            <div
+              *ngIf="isCurrentUser(message.senderId)"
+              class="flex-shrink-0 h-8 w-8"
+            >
+              <img
+                [src]="currentUser?.avatar"
+                alt="Avatar"
+                class="h-8 w-8 rounded-full"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message input -->
+    <div class="bg-white p-4 border-t">
+      <div class="flex items-center">
+        <input
+          type="text"
+          [(ngModel)]="newMessage"
+          placeholder="Escribe un mensaje"
+          class="flex-1 border border-gray-300 rounded-l-md py-2 px-4 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          (keyup.enter)="sendMessage()"
+        />
+        <div class="flex">
+          <button
+            (click)="sendMessage()"
+            class="bg-indigo-600 text-white p-2 rounded-r-md hover:bg-indigo-700"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

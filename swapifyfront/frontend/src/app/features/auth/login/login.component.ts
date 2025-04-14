@@ -2,6 +2,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { UserService } from '../../../services/user-service/user.service';
+import { ResetPasswordService } from '../../../services/reset-password/reset-password.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -19,11 +20,15 @@ export class LoginComponent {
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
+  resetPassword: boolean = false;
+  resetToken: string = '';
+  newPassword: string = '';
 
   constructor(
     private authService: AuthService,
     private userService: UserService,
-    private router: Router
+    private router: Router,
+    private resetPasswordService: ResetPasswordService,
   ) {}
 
   onSubmit() {
@@ -74,6 +79,42 @@ export class LoginComponent {
         this.error = 'Error al iniciar sesión: ' + (err.error?.message || 'Credenciales inválidas.');
       }
     });
+  }
+
+  enviarSolicitudReset() {
+    console.log(this.email)
+    this.resetPasswordService.requestPasswordReset(this.email).subscribe({
+      next: (response) => {
+        console.log('Correo de reseteo enviado:', response.message);
+        this.successMessage = 'Correo enviado. Revisa tu bandeja de entrada.';
+        this.error = null;
+      },
+      error: (err) => {
+        console.error('Error al solicitar reset:', err);
+        this.error = 'No se pudo enviar el correo de recuperación.';
+      }
+    });
+  }
+  confirmarReset() {
+    this.resetPasswordService.confirmPasswordReset(this.resetToken, this.newPassword).subscribe({
+      next: (response) => {
+        console.log('Contraseña cambiada:', response.message);
+        this.successMessage = 'Contraseña cambiada exitosamente. Ya podés iniciar sesión.';
+        this.resetPassword = false;
+        this.error = null;
+        this.email = '';
+        this.password = '';
+      },
+      error: (err) => {
+        console.error('Error al confirmar reset:', err);
+        this.error = 'Token inválido o expirado.';
+      }
+    });
+  }
+    
+
+  onResetPassword() {
+    this.resetPassword = true;
   }
 
   irARegistro() {

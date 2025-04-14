@@ -24,9 +24,18 @@ export class UserService {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
-    console.log(headers)
+    console.log(headers);
     return this.http.get(`${this.apiUrl}/me`, { headers });
   }
+
+  getUserById(id: number, token: string): Observable<any> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+    return this.http.get(`${this.apiUrl}/${id}`, { headers });
+  }
+
   updateUserProfile(token: string, profileData: any): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,

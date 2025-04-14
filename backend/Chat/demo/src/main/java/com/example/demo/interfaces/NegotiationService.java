@@ -12,4 +12,5 @@ public interface NegotiationService {
     ConversationDto getNegotiation(Long id, String authToken);
     ConversationDto sendProposal(Long id, List<String> productIdsOffered, Integer creditsOffered, String authToken);
     ConversationDto acceptProposal(Long id, String authToken);
+    List<ConversationDto> getUserConversations(String authToken);
 }

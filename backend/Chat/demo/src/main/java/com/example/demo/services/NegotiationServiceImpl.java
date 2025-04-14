@@ -189,6 +189,15 @@ public class NegotiationServiceImpl implements NegotiationService {
 
         return dto;
     }
+    @Override
+    public List<ConversationDto> getUserConversations(String authToken) {
+        UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
+        if (userInfo == null) throw new EntityNotFoundException("Token inválido");
+
+        Long userId = Long.valueOf(userInfo.getId().toString());
+        List<Conversation> conversations = conversationRepository.findByBuyerIdOrSellerId(userId);
+        return conversations.stream().map(this::mapToDto).toList();
+    }
 
     private ConversationDto mapToDto(Conversation c) {
         return new ConversationDto(
