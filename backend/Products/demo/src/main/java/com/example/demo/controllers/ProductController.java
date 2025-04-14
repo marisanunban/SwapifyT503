@@ -127,6 +127,18 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchByKeyword(@RequestParam String keyword) {
+        int minimumLength = 4;
+        if (keyword.length() < minimumLength) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+        List<Product> products = productService.findByKeyword(keyword);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+
+
     private Long getOwnerIdFromToken(String token) {
         String bearerToken = token.replace("Bearer ", "");
         UserInfoDto userInfo = authClient.validateUserToken(bearerToken, null)

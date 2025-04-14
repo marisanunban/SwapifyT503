@@ -19,7 +19,8 @@ export class ProfileComponent implements OnInit {
   user: { id: number; username: string; credits: number } | null = null;
   username: string = '';
   aboutMe: string = '';
-  profileImageUrl: string = ''; // Base64 de la imagen
+  profileImageUrl: string = ''; // URL de la imagen actual del perfil
+  imageFile: File | null = null; // Archivo de imagen seleccionado
   isEditing: boolean = false;
   isEditingMe: boolean = false;
   products: any[] = [];
@@ -55,6 +56,7 @@ export class ProfileComponent implements OnInit {
           console.error('Error al obtener perfil:', error);
         }
       });
+      console.log(this.profileImageUrl);
     } else {
       console.error('No hay token disponible.');
     }
@@ -114,19 +116,7 @@ export class ProfileComponent implements OnInit {
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        this.profileImageUrl = reader.result as string; // Guarda la imagen en base64
-        console.log('Imagen en base64:', this.profileImageUrl); // Verifica el valor
-      };
-
-      reader.onerror = (error) => {
-        console.error('Error al leer el archivo:', error);
-      };
-
-      reader.readAsDataURL(file); // Convierte la imagen a base64
+      this.imageFile = input.files[0];
     }
   }
 
@@ -137,11 +127,59 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    const updatedProfile: any = {};
-
-    if (this.profileImageUrl) {
-      updatedProfile.profilePicture = this.profileImageUrl; // Imagen en base64
+    if (this.imageFile) {
+      // Verifica si hay una imagen anterior para eliminar
+      if (this.profileImageUrl) {
+        const imageId = this.extractImageIdFromUrl(this.profileImageUrl); // Extrae el imageId de la URL
+        if (imageId) {
+          this.cloudinaryService.deleteImage(imageId).subscribe({
+            next: () => {
+              console.log('Imagen anterior eliminada exitosamente.');
+              this.uploadNewImage(token); // Subir la nueva imagen
+            },
+            error: (error) => {
+              console.error('Error al eliminar la imagen anterior:', error);
+              this.uploadNewImage(token); // Continúa con la subida de la nueva imagen incluso si falla la eliminación
+            }
+          });
+        } else {
+          console.warn('No se pudo extraer el imageId de la URL.');
+          this.uploadNewImage(token); // Continúa con la subida de la nueva imagen
+        }
+      } else {
+        this.uploadNewImage(token); // Si no hay imagen anterior, sube la nueva directamente
+      }
+    } else {
+      // Si no se seleccionó una nueva imagen, guarda directamente el perfil
+      this.updateProfile(token);
     }
+  }
+
+  private uploadNewImage(token: string): void {
+    this.cloudinaryService.uploadImage(this.imageFile!, token).subscribe({
+      next: (uploadResponse) => {
+        console.log('Imagen subida exitosamente:', uploadResponse);
+        this.profileImageUrl = uploadResponse.imageUrl; // Actualiza la URL de la imagen
+        this.updateProfile(token); // Llama a la función para guardar el perfil
+      },
+      error: (error) => {
+        console.error('Error al subir la imagen:', error);
+      }
+    });
+  }
+
+  private extractImageIdFromUrl(url: string): string | null {
+    // Implementa la lógica para extraer el imageId de la URL de Cloudinary
+    const match = url.match(/\/([^/]+)\.[a-z]+$/i);
+    return match ? match[1] : null;
+  }
+
+  private updateProfile(token: string): void {
+    const updatedProfile: any = {
+      profilePictureUrl: this.profileImageUrl // URL de la imagen actualizada o existente
+    };
+    console.log('foto de perfil:', this.profileImageUrl);
+    console.log('update', updatedProfile);
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
@@ -208,7 +246,7 @@ export class ProfileComponent implements OnInit {
     if (token && this.user?.id) {
       this.productService.getProductsByOwner(this.user.id, token).subscribe({
         next: (response) => {
-          console.log('Respuesta completa del bckend:', response);
+          console.log('Respuesta completa del backend:', response);
           this.products = response.map((product: any) => {
             return {
               ...product,

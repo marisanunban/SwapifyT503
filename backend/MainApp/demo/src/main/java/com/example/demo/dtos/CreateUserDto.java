@@ -8,6 +8,8 @@ public class CreateUserDto {
     private String username;
     private String email; // Agregamos el email para mapearlo desde el UserInfoDto
 
+
+
     public CreateUserDto() {
     }
 

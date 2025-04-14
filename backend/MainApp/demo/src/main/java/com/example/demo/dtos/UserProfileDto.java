@@ -5,18 +5,29 @@ public class UserProfileDto {
     private String username;
     private String aboutMe;
     private String profilePicture;
+    private String pictureId;
 
-    public UserProfileDto(String username, String aboutMe, String profilePicture) {
+    public String getPictureId() {
+        return pictureId;
+    }
+
+    public void setPictureId(String pictureId) {
+        this.pictureId = pictureId;
+    }
+
+    public UserProfileDto(String username, String aboutMe, String profilePicture, String pictureId) {
         this.username = username;
         this.aboutMe = aboutMe;
         this.profilePicture = profilePicture;
+        this.pictureId = pictureId;
     }
 
-    public UserProfileDto(Long id, String username, String aboutMe, String profilePicture) {
+    public UserProfileDto(Long id, String username, String aboutMe, String profilePicture, String pictureId) {
         this.id = id;
         this.username = username;
         this.aboutMe = aboutMe;
         this.profilePicture = profilePicture;
+        this.pictureId = pictureId;
     }
 
     // Getters y setters

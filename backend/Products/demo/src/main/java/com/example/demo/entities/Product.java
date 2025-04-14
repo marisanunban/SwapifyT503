@@ -15,6 +15,16 @@ public class Product {
 
     private Long ownerId;
 
+    private String title;
+
+    private String description;
+
+    private String category;
+
+    private String status;
+
+    private String imageUrl;
+
     private String imageId;
 
     public String getImageId() {
@@ -25,13 +35,11 @@ public class Product {
         this.imageId = imageId;
     }
 
-    private String title;
+    private Map<String, String> attributes;
+    private Double price;
 
-    private String description;
+    private LocalDateTime createdAt;
 
-    private String category;
-
-    private String status;
 
     public String getId() {
         return id;
@@ -113,12 +121,6 @@ public class Product {
         this.createdAt = createdAt;
     }
 
-    private String imageUrl;
-
-    private Map<String, String> attributes;
-    private Double price;
-
-    private LocalDateTime createdAt;
 
     public Product() {
         this.createdAt = LocalDateTime.now();

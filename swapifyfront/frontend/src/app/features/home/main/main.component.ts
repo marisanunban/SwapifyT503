@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { ProductService } from '../../../services/product-service/product.service';
+import { TransactionService } from '../../../services/transaction-service/transaction.service';
 
 @Component({
   selector: 'app-main',
@@ -17,7 +18,7 @@ export class MainComponent implements OnInit {
   user: { id: number; username: string; credits: number } | null = null;
   products: any[] = []; 
 
-  constructor(private router: Router, private authService: AuthService, private productService: ProductService) {}
+  constructor(private router: Router,private transactionService:TransactionService, private authService: AuthService, private productService: ProductService) {}
 
   ngOnInit() {
     this.authService.user$.subscribe(user => {
@@ -29,6 +30,23 @@ export class MainComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/main']); // Redirigir al login después de cerrar sesión
+  }
+  comprarProducto(productId: string): void {
+    console.log( 'producto:', productId)
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No hay token disponible.');
+      return;
+    }
+    this.transactionService.startNegotiation(productId, token).subscribe({
+      next: (conversation) => {
+        console.log('Negociación iniciada:', conversation);
+        this.router.navigate(['/chat', conversation.id]); // Redirige al chat con el conversationId
+      },
+      error: (error) => {
+        console.error('Error al iniciar la negociación:', error);
+      }
+    });
   }
 
   irARegistro() {
