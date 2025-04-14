@@ -64,4 +64,8 @@ export class ProductService {
   
     return this.http.patch(`${this.apiUrl}/${productId}`, productData, { headers });
   }
+
+  searchProducts(keyword: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/search`, { params: { keyword } });
+  }
 }

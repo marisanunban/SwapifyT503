@@ -1,7 +1,9 @@
 <!-- main.component.html -->
 <nav class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
   <!-- Logo -->
-  <a href="#" class="text-2xl font-bold !text-green-700"></a>
+  <a href="#" class="text-2xl font-bold !text-green-700">
+    <img src="https://res.cloudinary.com/dgxpfv18c/image/upload/v1744636874/Untitled_logo_1_free-file-removebg-preview_ob6sxx.png" alt="Swapify Logo" class="h-20 w-20">
+  </a>
 
   <!-- Búsqueda -->
   <div class="flex flex-1 mx-4">
@@ -20,6 +22,8 @@
       <input
         type="text"
         placeholder="Busca artículos"
+        [(ngModel)]="searchKeyword" 
+        (keyup.enter)="buscarProductos()"
         class="w-full m-2 px-3 py-2 bg-gray-100 rounded-r-md focus:outline-none">
     </div>
   </div>
@@ -44,7 +48,47 @@
 </nav>
 
 <main>
-    
+    <div *ngIf="search">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div class="max-w-xs rounded-xl overflow-hidden shadow-lg bg-white" *ngFor="let product of products">
+          <!-- Imagen del producto con gradiente y botón de favoritos -->
+          <div class="relative h-64 bg-gradient-to-r from-indigo-700 to-purple-400">
+            <img 
+              [src]="product.imageUrl"
+              alt="product" 
+              class="h-full w-full object-contain p-4"
+            >
+            <button class="absolute top-3 right-3 p-2 rounded-full bg-white/20 backdrop-blur-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Información del producto -->
+          <div class="p-5">
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">{{product.title}}</h2>
+            
+            <!-- Descripción del producto -->
+            <p class="text-gray-600 text-sm mb-4">
+              {{product.description}}
+            </p>
+            
+            <!-- Precio y botón de añadir al carrito -->
+            <div class="flex items-center justify-between mt-4">
+              <div>
+                <p class="text-xs text-gray-500 uppercase font-medium">{{product.price}} swapicoins</p>
+                <p class="text-xl font-bold text-gray-900">{{product.price}}</p>
+              </div>
+              <button class="bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-6 rounded-md transition-colors">
+                Comprar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div *ngIf="!search">
     <div class="carrusel mb-10">
       <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
         <div class="carousel-indicators">
@@ -196,7 +240,7 @@
         </div>
       </div>
     </div>
-    
+  </div>  
 </main>
 
 

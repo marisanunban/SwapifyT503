@@ -16,6 +16,8 @@ import { ProductService } from '../../../services/product-service/product.servic
 export class MainComponent implements OnInit {
   user: { id: number; username: string; credits: number } | null = null;
   products: any[] = []; 
+  search: boolean = false; 
+  searchKeyword: string = ''; // Nueva propiedad para el término de búsqueda
 
   constructor(private router: Router, private authService: AuthService, private productService: ProductService) {}
 
@@ -47,7 +49,6 @@ export class MainComponent implements OnInit {
     this.router.navigate(['/contact']);
   }
  
-
   recogerProductos() {
     this.productService.getAllProducts().subscribe({
       next: response => {
@@ -56,6 +57,30 @@ export class MainComponent implements OnInit {
       },
       error: error => {
         console.error('Error al obtener productos:', error);
+      }
+    });
+  }
+
+  buscarProductos() {
+    if (this.searchKeyword.length == 0) {
+      this.search= false; // Indica que no se realizó una búsqueda
+      this.recogerProductos(); // Si el término de búsqueda está vacío, vuelve a cargar todos los productos
+      return;
+    }
+    else if(this.searchKeyword.length < 4) {
+      console.error('El término de búsqueda debe tener al menos 4 caracteres.');
+      return;
+    } 
+
+    this.productService.searchProducts(this.searchKeyword).subscribe({
+      next: response => {
+        this.products = response; // Asigna los productos encontrados
+        this.search = true; // Indica que se realizó una búsqueda
+      },
+      error: error => {
+        console.error('Error al buscar productos:', error);
+        this.products = []; // Limpia los productos en caso de error
+        this.search = true;
       }
     });
   }
