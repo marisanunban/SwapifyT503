@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 
 interface Conversation {
   id: number;
-  productId: string;
+  productId?: string; // Ahora opcional
   buyerId: number;
   sellerId: number;
   messages: any[];
@@ -59,13 +59,18 @@ export class NegotiationService {
   sendMessage(
     conversationId: number,
     content: string,
-    type: string = 'TEXT'
+    type: string = 'TEXT',
+    productId?: string
   ): Observable<any> {
+    const params: any = { content, type };
+    if (productId) {
+      params.productId = productId;
+    }
     return this.http
       .post(
         `${this.apiUrl}/${conversationId}/messages`,
         null,
-        { headers: this.getHeaders(), params: { content, type } }
+        { headers: this.getHeaders(), params }
       )
       .pipe(
         catchError((err) => {
@@ -84,5 +89,12 @@ export class NegotiationService {
           return throwError(() => new Error('No se pudieron obtener las conversaciones'));
         })
       );
+  }
+  deleteConversation(conversationId: number, token: string): Observable<void> {
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+    return this.http.delete<void>(`${this.apiUrl}/${conversationId}`, { headers });
   }
 }

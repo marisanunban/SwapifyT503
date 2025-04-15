@@ -67,6 +67,17 @@ public class Message {
     @Column(name = "sender_id")
     private Long senderId; // Cambiado de UUID a Long
 
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
+
+    @Column(name = "product_id")
+    private String productId; // Nuevo campo opcional
+
     private String content;
 
     private LocalDateTime timestamp;

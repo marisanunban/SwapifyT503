@@ -8,7 +8,7 @@ import { UserService } from '../../../services/user-service/user.service';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { ProductService } from '../../../services/product-service/product.service';
 import { CloudinaryService } from '../../../services/cloudinary-service/cloudinary.service';
-import { NegotiationService } from '../../../services/negotiation-service/negotiation.service'; // Importar NegotiationService
+import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 
 @Component({
   selector: 'app-profile',
@@ -26,7 +26,8 @@ export class ProfileComponent implements OnInit {
   isEditing: boolean = false;
   isEditingMe: boolean = false;
   products: any[] = [];
-  conversations: any[] = []; // Añadir propiedad para conversaciones
+  conversations: any[] = [];
+  otherUserNames: { [conversationId: number]: string } = {};
   latitude: number | null = null;
   longitude: number | null = null;
   municipio: string | null = null;
@@ -39,7 +40,7 @@ export class ProfileComponent implements OnInit {
     private productService: ProductService,
     private cloudinaryService: CloudinaryService,
     private http: HttpClient,
-    private negotiationService: NegotiationService // Inyectar NegotiationService
+    private negotiationService: NegotiationService
   ) {}
 
   ngOnInit() {
@@ -60,7 +61,6 @@ export class ProfileComponent implements OnInit {
           console.error('Error al obtener perfil:', error);
         }
       });
-      console.log(this.profileImageUrl);
     } else {
       console.error('No hay token disponible.');
     }
@@ -70,24 +70,37 @@ export class ProfileComponent implements OnInit {
 
   recuperarConversaciones() {
     const token = localStorage.getItem('token');
-    if (token && this.user?.id) {
-      this.negotiationService.getUserConversations().subscribe({
-        next: (response) => {
-          this.conversations = response;
-          console.log('Conversaciones del usuario:', this.conversations);
-          // Asociar conversaciones a productos
-          this.products = this.products.map(product => ({
-            ...product,
-            conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
-          }));
-        },
-        error: (error) => {
-          console.error('Error al obtener conversaciones:', error);
-        }
-      });
-    } else {
-      console.error('No hay token o ID de usuario disponible.');
+    if (!token || !this.user?.id) {
+      console.error('No hay token o usuario disponible.');
+      return;
     }
+
+    this.negotiationService.getUserConversations().subscribe({
+      next: (response) => {
+        this.conversations = response;
+        this.conversations.forEach(conv => {
+          const otherUserId = conv.buyerId === this.user!.id ? conv.sellerId : conv.buyerId;
+          this.userService.getUserById(otherUserId, token).subscribe({
+            next: (userInfo) => {
+              this.otherUserNames[conv.id] = userInfo.username || `Usuario ${otherUserId}`;
+            },
+            error: () => {
+              this.otherUserNames[conv.id] = `Usuario ${otherUserId}`;
+            }
+          });
+        });
+        this.products = this.products.map(product => {
+          const conversation = this.conversations.find(conv => 
+            (conv.sellerId === this.user!.id && conv.buyerId !== this.user!.id) ||
+            (conv.buyerId === this.user!.id && conv.sellerId === product.ownerId)
+          );
+          return { ...product, conversation };
+        });
+      },
+      error: (error) => {
+        console.error('Error al obtener conversaciones:', error);
+      }
+    });
   }
 
   goToChat(conversationId: number) {
@@ -96,13 +109,42 @@ export class ProfileComponent implements OnInit {
     });
   }
 
+  deleteConversation(conversationId: number) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No hay token disponible.');
+      return;
+    }
+
+    if (confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
+      this.negotiationService.deleteConversation(conversationId, token).subscribe({
+        next: () => {
+          console.log('Conversación eliminada:', conversationId);
+          this.conversations = this.conversations.filter(conv => conv.id !== conversationId);
+          delete this.otherUserNames[conversationId];
+          // Actualizar productos para quitar la referencia a la conversación eliminada
+          this.products = this.products.map(product => {
+            if (product.conversation && product.conversation.id === conversationId) {
+              const { conversation, ...rest } = product;
+              return rest;
+            }
+            return product;
+          });
+        },
+        error: (error) => {
+          console.error('Error al eliminar la conversación:', error);
+          alert('No se pudo eliminar la conversación. Inténtalo de nuevo.');
+        }
+      });
+    }
+  }
+
   obtenerUbicacion(): void {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           this.latitude = position.coords.latitude;
           this.longitude = position.coords.longitude;
-          console.log(`Ubicación obtenida: Latitud ${this.latitude}, Longitud ${this.longitude}`);
           this.obtenerMunicipio();
         },
         (error) => {
@@ -119,18 +161,13 @@ export class ProfileComponent implements OnInit {
       const url = `https://nominatim.openstreetmap.org/reverse?lat=${this.latitude}&lon=${this.longitude}&format=json`;
       this.http.get<any>(url).subscribe({
         next: (response) => {
-          console.log('Respuesta de Nominatim:', response);
           this.municipio = response.address.city || response.address.town || response.address.village || 'Municipio no encontrado';
           this.pais = response.address.country || 'País no encontrado';
-          console.log(`Municipio: ${this.municipio}`);
-          console.log(`País: ${this.pais}`);
         },
         error: (error) => {
           console.error('Error al obtener el municipio y el país:', error);
         }
       });
-    } else {
-      console.error('Latitud o longitud no están definidas.');
     }
   }
 
@@ -159,9 +196,7 @@ export class ProfileComponent implements OnInit {
     if (this.imageFile) {
       this.cloudinaryService.uploadImage(this.imageFile, token).subscribe({
         next: (uploadResponse) => {
-          console.log('Imagen subida exitosamente:', uploadResponse);
           this.profileImageUrl = uploadResponse.imageUrl;
-          console.log(this.profileImageUrl);
           this.updateProfile(token);
         },
         error: (error) => {
@@ -177,8 +212,6 @@ export class ProfileComponent implements OnInit {
     const updatedProfile: any = {
       profilePictureUrl: this.profileImageUrl
     };
-    console.log('foto de perfil:', this.profileImageUrl);
-    console.log('update', updatedProfile);
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
@@ -230,7 +263,6 @@ export class ProfileComponent implements OnInit {
       this.productService.getAllProducts(token).subscribe({
         next: response => {
           this.products = response;
-          console.log('Productos:', this.products);
         },
         error: error => {
           console.error('Error al obtener productos:', error);
@@ -244,23 +276,17 @@ export class ProfileComponent implements OnInit {
     if (token && this.user?.id) {
       this.productService.getProductsByOwner(this.user.id, token).subscribe({
         next: (response) => {
-          console.log('Respuesta completa del backend:', response);
-          this.products = response.map((product: any) => {
-            return {
-              ...product,
-              imageUrl: product.imageUrl,
-              imageId: product.imageId
-            };
-          });
-          console.log('Productos del propietario:', this.products);
-          this.recuperarConversaciones(); // Cargar conversaciones después de productos
+          this.products = response.map((product: any) => ({
+            ...product,
+            imageUrl: product.imageUrl,
+            imageId: product.imageId
+          }));
+          this.recuperarConversaciones();
         },
         error: (error) => {
           console.error('Error al obtener productos del propietario:', error);
         }
       });
-    } else {
-      console.error('No hay token o ID de usuario disponible.');
     }
   }
 

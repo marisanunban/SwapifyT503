@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class NegotiationServiceImpl implements NegotiationService {
@@ -25,7 +26,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     private final ProductClient productClient;
     private final TransactionClient transactionClient;
     private final SimpMessagingTemplate messagingTemplate;
-    private final ObjectMapper objectMapper; // Añadido para deserializar proposalProductIds
+    private final ObjectMapper objectMapper;
 
     public NegotiationServiceImpl(
             ConversationRepository conversationRepository,
@@ -40,7 +41,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         this.productClient = productClient;
         this.transactionClient = transactionClient;
         this.messagingTemplate = messagingTemplate;
-        this.objectMapper = new ObjectMapper(); // Inicializado aquí
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -59,8 +60,23 @@ public class NegotiationServiceImpl implements NegotiationService {
             throw new IllegalArgumentException("No puedes iniciar una negociación para tu propio producto");
         }
 
+        // Verificar si ya existe una conversación activa para este producto
+        Optional<Conversation> existingConversation = conversationRepository
+                .findByBuyerIdAndSellerIdAndProductIdAndStatus(
+                        buyerId, sellerId, productId, ConversationStatus.ACTIVE);
+        if (existingConversation.isPresent()) {
+            return mapToDto(existingConversation.get());
+        }
+
+        // Verificar si ya existe una conversación activa entre buyerId y sellerId
+        existingConversation = conversationRepository
+                .findByBuyerIdAndSellerIdAndStatus(buyerId, sellerId, ConversationStatus.ACTIVE);
+        if (existingConversation.isPresent()) {
+            return mapToDto(existingConversation.get());
+        }
+
+        // Crear nueva conversación (sin productId)
         Conversation conversation = new Conversation();
-        conversation.setProductId(productId);
         conversation.setBuyerId(buyerId);
         conversation.setSellerId(sellerId);
         conversation.setStatus(ConversationStatus.ACTIVE);
@@ -71,7 +87,7 @@ public class NegotiationServiceImpl implements NegotiationService {
 
     @Override
     @Transactional
-    public MessageDto sendMessage(Long conversationId, String content, String type, String authToken) {
+    public MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId) {
         UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
         if (userInfo == null) throw new EntityNotFoundException("Token inválido");
 
@@ -89,6 +105,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         message.setContent(content);
         message.setTimestamp(LocalDateTime.now());
         message.setType(MessageType.valueOf(type.toUpperCase()));
+        message.setProductId(productId); // Puede ser null
 
         Message saved = messageRepository.save(message);
         MessageDto dto = mapToMessageDto(saved);
@@ -99,20 +116,15 @@ public class NegotiationServiceImpl implements NegotiationService {
 
     @Override
     public ConversationDto getNegotiation(Long id, String authToken) {
-        // Validar el token y obtener la información del usuario
         UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
         if (userInfo == null) {
             throw new EntityNotFoundException("Token inválido o usuario no encontrado");
         }
 
-        // Buscar la conversación
         Conversation conversation = conversationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Conversación no encontrada"));
 
-        // Convertir el ID del usuario a Long para comparación
         Long requesterId = Long.valueOf(userInfo.getId().toString());
-
-        // Verificar si el usuario es el comprador o el vendedor
         if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
             throw new IllegalArgumentException("Solo los participantes de la conversación pueden verla");
         }
@@ -168,27 +180,22 @@ public class NegotiationServiceImpl implements NegotiationService {
             throw new IllegalStateException("No hay una propuesta pendiente para aceptar");
         }
 
-        // Crear la transacción con los datos del vendedor
         CreateTransactionDto transactionDto = new CreateTransactionDto();
         transactionDto.setProductOfferedId(conversation.getProductId());
         transactionDto.setCreditsOffered(conversation.getProposalCreditsOffered() != null ? conversation.getProposalCreditsOffered() : 0);
         TransactionDto createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
 
-        // Actualizar la conversación con el ID de la transacción creada
-        // (Opcional: podrías agregar un campo transactionId en Conversation si quieres vincularlos)
-        conversation.setStatus(ConversationStatus.ACTIVE); // Mantenemos el estado hasta que se complete la transacción
-
+        conversation.setStatus(ConversationStatus.ACTIVE);
         Conversation updated = conversationRepository.save(conversation);
         ConversationDto dto = mapToDto(updated);
         messagingTemplate.convertAndSend("/topic/conversations/" + id, dto);
 
-        // Notificar al comprador (María) para que actualice la transacción
-        // Esto podría ser un mensaje WebSocket o una notificación manual
         messagingTemplate.convertAndSend("/topic/users/" + conversation.getBuyerId(),
                 "Por favor, confirma la transacción " + createdTransaction.getId() + " con tu producto.");
 
         return dto;
     }
+
     @Override
     public List<ConversationDto> getUserConversations(String authToken) {
         UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
@@ -197,6 +204,24 @@ public class NegotiationServiceImpl implements NegotiationService {
         Long userId = Long.valueOf(userInfo.getId().toString());
         List<Conversation> conversations = conversationRepository.findByBuyerIdOrSellerId(userId);
         return conversations.stream().map(this::mapToDto).toList();
+    }
+    @Override
+    @Transactional
+    public void deleteNegotiation(Long id, String authToken) {
+        UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
+        if (userInfo == null) {
+            throw new EntityNotFoundException("Token inválido");
+        }
+
+        Conversation conversation = conversationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Conversación no encontrada"));
+
+        Long requesterId = Long.valueOf(userInfo.getId().toString());
+        if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
+            throw new IllegalArgumentException("Solo los participantes de la conversación pueden eliminarla");
+        }
+
+        conversationRepository.deleteById(id);
     }
 
     private ConversationDto mapToDto(Conversation c) {
@@ -220,7 +245,8 @@ public class NegotiationServiceImpl implements NegotiationService {
                 m.getSenderId(),
                 m.getContent(),
                 m.getTimestamp().toString(),
-                m.getType().toString()
+                m.getType().toString(),
+                m.getProductId() // Añadido
         );
     }
 }

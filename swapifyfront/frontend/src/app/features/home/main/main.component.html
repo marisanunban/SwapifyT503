@@ -38,8 +38,9 @@
     </button>
     <div *ngIf="user" class="flex items-center space-x-4">
       <span class="text-lg font-semibold"><a (click)="irAProfile()">{{ user.username }}</a></span>
-      <span class="bg-green-600 px-3 py-1 rounded">Créditos: {{ user.credits }}</span>
-      <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded">Cerrar sesión</button>
+      <span class="bg-green-600 px-3 py-1 rounded text-white">Créditos: {{ user.credits }}</span>
+      <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded text-white">Cerrar sesión</button>
+      <button class="text-teal-600 m-2" (click)="irACrear()">Crear producto</button>
     </div>
     <div class="flex items-center ml-2">
       ES <i class="ml-1 fas fa-chevron-down text-xs"></i>
@@ -79,10 +80,10 @@
                 <p class="text-xl font-bold text-gray-900">{{ product.price }}</p>
               </div>
               <button
-                (click)="startChat(product.id)"
+                (click)="product.conversation ? goToChat(product.conversation.id) : startChat(product.id)"
                 class="bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-6 rounded-md transition-colors"
-                [disabled]="!user">
-                Iniciar Chat
+                [disabled]="!user || product.ownerId === user?.id">
+                {{ product.conversation ? 'Ir al chat' : 'Iniciar Chat' }}
               </button>
             </div>
           </div>
@@ -220,10 +221,10 @@
                 <p class="text-xl font-bold text-gray-900">{{ product.price }}</p>
               </div>
               <button
-                (click)="startChat(product.id)"
+                (click)="product.conversation ? goToChat(product.conversation.id) : startChat(product.id)"
                 class="bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-6 rounded-md transition-colors"
-                [disabled]="!user">
-                Iniciar Chat
+                [disabled]="!user || product.ownerId === user?.id">
+                {{ product.conversation ? 'Ir al chat' : 'Iniciar Chat' }}
               </button>
             </div>
           </div>

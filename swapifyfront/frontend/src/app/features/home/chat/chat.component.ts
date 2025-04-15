@@ -216,4 +216,26 @@ export class ChatComponent implements OnInit {
   selectUser(user: User) {
     console.log('Usuario seleccionado:', user);
   }
+  deleteConversation() {
+    const token = localStorage.getItem('token');
+    if (!token || !this.conversation) {
+      console.error('No hay token o conversación disponible.');
+      return;
+    }
+  
+    const conversationId = this.conversation.id; // Almacenamos el ID para usarlo consistentemente
+  
+    if (confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
+      this.negotiationService.deleteConversation(conversationId, token).subscribe({
+        next: () => {
+          console.log('Conversación eliminada:', conversationId);
+          this.router.navigate(['/profile']); // Redirigir a profile tras eliminar
+        },
+        error: (error) => {
+          console.error('Error al eliminar la conversación:', error);
+          alert('No se pudo eliminar la conversación. Inténtalo de nuevo.');
+        }
+      });
+    }
+  }
 }
