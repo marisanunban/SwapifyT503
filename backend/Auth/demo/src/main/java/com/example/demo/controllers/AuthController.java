@@ -49,8 +49,5 @@ public class AuthController {
         return ResponseEntity.ok(userInfo);
     }
 
-//    @PostMapping("/reset-password-view")
-//    public String resetPasswordView(){
-//
-//    }
+
 }

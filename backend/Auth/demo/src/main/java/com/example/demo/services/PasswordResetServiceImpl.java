@@ -41,10 +41,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         tokenRepository.save(tokenEntity);
 
         // Reemplazamos el envío de correo por un mensaje de prueba
-        emailService.sendResetPasswordEmail(user.getEmail(), resetToken);
-        System.out.println("Token generado (supuestamente real): " + resetToken);
+        System.out.println("Token generado (simulado): " + resetToken);
 
-        return new MessageDto("Correo enviado (supuestamente real) token de reset: " + resetToken);
+        return new MessageDto("Correo enviado (simulado para pruebas)");
     }
 
     @Override

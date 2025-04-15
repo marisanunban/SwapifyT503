@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/negotiations")
 public class NegotiationController {
@@ -61,5 +61,11 @@ public class NegotiationController {
             @RequestHeader("Authorization") String authToken) {
         ConversationDto conversation = negotiationService.acceptProposal(id, authToken);
         return new ResponseEntity<>(conversation, HttpStatus.OK);
+    }
+    @GetMapping("/user")
+    public ResponseEntity<List<ConversationDto>> getUserConversations(
+            @RequestHeader("Authorization") String authToken) {
+        List<ConversationDto> conversations = negotiationService.getUserConversations(authToken);
+        return new ResponseEntity<>(conversations, HttpStatus.OK);
     }
 }
