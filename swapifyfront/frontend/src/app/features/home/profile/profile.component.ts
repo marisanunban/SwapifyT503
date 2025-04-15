@@ -8,9 +8,11 @@ import { UserService } from '../../../services/user-service/user.service';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { ProductService } from '../../../services/product-service/product.service';
 import { CloudinaryService } from '../../../services/cloudinary-service/cloudinary.service';
+import { NegotiationService } from '../../../services/negotiation-service/negotiation.service'; // Importar NegotiationService
 
 @Component({
   selector: 'app-profile',
+  standalone: true,
   imports: [FormsModule, RouterLink, CommonModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
@@ -19,11 +21,12 @@ export class ProfileComponent implements OnInit {
   user: { id: number; username: string; credits: number } | null = null;
   username: string = '';
   aboutMe: string = '';
-  profileImageUrl: string = ''; // URL de la imagen actual del perfil
-  imageFile: File | null = null; // Archivo de imagen seleccionado
+  profileImageUrl: string = '';
+  imageFile: File | null = null;
   isEditing: boolean = false;
   isEditingMe: boolean = false;
   products: any[] = [];
+  conversations: any[] = []; // Añadir propiedad para conversaciones
   latitude: number | null = null;
   longitude: number | null = null;
   municipio: string | null = null;
@@ -35,13 +38,13 @@ export class ProfileComponent implements OnInit {
     private authService: AuthService,
     private productService: ProductService,
     private cloudinaryService: CloudinaryService,
-    private http: HttpClient
+    private http: HttpClient,
+    private negotiationService: NegotiationService // Inyectar NegotiationService
   ) {}
 
   ngOnInit() {
     this.authService.user$.subscribe(user => {
-      this.user = user; // Se actualizará automáticamente cuando el usuario inicie sesión
-
+      this.user = user;
     });
 
     const token = localStorage.getItem('token');
@@ -51,21 +54,46 @@ export class ProfileComponent implements OnInit {
           this.username = response.username;
           this.aboutMe = response.aboutMe;
           this.profileImageUrl = response.profilePicture;
-          this.recuperarProductosPropietario(); // Llama a la función para recoger productos
+          this.recuperarProductosPropietario();
         },
-
         error: error => {
           console.error('Error al obtener perfil:', error);
         }
-        
       });
-      console.log(this.profileImageUrl)
+      console.log(this.profileImageUrl);
     } else {
       console.error('No hay token disponible.');
     }
 
-    // Obtener la ubicación del usuario
     this.obtenerUbicacion();
+  }
+
+  recuperarConversaciones() {
+    const token = localStorage.getItem('token');
+    if (token && this.user?.id) {
+      this.negotiationService.getUserConversations().subscribe({
+        next: (response) => {
+          this.conversations = response;
+          console.log('Conversaciones del usuario:', this.conversations);
+          // Asociar conversaciones a productos
+          this.products = this.products.map(product => ({
+            ...product,
+            conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
+          }));
+        },
+        error: (error) => {
+          console.error('Error al obtener conversaciones:', error);
+        }
+      });
+    } else {
+      console.error('No hay token o ID de usuario disponible.');
+    }
+  }
+
+  goToChat(conversationId: number) {
+    this.router.navigate(['/chat'], {
+      state: { conversationId }
+    });
   }
 
   obtenerUbicacion(): void {
@@ -75,7 +103,7 @@ export class ProfileComponent implements OnInit {
           this.latitude = position.coords.latitude;
           this.longitude = position.coords.longitude;
           console.log(`Ubicación obtenida: Latitud ${this.latitude}, Longitud ${this.longitude}`);
-          this.obtenerMunicipio(); // Llama al método para obtener el municipio y el país
+          this.obtenerMunicipio();
         },
         (error) => {
           console.error('Error al obtener la ubicación:', error);
@@ -89,11 +117,9 @@ export class ProfileComponent implements OnInit {
   obtenerMunicipio(): void {
     if (this.latitude && this.longitude) {
       const url = `https://nominatim.openstreetmap.org/reverse?lat=${this.latitude}&lon=${this.longitude}&format=json`;
-
       this.http.get<any>(url).subscribe({
         next: (response) => {
           console.log('Respuesta de Nominatim:', response);
-          // Extraer municipio y país de la respuesta
           this.municipio = response.address.city || response.address.town || response.address.village || 'Municipio no encontrado';
           this.pais = response.address.country || 'País no encontrado';
           console.log(`Municipio: ${this.municipio}`);
@@ -131,34 +157,28 @@ export class ProfileComponent implements OnInit {
     }
 
     if (this.imageFile) {
-      // Subir la nueva imagen a Cloudinary
       this.cloudinaryService.uploadImage(this.imageFile, token).subscribe({
         next: (uploadResponse) => {
           console.log('Imagen subida exitosamente:', uploadResponse);
-          this.profileImageUrl = uploadResponse.imageUrl; // Actualiza la URL de la imagen
-          console.log(this.profileImageUrl)
-          this.updateProfile(token); // Llama a la función para guardar el perfil
+          this.profileImageUrl = uploadResponse.imageUrl;
+          console.log(this.profileImageUrl);
+          this.updateProfile(token);
         },
         error: (error) => {
           console.error('Error al subir la imagen:', error);
         }
       });
     } else {
-      // Si no se seleccionó una nueva imagen, guarda directamente el perfil
       this.updateProfile(token);
     }
   }
 
-  
-
   private updateProfile(token: string): void {
-    
     const updatedProfile: any = {
-      profilePictureUrl: this.profileImageUrl // URL de la imagen actualizada o existente
-      
-    }; 
-    console.log('foto de perfil:' ,this.profileImageUrl)
-   console.log('update' , updatedProfile)
+      profilePictureUrl: this.profileImageUrl
+    };
+    console.log('foto de perfil:', this.profileImageUrl);
+    console.log('update', updatedProfile);
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
@@ -184,7 +204,6 @@ export class ProfileComponent implements OnInit {
     }
 
     const updatedProfile: any = {};
-
     if (this.aboutMe) {
       updatedProfile.aboutMe = this.aboutMe;
     }
@@ -234,6 +253,7 @@ export class ProfileComponent implements OnInit {
             };
           });
           console.log('Productos del propietario:', this.products);
+          this.recuperarConversaciones(); // Cargar conversaciones después de productos
         },
         error: (error) => {
           console.error('Error al obtener productos del propietario:', error);
