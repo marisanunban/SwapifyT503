@@ -1,4 +1,4 @@
-package com.example.cloudinary_service.entities;
+package com.example.cloudinary_service.pojos;
 
 
 public class Image {
