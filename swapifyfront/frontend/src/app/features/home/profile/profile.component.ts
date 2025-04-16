@@ -144,11 +144,13 @@ export class ProfileComponent implements OnInit {
   enableEditingMe() {
     this.isEditingMe = true;
   }
-
-  onFileSelected(event: Event) {
+  onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       this.imageFile = input.files[0];
+      console.log('Archivo seleccionado:', this.imageFile);
+    } else {
+      console.error('No se seleccionó ningún archivo.');
     }
   }
 
@@ -169,6 +171,9 @@ export class ProfileComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al subir la imagen:', error);
+          if(error.status == 403){
+            alert('Error 403: ' + error.error.error)
+          }
         }
       });
     } else {
