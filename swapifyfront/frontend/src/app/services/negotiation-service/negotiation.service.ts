@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 
 interface Conversation {
   id: number;
-  productId?: string; // Ahora opcional
+  productId: string;
   buyerId: number;
   sellerId: number;
   messages: any[];

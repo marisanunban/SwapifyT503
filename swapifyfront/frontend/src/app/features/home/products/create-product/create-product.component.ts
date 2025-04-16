@@ -92,6 +92,9 @@ export class CreateProductComponent {
       },
       error: (error) => {
         console.error('Error al subir la imagen:', error);
+        if(error.status == 403){
+          alert('Error 403: ' + error.error.error)
+        }
       }
     });
   }

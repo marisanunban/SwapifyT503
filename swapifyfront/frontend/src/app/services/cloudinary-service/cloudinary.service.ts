@@ -9,6 +9,8 @@ export class CloudinaryService {
   private apiUrl = 'http://localhost:8088/cloudinary';
   constructor( private http: HttpClient) { }
 
+
+
   uploadImage(file: File, token: string): Observable<any> {
     const formData = new FormData();
     formData.append('multipartFile', file);

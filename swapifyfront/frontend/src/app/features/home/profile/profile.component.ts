@@ -32,6 +32,7 @@ export class ProfileComponent implements OnInit {
   longitude: number | null = null;
   municipio: string | null = null;
   pais: string | null = null;
+  activeTab: string = 'products';
 
   constructor(
     private router: Router,
@@ -67,40 +68,29 @@ export class ProfileComponent implements OnInit {
 
     this.obtenerUbicacion();
   }
-
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
+  }
   recuperarConversaciones() {
     const token = localStorage.getItem('token');
-    if (!token || !this.user?.id) {
-      console.error('No hay token o usuario disponible.');
-      return;
+    if (token && this.user?.id) {
+      this.negotiationService.getUserConversations().subscribe({
+        next: (response) => {
+          this.conversations = response;
+          console.log('Conversaciones del usuario:', this.conversations);
+          // Asociar conversaciones a productos
+          this.products = this.products.map(product => ({
+            ...product,
+            conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
+          }));
+        },
+        error: (error) => {
+          console.error('Error al obtener conversaciones:', error);
+        }
+      });
+    } else {
+      console.error('No hay token o ID de usuario disponible.');
     }
-
-    this.negotiationService.getUserConversations().subscribe({
-      next: (response) => {
-        this.conversations = response;
-        this.conversations.forEach(conv => {
-          const otherUserId = conv.buyerId === this.user!.id ? conv.sellerId : conv.buyerId;
-          this.userService.getUserById(otherUserId, token).subscribe({
-            next: (userInfo) => {
-              this.otherUserNames[conv.id] = userInfo.username || `Usuario ${otherUserId}`;
-            },
-            error: () => {
-              this.otherUserNames[conv.id] = `Usuario ${otherUserId}`;
-            }
-          });
-        });
-        this.products = this.products.map(product => {
-          const conversation = this.conversations.find(conv => 
-            (conv.sellerId === this.user!.id && conv.buyerId !== this.user!.id) ||
-            (conv.buyerId === this.user!.id && conv.sellerId === product.ownerId)
-          );
-          return { ...product, conversation };
-        });
-      },
-      error: (error) => {
-        console.error('Error al obtener conversaciones:', error);
-      }
-    });
   }
 
   goToChat(conversationId: number) {
@@ -201,6 +191,9 @@ export class ProfileComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al subir la imagen:', error);
+          if(error.status == 403){
+            alert('Error 403: ' + error.error.error)
+          }
         }
       });
     } else {

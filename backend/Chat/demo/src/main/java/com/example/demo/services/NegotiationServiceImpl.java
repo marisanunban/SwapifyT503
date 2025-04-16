@@ -88,11 +88,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     @Override
     @Transactional
     public MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId) {
-        UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
         if (userInfo == null) throw new EntityNotFoundException("Token inválido");
-
-        Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new EntityNotFoundException("Conversación no encontrada"));
 
         Long senderId = Long.valueOf(userInfo.getId().toString());
         if (!senderId.equals(conversation.getBuyerId()) && !senderId.equals(conversation.getSellerId())) {
