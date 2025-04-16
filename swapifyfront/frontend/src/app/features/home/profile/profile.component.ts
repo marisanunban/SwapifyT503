@@ -32,7 +32,7 @@ export class ProfileComponent implements OnInit {
   longitude: number | null = null;
   municipio: string | null = null;
   pais: string | null = null;
-  activeTab: string = 'products';
+  mostrarSeccionProductos: boolean = true;
 
   constructor(
     private router: Router,
@@ -68,8 +68,16 @@ export class ProfileComponent implements OnInit {
 
     this.obtenerUbicacion();
   }
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
+
+
+  mostrarProductos(): void {
+    this.mostrarSeccionProductos = true;
+    this.recuperarProductosPropietario(); // Recupera los productos del propietario
+  }
+  
+  mostrarConversaciones(): void {
+    this.mostrarSeccionProductos = false;
+    this.recuperarConversaciones(); // Recupera las conversaciones activas
   }
   recuperarConversaciones() {
     const token = localStorage.getItem('token');
@@ -335,4 +343,6 @@ export class ProfileComponent implements OnInit {
   irAEditar(productId: string): void {
     this.router.navigate(['/edit', productId]);
   }
+
+  
 }

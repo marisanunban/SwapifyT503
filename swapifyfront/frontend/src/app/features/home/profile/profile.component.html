@@ -275,15 +275,55 @@
         <!-- Pestañas de contenido -->
 <div class="border-b border-gray-200 mb-6">
   <nav class="flex">
-    <a href="#" class="px-4 py-3 text-teal-600 border-b-2 border-teal-600 font-medium">Productos a la venta ({{products.length}})</a>
-    <a href="#" class="px-4 py-3 text-gray-500 hover:text-gray-700">Vendidos (32)</a>
-    <a href="#" class="px-4 py-3 text-gray-500 hover:text-gray-700">Favoritos (12)</a>
-    <a href="#" class="px-4 py-3 text-gray-500 hover:text-gray-700">Conversaciones ({{conversations.length}})</a>
+    <a 
+      href="#" 
+      class="px-4 py-3 font-medium"
+      [class.text-teal-600]="mostrarSeccionProductos"
+      [class.border-b-2]="mostrarSeccionProductos"
+      [class.border-teal-600]="mostrarSeccionProductos"
+      [class.text-gray-500]="!mostrarSeccionProductos"
+      (click)="mostrarProductos(); $event.preventDefault()"
+    >
+      Productos a la venta ({{products.length}})
+    </a>
+    <a 
+      href="#" 
+      class="px-4 py-3 font-medium"
+      [class.text-teal-600]="!mostrarSeccionProductos"
+      [class.border-b-2]="!mostrarSeccionProductos"
+      [class.border-teal-600]="!mostrarSeccionProductos"
+      [class.text-gray-500]="mostrarSeccionProductos"
+      (click)="mostrarConversaciones(); $event.preventDefault()"
+    >
+      Conversaciones ({{conversations.length}})
+    </a>
   </nav>
 </div>
 
+<!-- Sección de productos -->
+<div *ngIf="mostrarSeccionProductos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div *ngFor="let product of products" class="bg-white rounded-lg shadow-sm overflow-hidden">
+    <div class="relative">
+      <img [src]="product.imageUrl" class="w-full h-48 object-cover" alt="Producto">
+    </div>
+    <div class="p-4">
+      <h5 class="text-lg font-medium">{{product.title}}</h5>
+      <p class="text-gray-600 text-sm">{{product.description}}</p>
+      <span class="font-bold text-teal-600">{{product.price}}</span>
+    </div>
+    <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+      <button class="flex items-center text-teal-600 hover:text-teal-800" (click)="irAEditar(product.id)">
+        <i class="fas fa-edit mr-1"></i> Editar
+      </button>
+      <button class="flex items-center text-red-500 hover:text-red-700" (click)="eliminarProducto(product.id, product.imageId)">
+        <i class="fas fa-trash mr-1"></i> Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Sección de conversaciones -->
-<div *ngIf="conversations.length > 0" class="bg-white rounded-lg shadow-sm p-6 mb-6">
+<div *ngIf="!mostrarSeccionProductos" class="bg-white rounded-lg shadow-sm p-6 mb-6">
   <h5 class="text-lg font-semibold mb-4">Conversaciones activas</h5>
   <div *ngFor="let conversation of conversations" class="border-b border-gray-200 py-3">
     <div class="flex justify-between items-center">
@@ -292,76 +332,14 @@
         <p class="text-sm text-gray-600">Estado: {{ conversation.status }}</p>
         <p class="text-sm text-gray-600">Creado: {{ conversation.createdAt | date:'short' }}</p>
       </div>
-      <div class="flex items-center space-x-2">
-        <button class="flex items-center text-blue-500 hover:text-blue-700" (click)="goToChat(conversation.id)">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          Ir al chat
+      <div class="flex items-center space-x-4">
+        <button class=" m-2 flex items-center text-blue-500 hover:text-blue-700" (click)="goToChat(conversation.id)">
+          <i class="fas fa-comments mr-1"></i> Ir al chat
         </button>
         <button class="flex items-center text-red-500 hover:text-red-700" (click)="deleteConversation(conversation.id)">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Eliminar
+          <i class="fas fa-trash mr-1"></i> Eliminar
         </button>
       </div>
-    </div>
-  </div>
-</div>
-<div *ngIf="conversations.length === 0" class="bg-white rounded-lg shadow-sm p-6 mb-6">
-  <p class="text-gray-600">No hay conversaciones activas.</p>
-</div>
-        
-        <!-- Productos -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <!-- Producto 1 -->
-  <div *ngFor="let product of products" class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <div class="relative">
-      <img [src]="product.imageUrl" class="w-full h-48 object-cover" alt="Producto">
-      <span class="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 text-xs rounded-full">Nuevo</span>
-      <button class="absolute bottom-2 right-2 p-1 bg-white rounded-full shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-        </svg>
-      </button>
-    </div>
-    <div class="p-4">
-      <div class="flex justify-between items-center mb-2">
-        <h5 class="text-lg font-medium">{{product.title}}</h5>
-        <span class="font-bold text-teal-600">{{product.price}}</span>
-      </div>
-      <p class="text-gray-600 text-sm mb-3">{{product.description}}</p>
-      <div class="flex justify-between items-center">
-        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-          </svg>
-          45 visitas
-        </span>
-        <span class="text-gray-500 text-xs">Publicado hace 2 días</span>
-      </div>
-    </div>
-    <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
-      <button class="flex items-center text-teal-600 hover:text-teal-800" (click)="irAEditar(product.id)">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-        </svg>
-        Editar
-      </button>
-      <button *ngIf="product.conversation" class="flex items-center text-blue-500 hover:text-blue-700" (click)="goToChat(product.conversation.id)">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-        Ir al chat
-      </button>
-      <button class="flex items-center text-red-500 hover:text-red-700" (click)="eliminarProducto(product.id, product.imageId)">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-        Eliminar
-      </button>
     </div>
   </div>
 </div>
