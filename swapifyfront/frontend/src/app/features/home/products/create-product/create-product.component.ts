@@ -78,7 +78,7 @@ export class CreateProductComponent {
             this.transactionService.createTransaction(productId, this.token).subscribe({
               next: (transactionResponse) => {
                 console.log('Transacción creada exitosamente:', transactionResponse);
-                this.router.navigate(['/home']); // Redirige al usuario a la página de inicio o donde prefieras
+                this.router.navigate(['/main']); // Redirige al usuario a la página de inicio o donde prefieras
               },
               error: (transactionError) => {
                 console.error('Error al crear la transacción:', transactionError);
