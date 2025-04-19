@@ -20,7 +20,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Registra el endpoint WebSocket al que el frontend se conectará
-        registry.addEndpoint("/websocket").setAllowedOrigins("http://localhost:4200").withSockJS();
+        // Registra el endpoint WebSocket nativo
+        registry.addEndpoint("/websocket").setAllowedOrigins("http://localhost:4200");
+
+        // Opcional: Mantén un endpoint con SockJS para compatibilidad (si es necesario)
+        registry.addEndpoint("/websocket-sockjs").setAllowedOrigins("http://localhost:4200").withSockJS();
     }
 }

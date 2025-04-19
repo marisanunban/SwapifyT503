@@ -1,77 +1,48 @@
 package com.example.demo.entities;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
+@Document(collection = "chats")
 @Data
 public class Conversation {
+    @Id
+    private Long id;
+
+    @Indexed
+    private String productId;
+
+    @Indexed
+    private Long buyerId;
+
+    @Indexed
+    private Long sellerId;
+
+    @Indexed
+    private ConversationStatus status;
+
+    private String proposalProductIds;
+
+    private Integer proposalCreditsOffered;
+
+    private LocalDateTime createdAt;
+
+    private List<Message> messages = new ArrayList<>();
+
+    // Getters y Setters generados por Lombok @Data
+    // Los métodos explícitos no son necesarios, pero los mantengo por claridad si prefieres conservarlos
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public List<Message> getMessages() {
-        return messages;
-    }
-
-    public void setMessages(List<Message> messages) {
-        this.messages = messages;
-    }
-
-    public String getProposalProductIds() {
-        return proposalProductIds;
-    }
-
-    public void setProposalProductIds(String proposalProductIds) {
-        this.proposalProductIds = proposalProductIds;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Integer getProposalCreditsOffered() {
-        return proposalCreditsOffered;
-    }
-
-    public void setProposalCreditsOffered(Integer proposalCreditsOffered) {
-        this.proposalCreditsOffered = proposalCreditsOffered;
-    }
-
-    public ConversationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ConversationStatus status) {
-        this.status = status;
-    }
-
-    public Long getSellerId() {
-        return sellerId;
-    }
-
-    public void setSellerId(Long sellerId) {
-        this.sellerId = sellerId;
-    }
-
-    public Long getBuyerId() {
-        return buyerId;
-    }
-
-    public void setBuyerId(Long buyerId) {
-        this.buyerId = buyerId;
     }
 
     public String getProductId() {
@@ -82,29 +53,59 @@ public class Conversation {
         this.productId = productId;
     }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long getBuyerId() {
+        return buyerId;
+    }
 
-    @Column(name = "product_id")
-    private String productId;
+    public void setBuyerId(Long buyerId) {
+        this.buyerId = buyerId;
+    }
 
-    @Column(name = "buyer_id")
-    private Long buyerId; // Cambiado de UUID a Long
+    public Long getSellerId() {
+        return sellerId;
+    }
 
-    @Column(name = "seller_id")
-    private Long sellerId; // Cambiado de UUID a Long
+    public void setSellerId(Long sellerId) {
+        this.sellerId = sellerId;
+    }
 
-    @Enumerated(EnumType.STRING)
-    private ConversationStatus status;
+    public ConversationStatus getStatus() {
+        return status;
+    }
 
-    @Column(columnDefinition = "TEXT")
-    private String proposalProductIds;
+    public void setStatus(ConversationStatus status) {
+        this.status = status;
+    }
 
-    private Integer proposalCreditsOffered;
+    public String getProposalProductIds() {
+        return proposalProductIds;
+    }
 
-    private LocalDateTime createdAt;
+    public void setProposalProductIds(String proposalProductIds) {
+        this.proposalProductIds = proposalProductIds;
+    }
 
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL)
-    private List<Message> messages = new ArrayList<>();
+    public Integer getProposalCreditsOffered() {
+        return proposalCreditsOffered;
+    }
+
+    public void setProposalCreditsOffered(Integer proposalCreditsOffered) {
+        this.proposalCreditsOffered = proposalCreditsOffered;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public List<Message> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
+    }
 }

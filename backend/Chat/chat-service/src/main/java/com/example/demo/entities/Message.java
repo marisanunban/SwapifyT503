@@ -1,16 +1,18 @@
 package com.example.demo.entities;
 
-import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
-@Entity
 @Data
 public class Message {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    private Long senderId;
+
+    private String productId;
+
+    private String content;
 
     public Long getId() {
         return id;
@@ -44,29 +46,6 @@ public class Message {
         this.content = content;
     }
 
-    public Long getSenderId() {
-        return senderId;
-    }
-
-    public void setSenderId(Long senderId) {
-        this.senderId = senderId;
-    }
-
-    public Conversation getConversation() {
-        return conversation;
-    }
-
-    public void setConversation(Conversation conversation) {
-        this.conversation = conversation;
-    }
-
-    @ManyToOne
-    @JoinColumn(name = "conversation_id")
-    private Conversation conversation;
-
-    @Column(name = "sender_id")
-    private Long senderId; // Cambiado de UUID a Long
-
     public String getProductId() {
         return productId;
     }
@@ -75,13 +54,15 @@ public class Message {
         this.productId = productId;
     }
 
-    @Column(name = "product_id")
-    private String productId; // Nuevo campo opcional
+    public Long getSenderId() {
+        return senderId;
+    }
 
-    private String content;
+    public void setSenderId(Long senderId) {
+        this.senderId = senderId;
+    }
 
     private LocalDateTime timestamp;
 
-    @Enumerated(EnumType.STRING)
     private MessageType type;
 }

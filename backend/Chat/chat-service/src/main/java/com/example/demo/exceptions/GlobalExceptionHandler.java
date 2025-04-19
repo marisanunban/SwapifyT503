@@ -1,6 +1,5 @@
 package com.example.demo.exceptions;
 
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,13 +9,14 @@ import org.springframework.web.context.request.WebRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Maneja EntityNotFoundException (404)
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(EntityNotFoundException ex, WebRequest request) {
+    // Maneja NoSuchElementException (404)
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Map<String, Object>> handleNoSuchElementException(NoSuchElementException ex, WebRequest request) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", HttpStatus.NOT_FOUND.value());
