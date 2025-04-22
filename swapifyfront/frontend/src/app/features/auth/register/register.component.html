@@ -34,6 +34,21 @@
             placeholder="Contraseña"
             required
           >
+
+          <!-- Campo para Repetir Contraseña -->
+          <input
+          type="password"
+          [(ngModel)]="confirmPassword"
+          name="confirmPassword"
+          class="border border-gray-300 p-3 rounded w-full focus:border-green-500 focus:outline-none"
+          placeholder="Repite la Contraseña"
+          required
+          >
+
+          <!-- Mensaje de error si las contraseñas no coinciden -->
+          <div *ngIf="passwordMismatch" class="text-center text-red-500 text-sm">
+          Las contraseñas deben coincidir
+          </div>
   
           <!-- Mensaje de error -->
           <div *ngIf="error" class="text-center text-red-500 text-sm">

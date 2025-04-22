@@ -16,6 +16,7 @@ export class RegisterComponent {
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
+  confirmPassword: string = ''; // Cambiado a booleano para controlar el checkbox
 
   constructor(private authService: AuthService, private router: Router) {}
 
@@ -24,9 +25,18 @@ export class RegisterComponent {
     this.error = null;
     this.successMessage = null;
   
-    if (!this.email || !this.password) {
+    // Validar campos vacíos
+    if (!this.email || !this.password || !this.confirmPassword) {
       this.error = 'Por favor, complete todos los campos.';
       console.log('Campos incompletos');
+      return;
+    }
+  
+    // Validar que las contraseñas coincidan
+    if (this.password !== this.confirmPassword) {
+      this.error = 'Las contraseñas deben coincidir.';
+      console.log('Las contraseñas no coinciden');
+      alert('Las contraseñas no coinciden. Por favor, verifica e inténtalo de nuevo.');
       return;
     }
   
@@ -42,10 +52,8 @@ export class RegisterComponent {
         this.successMessage = '¡Registro exitoso! Redirigiendo al login...';
         this.email = '';
         this.password = '';
+        this.confirmPassword = ''; // Limpiar el campo de confirmación
         this.router.navigate(['/login']);
-        /*setTimeout(() => {
-        }, 500);*/ 
-        //TODO spinner
       },
       error: (err) => {
         console.log('Error del backend:', err);

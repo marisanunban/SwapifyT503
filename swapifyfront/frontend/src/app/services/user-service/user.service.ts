@@ -44,4 +44,9 @@ export class UserService {
 
     return this.http.patch(`${this.apiUrl}/me`, profileData, { headers });
   }
+
+  updateUserLocation(userId: number, payload: any, token: string) {
+    const headers = { Authorization: `Bearer ${token}` };
+    return this.http.put(`${this.apiUrl}/${userId}/location`, payload, { headers });
+  }
 }

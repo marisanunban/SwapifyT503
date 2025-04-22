@@ -169,6 +169,36 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  updateLocation(): void {
+    const token = localStorage.getItem('token');
+    if (!token || !this.user?.id) {
+      console.error('No hay token o ID de usuario disponible.');
+      return;
+    }
+  
+    if (this.latitude && this.longitude && this.municipio) {
+      const payload = {
+        latitude: this.latitude,
+        longitude: this.longitude,
+        locationName: this.municipio
+      };
+  
+      this.userService.updateUserLocation(this.user.id, payload, token).subscribe({
+        next: (response) => {
+          console.log('Ubicación actualizada:', response);
+          alert('Ubicación actualizada correctamente.');
+        },
+        error: (error) => {
+          console.error('Error al actualizar la ubicación:', error);
+          alert('No se pudo actualizar la ubicación. Inténtalo de nuevo.');
+        }
+      });
+    } else {
+      console.error('No se pudo obtener la ubicación completa.');
+      alert('No se pudo obtener la ubicación completa. Por favor, inténtalo de nuevo.');
+    }
+  }
+
   enableEditing() {
     this.isEditing = true;
   }
