@@ -108,14 +108,8 @@ export class ProfileComponent implements OnInit {
   }
 
   deleteConversation(conversationId: number) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No hay token disponible.');
-      return;
-    }
-
     if (confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
-      this.negotiationService.deleteConversation(conversationId, token).subscribe({
+      this.negotiationService.deleteConversation(conversationId).subscribe({
         next: () => {
           console.log('Conversación eliminada:', conversationId);
           this.conversations = this.conversations.filter(conv => conv.id !== conversationId);

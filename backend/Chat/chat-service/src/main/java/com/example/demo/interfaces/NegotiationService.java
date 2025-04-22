@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface NegotiationService {
     ConversationDto startNegotiation(String productId, String authToken);
-    MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId);
+    MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId, Integer creditsOffered);
     ConversationDto getNegotiation(Long id, String authToken);
     ConversationDto sendProposal(Long id, List<String> productIdsOffered, Integer creditsOffered, String authToken);
     ConversationDto acceptProposal(Long id, String authToken);

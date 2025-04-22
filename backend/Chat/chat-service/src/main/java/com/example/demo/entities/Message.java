@@ -14,6 +14,15 @@ public class Message {
 
     private String content;
 
+    public Integer getCreditsOffered() {
+        return creditsOffered;
+    }
+
+    public void setCreditsOffered(Integer creditsOffered) {
+        this.creditsOffered = creditsOffered;
+    }
+
+    private Integer creditsOffered;
     public Long getId() {
         return id;
     }

@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/negotiations")
@@ -33,8 +34,9 @@ public class NegotiationController {
             @RequestParam("content") String content,
             @RequestParam(value = "type", defaultValue = "TEXT") String type,
             @RequestParam(value = "productId", required = false) String productId,
+            @RequestParam(value = "creditsOffered", required = false, defaultValue = "0") Integer creditsOffered,
             @RequestHeader("Authorization") String authToken) {
-        MessageDto message = negotiationService.sendMessage(conversationId, content, type, authToken, productId);
+        MessageDto message = negotiationService.sendMessage(conversationId, content, type, authToken, productId, creditsOffered);
         return new ResponseEntity<>(message, HttpStatus.CREATED);
     }
 
@@ -63,12 +65,14 @@ public class NegotiationController {
         ConversationDto conversation = negotiationService.acceptProposal(id, authToken);
         return new ResponseEntity<>(conversation, HttpStatus.OK);
     }
+
     @GetMapping("/user")
     public ResponseEntity<List<ConversationDto>> getUserConversations(
             @RequestHeader("Authorization") String authToken) {
         List<ConversationDto> conversations = negotiationService.getUserConversations(authToken);
         return new ResponseEntity<>(conversations, HttpStatus.OK);
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNegotiation(
             @PathVariable("id") Long id,

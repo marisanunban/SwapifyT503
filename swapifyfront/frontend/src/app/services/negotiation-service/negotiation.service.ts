@@ -60,12 +60,12 @@ export class NegotiationService {
     conversationId: number,
     content: string,
     type: string = 'TEXT',
-    productId?: string
+    productId?: string,
+    creditsOffered?: number
   ): Observable<any> {
     const params: any = { content, type };
-    if (productId) {
-      params.productId = productId;
-    }
+    if (productId) params.productId = productId;
+    if (creditsOffered !== undefined) params.creditsOffered = creditsOffered.toString();
     return this.http
       .post(
         `${this.apiUrl}/${conversationId}/messages`,
@@ -90,11 +90,15 @@ export class NegotiationService {
         })
       );
   }
-  deleteConversation(conversationId: number, token: string): Observable<void> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-    return this.http.delete<void>(`${this.apiUrl}/${conversationId}`, { headers });
+
+  deleteConversation(conversationId: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.apiUrl}/${conversationId}`, { headers: this.getHeaders() })
+      .pipe(
+        catchError((err) => {
+          console.error('Error deleting conversation:', err);
+          return throwError(() => new Error('No se pudo eliminar la conversación'));
+        })
+      );
   }
 }

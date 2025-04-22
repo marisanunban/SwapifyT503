@@ -8,9 +8,9 @@ import com.example.demo.dtos.*;
 import com.example.demo.entities.*;
 import com.example.demo.interfaces.NegotiationService;
 import com.example.demo.repositories.ConversationRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -49,16 +49,14 @@ public class NegotiationServiceImpl implements NegotiationService {
     @Override
     @Transactional
     public ConversationDto startNegotiation(String productId, String authToken) {
-        // Validar el token
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null);
+            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
         if (userInfo == null) throw new NoSuchElementException("Token inválido");
 
-        // Obtener el producto
         ProductDto product;
         try {
             product = productClient.getProduct(productId);
@@ -67,26 +65,13 @@ public class NegotiationServiceImpl implements NegotiationService {
         }
         if (product == null) throw new NoSuchElementException("Producto no encontrado");
 
-        // Convertir IDs
-        Long buyerId;
-        try {
-            buyerId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
-        }
-
-        Long sellerId;
-        try {
-            sellerId = Long.valueOf(product.getOwnerId());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de propietario inválido: " + product.getOwnerId());
-        }
+        Long buyerId = userInfo.getId();
+        Long sellerId = Long.valueOf(product.getOwnerId());
 
         if (buyerId.equals(sellerId)) {
             throw new IllegalArgumentException("No puedes iniciar una negociación para tu propio producto");
         }
 
-        // Verificar si ya existe una conversación activa para este producto
         Optional<Conversation> existingConversation = conversationRepository
                 .findByBuyerIdAndSellerIdAndProductIdAndStatus(
                         buyerId, sellerId, productId, ConversationStatus.ACTIVE);
@@ -94,14 +79,12 @@ public class NegotiationServiceImpl implements NegotiationService {
             return mapToDto(existingConversation.get());
         }
 
-        // Verificar si ya existe una conversación activa entre buyerId y sellerId
         existingConversation = conversationRepository
                 .findByBuyerIdAndSellerIdAndStatus(buyerId, sellerId, ConversationStatus.ACTIVE);
         if (existingConversation.isPresent()) {
             return mapToDto(existingConversation.get());
         }
 
-        // Crear nueva conversación
         Conversation conversation = new Conversation();
         conversation.setId(idGeneratorService.generateSequence("conversation_sequence"));
         conversation.setProductId(productId);
@@ -110,21 +93,16 @@ public class NegotiationServiceImpl implements NegotiationService {
         conversation.setStatus(ConversationStatus.ACTIVE);
         conversation.setCreatedAt(LocalDateTime.now());
 
-        // Guardar la conversación
-        try {
-            Conversation savedConversation = conversationRepository.save(conversation);
-            return mapToDto(savedConversation);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al guardar la conversación: " + e.getMessage(), e);
-        }
+        Conversation savedConversation = conversationRepository.save(conversation);
+        return mapToDto(savedConversation);
     }
 
     @Override
     @Transactional
-    public MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId) {
+    public MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId, Integer creditsOffered) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null);
+            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -133,15 +111,17 @@ public class NegotiationServiceImpl implements NegotiationService {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
 
-        Long senderId;
-        try {
-            senderId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
-        }
-
+        Long senderId = userInfo.getId();
         if (!senderId.equals(conversation.getBuyerId()) && !senderId.equals(conversation.getSellerId())) {
             throw new IllegalArgumentException("Solo los participantes pueden enviar mensajes");
+        }
+
+        // Validar producto si se proporciona
+        if (productId != null && !productId.isEmpty()) {
+            ProductDto product = productClient.getProduct(productId);
+            if (product == null || !product.getOwnerId().equals(senderId.toString())) {
+                throw new IllegalArgumentException("El producto no existe o no pertenece al remitente");
+            }
         }
 
         Message message = new Message();
@@ -149,20 +129,12 @@ public class NegotiationServiceImpl implements NegotiationService {
         message.setSenderId(senderId);
         message.setContent(content);
         message.setTimestamp(LocalDateTime.now());
-        try {
-            message.setType(MessageType.valueOf(type.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Tipo de mensaje inválido: " + type);
-        }
+        message.setType(MessageType.valueOf(type.toUpperCase()));
         message.setProductId(productId);
+        message.setCreditsOffered(creditsOffered != null ? creditsOffered : 0);
 
         conversation.getMessages().add(message);
-        Conversation updatedConversation;
-        try {
-            updatedConversation = conversationRepository.save(conversation);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al guardar el mensaje: " + e.getMessage(), e);
-        }
+        Conversation updatedConversation = conversationRepository.save(conversation);
 
         Message savedMessage = updatedConversation.getMessages().stream()
                 .filter(m -> m.getId().equals(message.getId()))
@@ -170,6 +142,35 @@ public class NegotiationServiceImpl implements NegotiationService {
                 .orElse(message);
 
         MessageDto dto = mapToMessageDto(savedMessage, conversationId);
+
+        // Si es PROPOSAL_RESPONSE, crear una transacción
+        if (message.getType() == MessageType.PROPOSAL_RESPONSE) {
+            // Buscar la propuesta original (el último mensaje PROPOSAL)
+            Message originalProposal = conversation.getMessages().stream()
+                    .filter(m -> m.getType() == MessageType.PROPOSAL)
+                    .reduce((first, second) -> second) // Obtener el último
+                    .orElseThrow(() -> new IllegalStateException("No se encontró una propuesta original"));
+
+            CreateTransactionDto transactionDto = new CreateTransactionDto();
+            // Producto ofrecido por el vendedor (de la propuesta original)
+            transactionDto.setProductOfferedId(originalProposal.getProductId());
+            transactionDto.setCreditsOffered(originalProposal.getCreditsOffered());
+
+            TransactionDto createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
+
+            // Enviar mensaje de sistema notificando la transacción
+            Message systemMessage = new Message();
+            systemMessage.setId(messageIdGenerator.incrementAndGet());
+            systemMessage.setContent("Transacción creada con ID: " + createdTransaction.getId());
+            systemMessage.setTimestamp(LocalDateTime.now());
+            systemMessage.setType(MessageType.SYSTEM);
+            conversation.getMessages().add(systemMessage);
+            conversationRepository.save(conversation);
+
+            MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
+            messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+        }
+
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, dto);
         return dto;
     }
@@ -178,7 +179,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public ConversationDto getNegotiation(Long id, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null);
+            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -187,13 +188,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         Conversation conversation = conversationRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
 
-        Long requesterId;
-        try {
-            requesterId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
-        }
-
+        Long requesterId = userInfo.getId();
         if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
             throw new IllegalArgumentException("Solo los participantes de la conversación pueden verla");
         }
@@ -206,7 +201,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public ConversationDto sendProposal(Long id, List<String> productIdsOffered, Integer creditsOffered, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null);
+            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -215,111 +210,36 @@ public class NegotiationServiceImpl implements NegotiationService {
         Conversation conversation = conversationRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
 
-        Long buyerId;
-        try {
-            buyerId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
+        Long senderId = userInfo.getId();
+        if (!senderId.equals(conversation.getBuyerId()) && !senderId.equals(conversation.getSellerId())) {
+            throw new IllegalArgumentException("Solo los participantes pueden enviar propuestas");
         }
 
-        if (!buyerId.equals(conversation.getBuyerId())) {
-            throw new IllegalArgumentException("Solo el comprador puede enviar propuestas");
-        }
+        String productId = productIdsOffered != null && !productIdsOffered.isEmpty() ? productIdsOffered.get(0) : null;
+        String content = "Propuesta: " + (productId != null ? "Producto ID " + productId : "") +
+                (creditsOffered != null && creditsOffered > 0 ? ", " + creditsOffered + " créditos" : "");
 
-        try {
-            if (productIdsOffered != null && !productIdsOffered.isEmpty()) {
-                conversation.setProposalProductIds(objectMapper.writeValueAsString(productIdsOffered));
-            } else {
-                conversation.setProposalProductIds(null);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Error al serializar productIdsOffered: " + e.getMessage(), e);
-        }
-        conversation.setProposalCreditsOffered(creditsOffered);
-        conversation.setStatus(ConversationStatus.PROPOSAL_SENT);
-
-        Conversation updated;
-        try {
-            updated = conversationRepository.save(conversation);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al guardar la propuesta: " + e.getMessage(), e);
-        }
-        return mapToDto(updated);
+        return mapToDto(conversationRepository.save(conversation));
     }
 
     @Override
     @Transactional
     public ConversationDto acceptProposal(Long id, String authToken) {
-        UserInfoDto userInfo;
-        try {
-            userInfo = authClient.validateUserToken(authToken, null);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
-        }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
-
-        Conversation conversation = conversationRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
-
-        Long sellerId;
-        try {
-            sellerId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
-        }
-
-        if (!sellerId.equals(conversation.getSellerId())) {
-            throw new IllegalArgumentException("Solo el vendedor puede aceptar propuestas");
-        }
-
-        if (!conversation.getStatus().equals(ConversationStatus.PROPOSAL_SENT)) {
-            throw new IllegalStateException("No hay una propuesta pendiente para aceptar");
-        }
-
-        CreateTransactionDto transactionDto = new CreateTransactionDto();
-        transactionDto.setProductOfferedId(conversation.getProductId());
-        transactionDto.setCreditsOffered(conversation.getProposalCreditsOffered() != null ? conversation.getProposalCreditsOffered() : 0);
-
-        TransactionDto createdTransaction;
-        try {
-            createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al crear la transacción: " + e.getMessage(), e);
-        }
-
-        conversation.setStatus(ConversationStatus.ACTIVE);
-        Conversation updated;
-        try {
-            updated = conversationRepository.save(conversation);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al guardar la conversación: " + e.getMessage(), e);
-        }
-
-        ConversationDto dto = mapToDto(updated);
-        messagingTemplate.convertAndSend("/topic/conversations/" + id, dto);
-        messagingTemplate.convertAndSend("/topic/users/" + conversation.getBuyerId(),
-                "Por favor, confirma la transacción " + createdTransaction.getId() + " con tu producto.");
-
-        return dto;
+        // Este método ya no se usa en el flujo propuesto, pero lo mantenemos por compatibilidad
+        throw new UnsupportedOperationException("acceptProposal is deprecated. Use transaction status updates.");
     }
 
     @Override
     public List<ConversationDto> getUserConversations(String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null);
+            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
         if (userInfo == null) throw new NoSuchElementException("Token inválido");
 
-        Long userId;
-        try {
-            userId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
-        }
-
+        Long userId = userInfo.getId();
         List<Conversation> conversations = conversationRepository.findByBuyerIdOrSellerId(userId);
         return conversations.stream().map(this::mapToDto).toList();
     }
@@ -329,7 +249,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public void deleteNegotiation(Long id, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null);
+            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -338,22 +258,12 @@ public class NegotiationServiceImpl implements NegotiationService {
         Conversation conversation = conversationRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
 
-        Long requesterId;
-        try {
-            requesterId = Long.valueOf(userInfo.getId().toString());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("ID de usuario inválido: " + userInfo.getId());
-        }
-
+        Long requesterId = userInfo.getId();
         if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
             throw new IllegalArgumentException("Solo los participantes de la conversación pueden eliminarla");
         }
 
-        try {
-            conversationRepository.deleteById(id);
-        } catch (Exception e) {
-            throw new RuntimeException("Error al eliminar la conversación: " + e.getMessage(), e);
-        }
+        conversationRepository.deleteById(id);
     }
 
     private ConversationDto mapToDto(Conversation c) {
@@ -378,11 +288,8 @@ public class NegotiationServiceImpl implements NegotiationService {
                 m.getContent(),
                 m.getTimestamp().toString(),
                 m.getType().toString(),
-                m.getProductId()
+                m.getProductId(),
+                m.getCreditsOffered()
         );
-    }
-
-    private Long generateMessageId() {
-        return messageIdGenerator.incrementAndGet();
     }
 }
