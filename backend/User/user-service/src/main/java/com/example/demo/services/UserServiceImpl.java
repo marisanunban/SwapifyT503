@@ -151,4 +151,16 @@ public class UserServiceImpl implements UserService {
                 user.getProfilePictureUrl() != null ? user.getProfilePictureId() : ""
         );
     }
+    @Override
+    public User updateLocation(Long userId, Double latitude, Double longitude, String locationName) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        user.setLatitude(latitude);
+        user.setLongitude(longitude);
+        user.setLocationName(locationName);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        return userRepository.save(user);
+    }
 }

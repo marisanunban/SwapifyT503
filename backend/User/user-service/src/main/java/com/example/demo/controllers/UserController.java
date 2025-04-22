@@ -2,6 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.clients.AuthClient;
 import com.example.demo.dtos.*;
+import com.example.demo.entities.User;
 import com.example.demo.interfaces.CreditHistoryService;
 import com.example.demo.interfaces.UserService;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:4200") // TODO: Implementar archivo de seguridad y quitar esta etiqueta
 @RestController
@@ -161,6 +163,19 @@ public class    UserController {
             System.out.println("Error al transferir créditos: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
+    }
+    @PutMapping("/{id}/location")
+    public ResponseEntity<User> updateLocation(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> payload) {
+
+        Double latitude = Double.valueOf(payload.get("latitude").toString());
+        Double longitude = Double.valueOf(payload.get("longitude").toString());
+        String locationName = payload.get("locationName").toString();
+
+        User updatedUser = userService.updateLocation(id, latitude, longitude, locationName);
+
+        return ResponseEntity.ok(updatedUser);
     }
 }
 

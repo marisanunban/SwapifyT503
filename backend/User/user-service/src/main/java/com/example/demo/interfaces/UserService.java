@@ -1,6 +1,7 @@
 package com.example.demo.interfaces;
 
 import com.example.demo.dtos.*;
+import com.example.demo.entities.User;
 
 public interface UserService {
     UserDto getUser(Long id);
@@ -14,4 +15,5 @@ public interface UserService {
     UserProfileDto getUserProfileByEmail(String email);
     UserDto getUserByEmail(String email);
     void transferCredits(Long fromUserId, Long toUserId, int amount);
+    User updateLocation(Long userId, Double latitude, Double longitude, String locationName);
 }
