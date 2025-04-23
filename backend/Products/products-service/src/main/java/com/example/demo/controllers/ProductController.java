@@ -138,6 +138,12 @@ public class ProductController {
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
+    @GetMapping("/by-location/{location}")
+    public ResponseEntity<List<ProductDto>> getProductsByLocation(@PathVariable String location) {
+        List<ProductDto> products = productService.getProductsByLocation(location);
+        return ResponseEntity.ok(products);
+    }
+
 
     private Long getOwnerIdFromToken(String token) {
         String bearerToken = token.replace("Bearer ", "");

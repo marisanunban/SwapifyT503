@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -164,4 +166,13 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.save(user);
     }
+
+    @Override
+    public List<User> getUsersByLocation(String locationName) {
+        List<User> users = new ArrayList<>();
+        users = userRepository.findByLocationName(locationName);
+        return users;
+    }
+
+
 }

@@ -177,6 +177,12 @@ public class    UserController {
 
         return ResponseEntity.ok(updatedUser);
     }
+
+    @GetMapping("/get-by-location/{location}")
+    public ResponseEntity<List<User>> getUsersFromLocation(@PathVariable String location){
+        List<User> users = userService.getUsersByLocation(location);
+        return ResponseEntity.ok(users);
+    }
 }
 
 
