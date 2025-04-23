@@ -82,10 +82,10 @@ public class    UserController {
     public Mono<ResponseEntity<UserProfileDto>> getCurrentUserProfile(@RequestHeader("Authorization") String token) {
         try {
             UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
-            if (userInfo == null || userInfo.getEmail() == null) {
+            if (userInfo == null || userInfo.getUseremail() == null) {
                 return Mono.just(ResponseEntity.status(401).build());
             }
-            UserProfileDto profileDto = userService.getUserProfileByEmail(userInfo.getEmail());
+            UserProfileDto profileDto = userService.getUserProfileByEmail(userInfo.getUseremail());
             return Mono.just(ResponseEntity.ok(profileDto));
         } catch (Exception e) {
             System.out.println("Excepción al obtener el perfil: " + e.getMessage());
@@ -100,7 +100,7 @@ public class    UserController {
                 // 1. Validar el token
                 UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
 
-                if (userInfo == null || !userInfo.getEmail().equals(email)) {
+                if (userInfo == null || !userInfo.getUseremail().equals(email)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
                 }
 
@@ -120,11 +120,11 @@ public class    UserController {
             @RequestBody UpdateUserProfileDto dto) {
         try {
             UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
-            if (userInfo == null || userInfo.getEmail() == null) {
+            if (userInfo == null || userInfo.getUseremail() == null) {
                 return Mono.just(ResponseEntity.status(401).build());
             }
             // Buscar el usuario por email para obtener su ID
-            UserProfileDto userProfile = userService.getUserProfileByEmail(userInfo.getEmail());
+            UserProfileDto userProfile = userService.getUserProfileByEmail(userInfo.getUseremail());
             userService.updateUserProfileReactively(userProfile.getId(), dto);
 
             return Mono.just(ResponseEntity.noContent().build());

@@ -1,8 +1,49 @@
 package com.example.demo.dtos;
 
+import jakarta.persistence.Column;
+
 public class UserInfoDto {
     private Long id;
-    private String email;
+    private String useremail;
+    private  String nickname;
+
+    private Double latitude;
+    private Double longitude;
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getLocationName() {
+        return locationName;
+    }
+
+    public void setLocationName(String locationName) {
+        this.locationName = locationName;
+    }
+
+    private String locationName;
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     private String role;
     private String imageUrl;
     private String imageId;
@@ -28,9 +69,9 @@ public class UserInfoDto {
     }
 
     // Constructor con parámetros
-    public UserInfoDto(Long id, String email, String role) {
+    public UserInfoDto(Long id, String useremail, String role) {
         this.id = id;
-        this.email = email;
+        this.useremail = useremail;
         this.role = role;
     }
 
@@ -43,12 +84,12 @@ public class UserInfoDto {
         this.id = id;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUseremail() {
+        return useremail;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUseremail(String useremail) {
+        this.useremail = useremail;
     }
 
     public String getRole() {
