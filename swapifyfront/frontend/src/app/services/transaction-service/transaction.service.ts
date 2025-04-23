@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { Transaction } from '../../models/transaction.model'; // Importar interfaz compartida
 
 @Injectable({
   providedIn: 'root'
@@ -15,17 +16,17 @@ export class TransactionService {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
       Authorization: `Bearer ${token || ''}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     });
   }
 
-  createTransaction(productId: string, creditsOffered: number): Observable<any> {
+  createTransaction(productId: string, creditsOffered: number): Observable<Transaction> {
     const body = {
       productOfferedId: productId,
-      creditsOffered
+      creditsOffered,
     };
     return this.http
-      .post(this.apiUrl, body, { headers: this.getHeaders() })
+      .post<Transaction>(this.apiUrl, body, { headers: this.getHeaders() })
       .pipe(
         catchError((err) => {
           console.error('Error creating transaction:', err);
@@ -34,13 +35,19 @@ export class TransactionService {
       );
   }
 
-  updateTransactionStatus(transactionId: number, status: 'ACCEPTED' | 'REJECTED', productRequestedId?: string): Observable<any> {
+  updateTransactionStatus(
+    transactionId: number,
+    status: 'ACCEPTED' | 'REJECTED',
+    productRequestedId?: string
+  ): Observable<Transaction> {
     const body = {
       status,
-      productRequestedId: productRequestedId || null
+      productRequestedId: productRequestedId || null,
     };
     return this.http
-      .put(`${this.apiUrl}/${transactionId}/status`, body, { headers: this.getHeaders() })
+      .put<Transaction>(`${this.apiUrl}/${transactionId}/status`, body, {
+        headers: this.getHeaders(),
+      })
       .pipe(
         catchError((err) => {
           console.error('Error updating transaction status:', err);
@@ -49,9 +56,9 @@ export class TransactionService {
       );
   }
 
-  getTransaction(transactionId: number): Observable<any> {
+  getTransaction(transactionId: number): Observable<Transaction> {
     return this.http
-      .get(`${this.apiUrl}/${transactionId}`, { headers: this.getHeaders() })
+      .get<Transaction>(`${this.apiUrl}/${transactionId}`, { headers: this.getHeaders() })
       .pipe(
         catchError((err) => {
           console.error('Error fetching transaction:', err);
