@@ -24,8 +24,7 @@
     <div class="flex-1 overflow-y-auto">
       <div
         *ngFor="let user of users"
-        class="px-4 py-3 hover:bg-indigo-800 cursor-pointer"
-        (click)="selectUser(user)"
+        class="px-4 py-3 hover:bg-indigo-800"
       >
         <div class="flex items-center">
           <div class="relative">
@@ -96,29 +95,53 @@
             class="w-full text-center text-sm text-gray-500 my-2"
           >
             <div *ngIf="message.text.includes('Transacción creada')">
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p>{{ message.text }}</p>
-                <button
-                  class="bg-blue-500 text-white px-3 py-1 rounded-md mx-1 hover:bg-blue-600"
-                  (click)="showTransactionDetails(extractTransactionId(message.text))"
-                  aria-label="View transaction details"
-                >
-                  Ver Detalles
-                </button>
-                <button
-                  class="bg-green-500 text-white px-3 py-1 rounded-md mx-1 hover:bg-green-600"
-                  (click)="acceptTransaction(extractTransactionId(message.text))"
-                  aria-label="Accept transaction"
-                >
-                  Aceptar
-                </button>
-                <button
-                  class="bg-red-500 text-white px-3 py-1 rounded-md mx-1 hover:bg-red-600"
-                  (click)="rejectTransaction(extractTransactionId(message.text))"
-                  aria-label="Reject transaction"
-                >
-                  Rechazar
-                </button>
+              <div class="bg-gray-100 p-3 rounded-md inline-block">
+                <p class="mb-2">{{ message.text }}</p>
+                <ng-container *ngIf="transactions[getTransactionId(message.text)] as transaction; else loading">
+                  <!-- Log para depuración -->
+                  <ng-container *ngIf="consoleLog(transaction)">
+                    <!-- Mostrar botones solo si la transacción está pendiente y el usuario no ha aceptado -->
+                    <div *ngIf="transaction.status === 'PENDING' && !hasAccepted(getTransactionId(message.text))" class="flex justify-center space-x-2">
+                      <button
+                        class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
+                        (click)="showTransactionDetails(getTransactionId(message.text))"
+                        aria-label="View transaction details"
+                      >
+                        Ver Detalles
+                      </button>
+                      <button
+                        class="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600"
+                        [disabled]="isAccepting[getTransactionId(message.text)]"
+                        (click)="acceptTransaction(getTransactionId(message.text))"
+                        aria-label="Accept transaction"
+                      >
+                        Aceptar
+                      </button>
+                      <button
+                        class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600"
+                        [disabled]="isRejecting[getTransactionId(message.text)]"
+                        (click)="rejectTransaction(getTransactionId(message.text))"
+                        aria-label="Reject transaction"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                    <!-- Mostrar mensaje de espera si el usuario ya aceptó pero el otro no -->
+                    <div *ngIf="transaction.status === 'PENDING' && hasAccepted(getTransactionId(message.text))" class="text-gray-700">
+                      Esperando la aceptación del otro usuario...
+                    </div>
+                    <!-- Mostrar estado final -->
+                    <div *ngIf="transaction.status === 'COMPLETED'" class="text-green-600">
+                      Transacción completada.
+                    </div>
+                    <div *ngIf="transaction.status === 'REJECTED'" class="text-red-600">
+                      Transacción rechazada.
+                    </div>
+                  </ng-container>
+                </ng-container>
+                <ng-template #loading>
+                  <p class="text-gray-500">Cargando transacción...</p>
+                </ng-template>
               </div>
             </div>
             <div *ngIf="!message.text.includes('Transacción creada')">

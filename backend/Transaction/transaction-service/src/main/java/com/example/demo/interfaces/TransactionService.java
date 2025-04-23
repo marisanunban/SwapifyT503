@@ -7,12 +7,11 @@ import com.example.demo.dtos.UpdateTransactionStatusDto;
 import java.util.List;
 
 public interface TransactionService {
-    // Eliminamos buyerId para reflejar que el vendedor inicia sin comprador
     TransactionDto createTransaction(CreateTransactionDto dto, String authToken);
 
-    TransactionDto getTransaction(Long id, String authToken);
+    TransactionDto getTransaction(Long id, String authToken); // Modificado para incluir authToken
 
     TransactionDto updateTransactionStatus(Long id, UpdateTransactionStatusDto dto, String authToken);
 
-    List<TransactionDto> getUserTransactions(String authToken);
+    List<TransactionDto> getTransactionsByUser(String authToken);
 }

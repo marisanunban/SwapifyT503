@@ -1,64 +1,109 @@
 package com.example.demo.entities;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transactions")
-@Data
+@Getter
+@Setter
 public class Transaction {
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "buyer_id", nullable = true)
-    private Long buyerId;  // Puede ser null hasta que un comprador acepte
-
-    @Column(name = "seller_id", nullable = false)
     private Long sellerId;
+    private Long buyerId;
 
-    @Column(name = "seller_email", nullable = false)
-    private String sellerEmail;
-
-    @Column(name = "buyer_email", nullable = true)
-    private String buyerEmail;  // Puede ser null hasta que un comprador acepte
-
-    @Column(name = "product_offered_id")
-    private String productOfferedId;  // Nullable (para trueques con créditos)
-
-    @Column(name = "product_requested_id", nullable = true)  // Corregido: ahora puede ser null
-    private String productRequestedId;  // Puede ser null hasta que el comprador acepte
-
-    @Column(name = "credits_offered", nullable = false)
-    private Integer creditsOffered = 0;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
-    private Status status;  // Null hasta que se acepte
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    public enum Status {
-        PENDING, ACCEPTED, REJECTED, COMPLETED
-    }
-
-    // Getters y setters
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public boolean isProcessing() {
+        return isProcessing;
+    }
+
+    public void setProcessing(boolean processing) {
+        isProcessing = processing;
+    }
+
+    public boolean isSellerAccepted() {
+        return sellerAccepted;
+    }
+
+    public void setSellerAccepted(boolean sellerAccepted) {
+        this.sellerAccepted = sellerAccepted;
+    }
+
+    public boolean isBuyerAccepted() {
+        return buyerAccepted;
+    }
+
+    public void setBuyerAccepted(boolean buyerAccepted) {
+        this.buyerAccepted = buyerAccepted;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public Integer getCreditsRequested() {
+        return creditsRequested;
+    }
+
+    public void setCreditsRequested(Integer creditsRequested) {
+        this.creditsRequested = creditsRequested;
+    }
+
+    public Integer getCreditsOffered() {
+        return creditsOffered;
+    }
+
+    public void setCreditsOffered(Integer creditsOffered) {
+        this.creditsOffered = creditsOffered;
+    }
+
+    public String getProductRequestedId() {
+        return productRequestedId;
+    }
+
+    public void setProductRequestedId(String productRequestedId) {
+        this.productRequestedId = productRequestedId;
+    }
+
+    public String getProductOfferedId() {
+        return productOfferedId;
+    }
+
+    public void setProductOfferedId(String productOfferedId) {
+        this.productOfferedId = productOfferedId;
     }
 
     public Long getBuyerId() {
@@ -77,67 +122,23 @@ public class Transaction {
         this.sellerId = sellerId;
     }
 
-    public String getSellerEmail() {
-        return sellerEmail;
+    private String productOfferedId;
+    private String productRequestedId;
+    private Integer creditsOffered;
+    private Integer creditsRequested;
+
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private boolean buyerAccepted;
+    private boolean sellerAccepted;
+    private boolean isProcessing;
+
+    public enum Status {
+        PENDING, COMPLETED, REJECTED
     }
 
-    public void setSellerEmail(String sellerEmail) {
-        this.sellerEmail = sellerEmail;
-    }
-
-    public String getBuyerEmail() {
-        return buyerEmail;
-    }
-
-    public void setBuyerEmail(String buyerEmail) {
-        this.buyerEmail = buyerEmail;
-    }
-
-    public String getProductOfferedId() {
-        return productOfferedId;
-    }
-
-    public void setProductOfferedId(String productOfferedId) {
-        this.productOfferedId = productOfferedId;
-    }
-
-    public String getProductRequestedId() {
-        return productRequestedId;
-    }
-
-    public void setProductRequestedId(String productRequestedId) {
-        this.productRequestedId = productRequestedId;
-    }
-
-    public Integer getCreditsOffered() {
-        return creditsOffered;
-    }
-
-    public void setCreditsOffered(Integer creditsOffered) {
-        this.creditsOffered = creditsOffered;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    // Getters y setters generados por Lombok
 }

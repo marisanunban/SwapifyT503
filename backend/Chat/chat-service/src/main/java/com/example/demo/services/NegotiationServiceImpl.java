@@ -51,7 +51,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public ConversationDto startNegotiation(String productId, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
+            userInfo = authClient.validateUserToken(authToken, null);
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -102,7 +102,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public MessageDto sendMessage(Long conversationId, String content, String type, String authToken, String productId, Integer creditsOffered) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
+            userInfo = authClient.validateUserToken(authToken, null);
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -142,35 +142,6 @@ public class NegotiationServiceImpl implements NegotiationService {
                 .orElse(message);
 
         MessageDto dto = mapToMessageDto(savedMessage, conversationId);
-
-        // Si es PROPOSAL_RESPONSE, crear una transacción
-        if (message.getType() == MessageType.PROPOSAL_RESPONSE) {
-            // Buscar la propuesta original (el último mensaje PROPOSAL)
-            Message originalProposal = conversation.getMessages().stream()
-                    .filter(m -> m.getType() == MessageType.PROPOSAL)
-                    .reduce((first, second) -> second) // Obtener el último
-                    .orElseThrow(() -> new IllegalStateException("No se encontró una propuesta original"));
-
-            CreateTransactionDto transactionDto = new CreateTransactionDto();
-            // Producto ofrecido por el vendedor (de la propuesta original)
-            transactionDto.setProductOfferedId(originalProposal.getProductId());
-            transactionDto.setCreditsOffered(originalProposal.getCreditsOffered());
-
-            TransactionDto createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
-
-            // Enviar mensaje de sistema notificando la transacción
-            Message systemMessage = new Message();
-            systemMessage.setId(messageIdGenerator.incrementAndGet());
-            systemMessage.setContent("Transacción creada con ID: " + createdTransaction.getId());
-            systemMessage.setTimestamp(LocalDateTime.now());
-            systemMessage.setType(MessageType.SYSTEM);
-            conversation.getMessages().add(systemMessage);
-            conversationRepository.save(conversation);
-
-            MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
-            messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
-        }
-
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, dto);
         return dto;
     }
@@ -179,7 +150,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public ConversationDto getNegotiation(Long id, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
+            userInfo = authClient.validateUserToken(authToken, null);
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -201,7 +172,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public ConversationDto sendProposal(Long id, List<String> productIdsOffered, Integer creditsOffered, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
+            userInfo = authClient.validateUserToken(authToken, null);
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -216,16 +187,36 @@ public class NegotiationServiceImpl implements NegotiationService {
         }
 
         String productId = productIdsOffered != null && !productIdsOffered.isEmpty() ? productIdsOffered.get(0) : null;
+        if (productId != null && !productId.isEmpty()) {
+            ProductDto product = productClient.getProduct(productId);
+            if (product == null || !product.getOwnerId().equals(senderId.toString())) {
+                throw new IllegalArgumentException("El producto no existe o no pertenece al remitente");
+            }
+        }
+
         String content = "Propuesta: " + (productId != null ? "Producto ID " + productId : "") +
                 (creditsOffered != null && creditsOffered > 0 ? ", " + creditsOffered + " créditos" : "");
 
-        return mapToDto(conversationRepository.save(conversation));
+        Message message = new Message();
+        message.setId(messageIdGenerator.incrementAndGet());
+        message.setSenderId(senderId);
+        message.setContent(content);
+        message.setTimestamp(LocalDateTime.now());
+        message.setType(MessageType.PROPOSAL);
+        message.setProductId(productId);
+        message.setCreditsOffered(creditsOffered != null ? creditsOffered : 0);
+
+        conversation.getMessages().add(message);
+        Conversation updatedConversation = conversationRepository.save(conversation);
+
+        MessageDto dto = mapToMessageDto(message, id);
+        messagingTemplate.convertAndSend("/topic/conversations/" + id, dto);
+        return mapToDto(updatedConversation);
     }
 
     @Override
     @Transactional
     public ConversationDto acceptProposal(Long id, String authToken) {
-        // Este método ya no se usa en el flujo propuesto, pero lo mantenemos por compatibilidad
         throw new UnsupportedOperationException("acceptProposal is deprecated. Use transaction status updates.");
     }
 
@@ -233,7 +224,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public List<ConversationDto> getUserConversations(String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
+            userInfo = authClient.validateUserToken(authToken, null);
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -249,7 +240,7 @@ public class NegotiationServiceImpl implements NegotiationService {
     public void deleteNegotiation(Long id, String authToken) {
         UserInfoDto userInfo;
         try {
-            userInfo = authClient.validateUserToken(authToken, null); // Corregido: no eliminar "Bearer "
+            userInfo = authClient.validateUserToken(authToken, null);
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
@@ -264,6 +255,115 @@ public class NegotiationServiceImpl implements NegotiationService {
         }
 
         conversationRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public TransactionDto createTransaction(Long conversationId, String authToken) {
+        System.out.println("Token en NegotiationServiceImpl.createTransaction: " + authToken);
+
+        UserInfoDto userInfo;
+        try {
+            userInfo = authClient.validateUserToken(authToken, null);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
+        }
+        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+
+        Long senderId = userInfo.getId();
+        if (!senderId.equals(conversation.getBuyerId()) && !senderId.equals(conversation.getSellerId())) {
+            throw new IllegalArgumentException("Solo los participantes pueden crear transacciones");
+        }
+
+        // Buscar la propuesta original (PROPOSAL)
+        Message proposal = conversation.getMessages().stream()
+                .filter(m -> m.getType() == MessageType.PROPOSAL)
+                .reduce((first, second) -> second)
+                .orElseThrow(() -> new IllegalStateException("No se encontró una propuesta original"));
+
+        // Buscar la respuesta a la propuesta (PROPOSAL_RESPONSE)
+        Message response = conversation.getMessages().stream()
+                .filter(m -> m.getType() == MessageType.PROPOSAL_RESPONSE)
+                .reduce((first, second) -> second)
+                .orElseThrow(() -> new IllegalStateException("No se encontró una respuesta a la propuesta"));
+
+        Long sellerId = conversation.getSellerId();
+        Long buyerId = conversation.getBuyerId();
+
+        CreateTransactionDto transactionDto = new CreateTransactionDto();
+        transactionDto.setSellerId(sellerId);
+        transactionDto.setBuyerId(buyerId);
+        if (proposal.getSenderId().equals(sellerId)) {
+            transactionDto.setProductOfferedId(proposal.getProductId());
+            transactionDto.setCreditsOffered(proposal.getCreditsOffered());
+            transactionDto.setProductRequestedId(response.getProductId());
+            transactionDto.setCreditsRequested(response.getCreditsOffered());
+        } else {
+            transactionDto.setProductOfferedId(response.getProductId());
+            transactionDto.setCreditsOffered(response.getCreditsOffered());
+            transactionDto.setProductRequestedId(proposal.getProductId());
+            transactionDto.setCreditsRequested(proposal.getCreditsOffered());
+        }
+
+        TransactionDto createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
+
+        Message systemMessage = new Message();
+        systemMessage.setId(messageIdGenerator.incrementAndGet());
+        systemMessage.setContent("Transacción creada con ID: " + createdTransaction.getId());
+        systemMessage.setTimestamp(LocalDateTime.now());
+        systemMessage.setType(MessageType.SYSTEM);
+        conversation.getMessages().add(systemMessage);
+        conversationRepository.save(conversation);
+
+        MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
+        messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+
+        return createdTransaction;
+    }
+
+    @Override
+    @Transactional
+    public TransactionDto confirmTransaction(Long conversationId, Long transactionId, String authToken, boolean accept) {
+        UserInfoDto userInfo;
+        try {
+            userInfo = authClient.validateUserToken(authToken, null);
+        } catch (Exception e) {
+            throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
+        }
+        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+
+        Long userId = userInfo.getId();
+        if (!userId.equals(conversation.getBuyerId()) && !userId.equals(conversation.getSellerId())) {
+            throw new IllegalArgumentException("Solo los participantes pueden confirmar transacciones");
+        }
+
+        // Crear el DTO para actualizar el estado
+        UpdateTransactionStatusDto statusDto = new UpdateTransactionStatusDto();
+        statusDto.setStatus(accept ? "ACCEPTED" : "REJECTED");
+
+        // Actualizar el estado de la transacción
+        TransactionDto updatedTransaction = transactionClient.updateTransactionStatus(transactionId, statusDto, authToken);
+
+        Message systemMessage = new Message();
+        systemMessage.setId(messageIdGenerator.incrementAndGet());
+        systemMessage.setContent(accept ?
+                "Usuario " + userId + " ha aceptado la transacción " + transactionId :
+                "Usuario " + userId + " ha rechazado la transacción " + transactionId);
+        systemMessage.setTimestamp(LocalDateTime.now());
+        systemMessage.setType(MessageType.SYSTEM);
+        conversation.getMessages().add(systemMessage);
+        conversationRepository.save(conversation);
+
+        MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
+        messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+
+        return updatedTransaction;
     }
 
     private ConversationDto mapToDto(Conversation c) {

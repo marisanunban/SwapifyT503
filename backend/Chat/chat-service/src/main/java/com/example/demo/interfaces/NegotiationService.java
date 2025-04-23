@@ -2,6 +2,7 @@ package com.example.demo.interfaces;
 
 import com.example.demo.dtos.ConversationDto;
 import com.example.demo.dtos.MessageDto;
+import com.example.demo.dtos.TransactionDto;
 
 import java.util.List;
 
@@ -13,4 +14,6 @@ public interface NegotiationService {
     ConversationDto acceptProposal(Long id, String authToken);
     List<ConversationDto> getUserConversations(String authToken);
     void deleteNegotiation(Long id, String authToken);
+    TransactionDto createTransaction(Long conversationId, String authToken);
+    TransactionDto confirmTransaction(Long conversationId, Long transactionId, String authToken, boolean accept);
 }

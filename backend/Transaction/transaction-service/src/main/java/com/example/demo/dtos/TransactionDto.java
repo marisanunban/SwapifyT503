@@ -2,19 +2,24 @@ package com.example.demo.dtos;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class TransactionDto {
     private Long id;
     private Long buyerId;
     private Long sellerId;
-    private String sellerEmail; // Nuevo campo
     private String productOfferedId;
     private String productRequestedId;
     private Integer creditsOffered;
+    private Integer creditsRequested;
     private String status;
     private String createdAt;
+    private String updatedAt; // Nuevo
+    private boolean buyerAccepted;
+    private boolean sellerAccepted;
 
-    // Getters y setters existentes
+    // Getters y setters
     public void setId(Long id) {
         this.id = id;
     }
@@ -23,12 +28,20 @@ public class TransactionDto {
         this.createdAt = createdAt;
     }
 
+    public void setUpdatedAt(String updatedAt) { // Nuevo
+        this.updatedAt = updatedAt;
+    }
+
     public void setStatus(String status) {
         this.status = status;
     }
 
     public void setCreditsOffered(Integer creditsOffered) {
         this.creditsOffered = creditsOffered;
+    }
+
+    public void setCreditsRequested(Integer creditsRequested) {
+        this.creditsRequested = creditsRequested;
     }
 
     public void setProductRequestedId(String productRequestedId) {
@@ -45,6 +58,14 @@ public class TransactionDto {
 
     public void setBuyerId(Long buyerId) {
         this.buyerId = buyerId;
+    }
+
+    public void setBuyerAccepted(boolean buyerAccepted) {
+        this.buyerAccepted = buyerAccepted;
+    }
+
+    public void setSellerAccepted(boolean sellerAccepted) {
+        this.sellerAccepted = sellerAccepted;
     }
 
     public Long getId() {
@@ -71,6 +92,10 @@ public class TransactionDto {
         return creditsOffered;
     }
 
+    public Integer getCreditsRequested() {
+        return creditsRequested;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -79,28 +104,36 @@ public class TransactionDto {
         return createdAt;
     }
 
-    // Getter y setter para el nuevo campo
-    public String getSellerEmail() {
-        return sellerEmail;
+    public String getUpdatedAt() { // Nuevo
+        return updatedAt;
     }
 
-    public void setSellerEmail(String sellerEmail) {
-        this.sellerEmail = sellerEmail;
+    public boolean isBuyerAccepted() {
+        return buyerAccepted;
     }
 
-    // Constructor actualizado
-    public TransactionDto(Long id, Long buyerId, Long sellerId, String sellerEmail,
+    public boolean isSellerAccepted() {
+        return sellerAccepted;
+    }
+
+    // Constructor
+    public TransactionDto(Long id, Long buyerId, Long sellerId,
                           String productRequestedId, String productOfferedId,
-                          Integer creditsOffered, String status, String createdAt) {
+                          Integer creditsOffered, Integer creditsRequested,
+                          String status, String createdAt, String updatedAt,
+                          boolean buyerAccepted, boolean sellerAccepted) {
         this.id = id;
         this.buyerId = buyerId;
         this.sellerId = sellerId;
-        this.sellerEmail = sellerEmail;
         this.productRequestedId = productRequestedId;
         this.productOfferedId = productOfferedId;
         this.creditsOffered = creditsOffered;
+        this.creditsRequested = creditsRequested;
         this.status = status;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.buyerAccepted = buyerAccepted;
+        this.sellerAccepted = sellerAccepted;
     }
 
     // Constructor por defecto

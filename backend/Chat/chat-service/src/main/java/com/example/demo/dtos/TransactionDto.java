@@ -7,14 +7,15 @@ public class TransactionDto {
     private Long id;
     private Long buyerId;
     private Long sellerId;
-    private String sellerEmail; // Nuevo campo
+    private String sellerEmail;
     private String productOfferedId;
     private String productRequestedId;
     private Integer creditsOffered;
+    private Integer creditsRequested; // Nuevo campo
     private String status;
     private String createdAt;
 
-    // Getters y setters existentes
+    // Getters y setters
     public void setId(Long id) {
         this.id = id;
     }
@@ -29,6 +30,10 @@ public class TransactionDto {
 
     public void setCreditsOffered(Integer creditsOffered) {
         this.creditsOffered = creditsOffered;
+    }
+
+    public void setCreditsRequested(Integer creditsRequested) {
+        this.creditsRequested = creditsRequested;
     }
 
     public void setProductRequestedId(String productRequestedId) {
@@ -47,6 +52,10 @@ public class TransactionDto {
         this.buyerId = buyerId;
     }
 
+    public void setSellerEmail(String sellerEmail) {
+        this.sellerEmail = sellerEmail;
+    }
+
     public Long getId() {
         return id;
     }
@@ -57,6 +66,10 @@ public class TransactionDto {
 
     public Long getSellerId() {
         return sellerId;
+    }
+
+    public String getSellerEmail() {
+        return sellerEmail;
     }
 
     public String getProductOfferedId() {
@@ -71,6 +84,10 @@ public class TransactionDto {
         return creditsOffered;
     }
 
+    public Integer getCreditsRequested() {
+        return creditsRequested;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -79,19 +96,11 @@ public class TransactionDto {
         return createdAt;
     }
 
-    // Getter y setter para el nuevo campo
-    public String getSellerEmail() {
-        return sellerEmail;
-    }
-
-    public void setSellerEmail(String sellerEmail) {
-        this.sellerEmail = sellerEmail;
-    }
-
     // Constructor actualizado
     public TransactionDto(Long id, Long buyerId, Long sellerId, String sellerEmail,
                           String productRequestedId, String productOfferedId,
-                          Integer creditsOffered, String status, String createdAt) {
+                          Integer creditsOffered, Integer creditsRequested,
+                          String status, String createdAt) {
         this.id = id;
         this.buyerId = buyerId;
         this.sellerId = sellerId;
@@ -99,6 +108,7 @@ public class TransactionDto {
         this.productRequestedId = productRequestedId;
         this.productOfferedId = productOfferedId;
         this.creditsOffered = creditsOffered;
+        this.creditsRequested = creditsRequested;
         this.status = status;
         this.createdAt = createdAt;
     }

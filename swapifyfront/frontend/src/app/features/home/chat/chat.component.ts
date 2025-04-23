@@ -5,19 +5,21 @@ import {
   AfterViewChecked,
   ViewChild,
   ElementRef,
+  ChangeDetectorRef, // Importado para forzar detección de cambios
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
-import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { UserService } from '../../../services/user-service/user.service';
 import { WebsocketService } from '../../../services/websocket-service/websocket.service';
 import { ProductService } from '../../../services/product-service/product.service';
 import { TransactionService } from '../../../services/transaction-service/transaction.service';
+import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { ToastrService } from 'ngx-toastr';
 import { Subscription, filter } from 'rxjs';
 import { Message } from '../../../models/message.model';
+import { Transaction } from '../../../models/transaction.model';
 
 interface User {
   id: number;
@@ -59,6 +61,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   showResponseForm = false;
   respondingToMessage: Message | null = null;
   userProducts: any[] = [];
+  transactions: { [key: number]: Transaction } = {};
+  isAccepting: { [key: number]: boolean } = {};
+  isRejecting: { [key: number]: boolean } = {};
   private wsSubscription: Subscription | null = null;
   private routerSubscription: Subscription | null = null;
 
@@ -74,12 +79,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     private productService: ProductService,
     private transactionService: TransactionService,
     private toastr: ToastrService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef // Inyectar ChangeDetectorRef
   ) {
     this.proposalForm = this.fb.group({
       productId: [''],
       creditsOffered: [0, [Validators.min(0)]],
-      content: ['Propuesta de trueque', Validators.required]
+      content: ['Propuesta de trueque', Validators.required],
     });
   }
 
@@ -95,6 +101,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
               online: true,
             }
           : null;
+        console.log('Usuario actual cargado:', this.currentUser); // Log para depuración
         if (user) {
           this.loadUserProducts();
         }
@@ -219,6 +226,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         });
 
         this.messages = [...this.conversation.messages];
+        this.loadTransactionsFromMessages();
         this.scrollToBottom();
       },
       error: () => {
@@ -238,7 +246,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             .subscribeToConversation(conversationId)
             .subscribe({
               next: (message: any) => {
-                if (message.senderId !== this.currentUser?.id) {
+                if (message.senderId !== this.currentUser?.id || message.type === 'SYSTEM') {
                   this.messages.push({
                     id: message.id,
                     conversationId: message.conversationId,
@@ -251,6 +259,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
                     isSystem: message.type === 'SYSTEM',
                   });
                   this.messages = [...this.messages];
+                  if (message.type === 'SYSTEM') {
+                    const transactionId = this.getTransactionId(message.text);
+                    if (transactionId) {
+                      this.loadTransactionState(transactionId);
+                    }
+                  }
                   this.scrollToBottom();
                 }
               },
@@ -292,7 +306,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       .sendMessage(this.conversation.id, messageToSend, 'TEXT')
       .subscribe({
         next: (response) => {
-          const index = this.messages.findIndex(m => m.id === tempMessage.id);
+          const index = this.messages.findIndex((m) => m.id === tempMessage.id);
           this.messages[index] = {
             ...tempMessage,
             id: response.id,
@@ -315,6 +329,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   openResponseForm(message: Message) {
+    if (message.type !== 'PROPOSAL') {
+      this.toastr.error('Solo puedes responder a una propuesta');
+      return;
+    }
     this.showResponseForm = true;
     this.showProposalForm = false;
     this.respondingToMessage = message;
@@ -332,7 +350,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const creditsOffered = formValue.creditsOffered || 0;
     const type = this.showResponseForm ? 'PROPOSAL_RESPONSE' : 'PROPOSAL';
 
-    if (productId && !this.userProducts.some(p => p.id === productId)) {
+    if (productId && !this.userProducts.some((p) => p.id === productId)) {
       this.toastr.error('El producto seleccionado no es válido');
       return;
     }
@@ -358,6 +376,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.proposalForm.reset();
           this.scrollToBottom();
           this.toastr.success(type === 'PROPOSAL' ? 'Propuesta enviada' : 'Respuesta enviada');
+
+          if (type === 'PROPOSAL_RESPONSE') {
+            this.negotiationService.createTransaction(this.conversation!.id).subscribe({
+              next: (transaction) => {
+                this.toastr.success(`Transacción creada con ID: ${transaction.id}`);
+                this.loadTransactionState(transaction.id);
+              },
+              error: (error) => {
+                this.toastr.error('Error al crear la transacción: ' + error.message);
+              },
+            });
+          }
         },
         error: (error) => {
           this.toastr.error(`Error al enviar ${type === 'PROPOSAL' ? 'la propuesta' : 'la respuesta'}: ${error.message}`);
@@ -365,95 +395,153 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       });
   }
 
-  acceptTransaction(transactionId: number) {
-    this.transactionService
-      .updateTransactionStatus(transactionId, 'ACCEPTED', this.proposalForm.value.productId)
-      .subscribe({
-        next: () => {
-          this.messages.push({
-            id: Date.now(),
-            conversationId: this.conversation!.id,
-            senderId: 0,
-            text: `Transacción ${transactionId} aceptada`,
-            time: new Date().toLocaleTimeString(),
-            type: 'SYSTEM',
-            isSystem: true,
-          });
-          this.scrollToBottom();
-          this.toastr.success('Transacción aceptada');
-        },
-        error: (error) => this.toastr.error('Error al aceptar la transacción: ' + error.message),
-      });
-  }
-
-  rejectTransaction(transactionId: number) {
-    this.transactionService
-      .updateTransactionStatus(transactionId, 'REJECTED')
-      .subscribe({
-        next: () => {
-          this.messages.push({
-            id: Date.now(),
-            conversationId: this.conversation!.id,
-            senderId: 0,
-            text: `Transacción ${transactionId} rechazada`,
-            time: new Date().toLocaleTimeString(),
-            type: 'SYSTEM',
-            isSystem: true,
-          });
-          this.scrollToBottom();
-          this.toastr.success('Transacción rechazada');
-        },
-        error: (error) => this.toastr.error('Error al rechazar la transacción: ' + error.message),
-      });
-  }
-
-  showTransactionDetails(transactionId: number) {
-    this.transactionService.getTransaction(transactionId).subscribe({
-      next: (transaction) => {
-        this.toastr.info(`Detalles de la transacción ${transactionId}: ${JSON.stringify(transaction)}`);
-      },
-      error: (error) => this.toastr.error('Error al obtener los detalles: ' + error.message),
+  loadTransactionsFromMessages() {
+    console.log('Cargando transacciones desde mensajes...');
+    console.log('Mensajes actuales:', this.messages);
+    this.messages.forEach((message) => {
+      if (message.isSystem && message.text.includes('Transacción creada')) {
+        const transactionId = this.getTransactionId(message.text);
+        console.log(`Transacción encontrada con ID: ${transactionId}`);
+        if (transactionId) {
+          this.loadTransactionState(transactionId);
+        }
+      }
     });
   }
 
-  extractTransactionId(content: string): number {
-    const match = content.match(/Transacción creada con ID: (\d+)/);
-    return match ? +match[1] : 0;
+  loadTransactionState(transactionId: number) {
+    console.log(`Cargando estado de la transacción ${transactionId}...`);
+    this.transactionService.getTransaction(transactionId).subscribe({
+      next: (transaction) => {
+        console.log(`Transacción ${transactionId} cargada:`, transaction);
+        this.transactions[transactionId] = transaction;
+        this.cdr.detectChanges(); // Forzar detección de cambios
+        console.log('Estado actual de this.transactions:', this.transactions);
+      },
+      error: (error) => {
+        console.error(`Error al cargar la transacción ${transactionId}:`, error);
+        this.toastr.error('Error al cargar el estado de la transacción: ' + error.message);
+      },
+    });
+  }
+
+  acceptTransaction(transactionId: number) {
+    if (!this.conversation || !this.currentUser) return;
+
+    this.isAccepting[transactionId] = true;
+    this.negotiationService.confirmTransaction(this.conversation.id, transactionId, true).subscribe({
+      next: (transaction) => {
+        this.transactions[transactionId] = transaction;
+        this.cdr.detectChanges(); // Forzar detección de cambios después de actualizar
+        this.toastr.success('Transacción aceptada');
+        this.isAccepting[transactionId] = false;
+      },
+      error: (error) => {
+        this.toastr.error('Error al aceptar la transacción: ' + error.message);
+        this.isAccepting[transactionId] = false;
+      },
+    });
+  }
+
+  rejectTransaction(transactionId: number) {
+    if (!this.conversation || !this.currentUser) return;
+
+    this.isRejecting[transactionId] = true;
+    this.negotiationService.confirmTransaction(this.conversation.id, transactionId, false).subscribe({
+      next: (transaction) => {
+        this.transactions[transactionId] = transaction;
+        this.cdr.detectChanges(); // Forzar detección de cambios después de actualizar
+        this.toastr.success('Transacción rechazada');
+        this.isRejecting[transactionId] = false;
+      },
+      error: (error) => {
+        this.toastr.error('Error al rechazar la transacción: ' + error.message);
+        this.isRejecting[transactionId] = false;
+      },
+    });
+  }
+
+  showTransactionDetails(transactionId: number) {
+    const transaction = this.transactions[transactionId];
+    if (!transaction) {
+      this.toastr.error('No se encontraron detalles de la transacción');
+      return;
+    }
+
+    const proposalMessage = this.messages.filter((m) => m.type === 'PROPOSAL').slice(-1)[0];
+    const responseMessage = this.messages.filter((m) => m.type === 'PROPOSAL_RESPONSE').slice(-1)[0];
+
+    if (!proposalMessage || !responseMessage) {
+      this.toastr.error('No se encontraron detalles de la transacción');
+      return;
+    }
+
+    const details = `
+      Detalles de la Transacción ID: ${transactionId}
+      Propuesta:
+      - Producto: ${this.getProductTitle(proposalMessage.productId) || 'Ninguno'}
+      - Créditos: ${proposalMessage.creditsOffered || 0}
+      Respuesta:
+      - Producto: ${this.getProductTitle(responseMessage.productId) || 'Ninguno'}
+      - Créditos: ${responseMessage.creditsOffered || 0}
+      Estado: ${transaction.status}
+      Comprador ha aceptado: ${transaction.buyerAccepted ? 'Sí' : 'No'}
+      Vendedor ha aceptado: ${transaction.sellerAccepted ? 'Sí' : 'No'}
+    `;
+    this.toastr.info(details, 'Detalles de la Transacción', { timeOut: 10000 });
+  }
+
+  hasAccepted(transactionId: number): boolean {
+    const transaction = this.transactions[transactionId];
+    if (!transaction || !this.currentUser) {
+      console.log('Transacción o usuario no definido:', { transaction, currentUser: this.currentUser });
+      return false;
+    }
+
+    const isBuyer = this.currentUser.id === transaction.buyerId;
+    console.log(`Usuario ${this.currentUser.id}, es comprador: ${isBuyer}, buyerAccepted: ${transaction.buyerAccepted}, sellerAccepted: ${transaction.sellerAccepted}`);
+    const hasAccepted = isBuyer ? transaction.buyerAccepted : transaction.sellerAccepted;
+    console.log(`hasAccepted para transacción ${transactionId}: ${hasAccepted}`);
+    return hasAccepted;
+  }
+
+  getTransactionId(messageText: string): number {
+    const match = messageText.match(/ID: (\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
   }
 
   isCurrentUser(senderId: number): boolean {
-    return senderId === this.currentUser?.id;
+    return this.currentUser?.id === senderId;
   }
 
   getMessageSender(senderId: number): User | undefined {
-    return senderId === this.currentUser?.id
-      ? this.currentUser
-      : this.users.find((u) => u.id === senderId);
+    return this.users.find((user) => user.id === senderId);
   }
 
-  getProductTitle(productId: string): string {
-    const product = this.userProducts.find(p => p.id === productId);
-    return product ? product.title : 'Producto desconocido';
+  getProductTitle(productId?: string): string {
+    if (!productId) return '';
+    const product = this.userProducts.find((p) => p.id === productId);
+    return product ? product.title : `Producto ${productId}`;
   }
 
-  selectUser(user: User) {
-    this.router.navigate(['/chat'], { state: { conversationId: user.id } });
+  scrollToBottom(): void {
+    try {
+      this.messageContainer.nativeElement.scrollTop = this.messageContainer.nativeElement.scrollHeight;
+    } catch (err) {}
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
 
-  private scrollToBottom(): void {
-    try {
-      this.messageContainer.nativeElement.scrollTop =
-        this.messageContainer.nativeElement.scrollHeight;
-    } catch (err) {}
+  ngOnDestroy() {
+    if (this.wsSubscription) this.wsSubscription.unsubscribe();
+    if (this.routerSubscription) this.routerSubscription.unsubscribe();
   }
 
-  ngOnDestroy() {
-    this.websocketService.disconnect();
-    this.wsSubscription?.unsubscribe();
-    this.routerSubscription?.unsubscribe();
+  // Método auxiliar para depurar desde la plantilla
+  consoleLog(transaction: Transaction): boolean {
+    console.log('Transacción en la plantilla:', transaction);
+    return true;
   }
 }

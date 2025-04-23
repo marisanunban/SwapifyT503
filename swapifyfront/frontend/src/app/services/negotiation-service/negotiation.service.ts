@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { Transaction } from '../../models/transaction.model'; // Importar interfaz compartida
 
 interface Conversation {
   id: number;
@@ -26,17 +27,16 @@ export class NegotiationService {
   private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('token');
     return new HttpHeaders({
-      Authorization: `Bearer ${token || ''}`
+      Authorization: `Bearer ${token || ''}`,
     });
   }
 
   startNegotiation(productId: string): Observable<Conversation> {
     return this.http
-      .post<Conversation>(
-        `${this.apiUrl}/start`,
-        null,
-        { headers: this.getHeaders(), params: { productId } }
-      )
+      .post<Conversation>(`${this.apiUrl}/start`, null, {
+        headers: this.getHeaders(),
+        params: { productId },
+      })
       .pipe(
         catchError((err) => {
           console.error('Error starting negotiation:', err);
@@ -67,11 +67,10 @@ export class NegotiationService {
     if (productId) params.productId = productId;
     if (creditsOffered !== undefined) params.creditsOffered = creditsOffered.toString();
     return this.http
-      .post(
-        `${this.apiUrl}/${conversationId}/messages`,
-        null,
-        { headers: this.getHeaders(), params }
-      )
+      .post(`${this.apiUrl}/${conversationId}/messages`, null, {
+        headers: this.getHeaders(),
+        params,
+      })
       .pipe(
         catchError((err) => {
           console.error('Error sending message:', err);
@@ -98,6 +97,37 @@ export class NegotiationService {
         catchError((err) => {
           console.error('Error deleting conversation:', err);
           return throwError(() => new Error('No se pudo eliminar la conversación'));
+        })
+      );
+  }
+
+  createTransaction(conversationId: number): Observable<Transaction> {
+    return this.http
+      .post<Transaction>(`${this.apiUrl}/${conversationId}/transactions`, null, {
+        headers: this.getHeaders(),
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('Error creating transaction:', err);
+          return throwError(() => new Error('No se pudo crear la transacción'));
+        })
+      );
+  }
+
+  confirmTransaction(conversationId: number, transactionId: number, accept: boolean): Observable<Transaction> {
+    return this.http
+      .post<Transaction>(
+        `${this.apiUrl}/${conversationId}/transactions/${transactionId}/confirm`,
+        null,
+        {
+          headers: this.getHeaders(),
+          params: { accept: accept.toString() },
+        }
+      )
+      .pipe(
+        catchError((err) => {
+          console.error('Error confirming transaction:', err);
+          return throwError(() => new Error('No se pudo confirmar la transacción'));
         })
       );
   }

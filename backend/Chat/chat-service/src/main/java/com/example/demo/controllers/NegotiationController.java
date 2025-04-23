@@ -2,6 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.dtos.ConversationDto;
 import com.example.demo.dtos.MessageDto;
+import com.example.demo.dtos.TransactionDto;
 import com.example.demo.interfaces.NegotiationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -79,5 +80,23 @@ public class NegotiationController {
             @RequestHeader("Authorization") String authToken) {
         negotiationService.deleteNegotiation(id, authToken);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/{conversationId}/transactions")
+    public ResponseEntity<TransactionDto> createTransaction(
+            @PathVariable("conversationId") Long conversationId,
+            @RequestHeader("Authorization") String authToken) {
+        TransactionDto transaction = negotiationService.createTransaction(conversationId, authToken);
+        return new ResponseEntity<>(transaction, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{conversationId}/transactions/{transactionId}/confirm")
+    public ResponseEntity<TransactionDto> confirmTransaction(
+            @PathVariable("conversationId") Long conversationId,
+            @PathVariable("transactionId") Long transactionId,
+            @RequestParam("accept") boolean accept,
+            @RequestHeader("Authorization") String authToken) {
+        TransactionDto transaction = negotiationService.confirmTransaction(conversationId, transactionId, authToken, accept);
+        return new ResponseEntity<>(transaction, HttpStatus.OK);
     }
 }
