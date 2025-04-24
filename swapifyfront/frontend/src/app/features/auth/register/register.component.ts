@@ -14,6 +14,7 @@ import { CommonModule } from '@angular/common';
 })
 export class RegisterComponent {
   useremail: string = '';
+  nickname: string = '';
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
