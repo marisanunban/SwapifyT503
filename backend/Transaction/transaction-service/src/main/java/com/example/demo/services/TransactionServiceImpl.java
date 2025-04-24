@@ -15,6 +15,7 @@ import com.example.demo.interfaces.TransactionService;
 import com.example.demo.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -160,7 +161,7 @@ public class TransactionServiceImpl implements TransactionService {
             TransactionTokens tokens = getOrCreateTransactionTokens(id);
             if (isBuyer) {
                 tokens.setBuyerToken(authToken);
-            } else if (isSeller) {
+            } else {
                 tokens.setSellerToken(authToken);
             }
 
@@ -172,7 +173,7 @@ public class TransactionServiceImpl implements TransactionService {
             if (newStatus.equals("REJECTED")) {
                 System.out.println("Usuario " + userInfo.getId() + " rechaza la transacción ID: " + id);
                 transaction.setStatus(Transaction.Status.REJECTED);
-            } else if (newStatus.equals("ACCEPTED")) {
+            } else {
                 if (isBuyer) {
                     if (transaction.isBuyerAccepted()) {
                         System.out.println("El comprador ya ha aceptado la transacción ID: " + id);
@@ -192,7 +193,7 @@ public class TransactionServiceImpl implements TransactionService {
                     }
                     transaction.setBuyerId(userInfo.getId());
                     transaction.setBuyerAccepted(true);
-                } else if (isSeller) {
+                } else {
                     if (transaction.isSellerAccepted()) {
                         System.out.println("El vendedor ya ha aceptado la transacción ID: " + id);
                         return mapToDto(transaction);
@@ -210,7 +211,7 @@ public class TransactionServiceImpl implements TransactionService {
                     }
 
                     // Cambiar el estado a COMPLETED y guardar antes de las transferencias
-                    transaction.setStatus(Transaction.Status.COMPLETED);
+                    transaction.setStatus(Status.COMPLETED);
                     transaction.setUpdatedAt(LocalDateTime.now());
                     transactionRepository.save(transaction);
 
@@ -276,7 +277,7 @@ public class TransactionServiceImpl implements TransactionService {
                         System.out.println("Transacción ID: " + id + " completada exitosamente");
                     } catch (Exception e) {
                         // Revertir el estado a PENDING si las transferencias fallan
-                        transaction.setStatus(Transaction.Status.PENDING);
+                        transaction.setStatus(Status.PENDING);
                         transactionRepository.save(transaction);
                         System.err.println("Error al procesar las transferencias de la transacción ID: " + id + ", mensaje: " + e.getMessage());
                         throw new RuntimeException("Error al completar la transacción: " + e.getMessage(), e);
@@ -342,6 +343,26 @@ public class TransactionServiceImpl implements TransactionService {
         Long userId = userInfo.getId();
         List<Transaction> transactions = transactionRepository.findByBuyerIdOrSellerId(userId, userId);
         return transactions.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    @Scheduled(fixedRate = 3600000) // Ejecutar cada hora (3600000 milisegundos = 1 hora)
+    public void cleanUpTransactionTokens() {
+        System.out.println("Ejecutando limpieza de transactionTokensMap...");
+        transactionTokensMap.entrySet().removeIf(entry -> {
+            Long transactionId = entry.getKey();
+            Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
+            if (transaction == null) {
+                System.out.println("Eliminando tokens de la transacción " + transactionId + ": transacción no encontrada en la base de datos.");
+                return true; // Eliminar si la transacción ya no existe
+            }
+            boolean shouldRemove = transaction.getStatus() == Transaction.Status.PENDING
+                    && transaction.getCreatedAt().isBefore(LocalDateTime.now().minusHours(1));
+            if (shouldRemove) {
+                System.out.println("Eliminando tokens de la transacción " + transactionId + ": está en estado PENDING y tiene más de 1 hora.");
+            }
+            return shouldRemove;
+        });
+        System.out.println("Limpieza de transactionTokensMap completada. Entradas restantes: " + transactionTokensMap.size());
     }
 
     private TransactionDto mapToDto(Transaction transaction) {
