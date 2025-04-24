@@ -16,7 +16,7 @@ import { UserService } from '../../../services/user-service/user.service';
   styleUrls: ['./main.component.css']
 })
 export class MainComponent implements OnInit {
-  user: { id: number; username: string; credits: number; location_name: string} | null = null;
+  user: { id: number; username: string; credits: number; locationName: string} | null = null;
   products: any[] = [];
   search: boolean = false;
   searchKeyword: string = '';
@@ -122,40 +122,59 @@ export class MainComponent implements OnInit {
   }
 
   buscarProductos() {
-    if (this.searchInLocality) {
-      // Si la casilla "En mi Localidad" está marcada
-      const userLocation = this.user?.location_name; // Obtener la localización del usuario
-      console.log('Localización del usuario:', this.user);
-      if (!userLocation) {
-        console.warn('No se ha especificado la ubicación del usuario.');
-        return;
-      }
-  
-      this.productService.getProductsByLocation(userLocation).subscribe(
-        (response) => {
-          this.products = response; // Actualiza la lista de productos con los resultados
-          console.log('Productos en mi localidad:', response);
-          this.search = true; // Mostrar los resultados de búsqueda
-          this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
-        },
-        (error) => {
-          console.error('Error al buscar productos en la localidad:', error);
-        }
-      );
-    } else {
-      // Si la casilla no está marcada, realiza la búsqueda normal
-      this.productService.searchProducts(this.searchKeyword, this.selectedCategory).subscribe(
-        (response) => {
-          this.products = response; // Actualiza la lista de productos con los resultados
-          console.log('Productos encontrados:', response);
-          this.search = true; // Mostrar los resultados de búsqueda
-          this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
-        },
-        (error) => {
-          console.error('Error al buscar productos:', error);
-        }
-      );
+    if (!this.searchKeyword) {
+      console.warn('Debe especificar una palabra clave para buscar.');
+      return;
     }
+  
+    // Paso 1: Buscar productos por palabra clave
+    this.productService.searchProducts(this.searchKeyword).subscribe(
+      (response) => {
+        let filteredProducts = response; // Productos encontrados por palabra clave
+        console.log('Productos encontrados por palabra clave:', filteredProducts);
+  
+        // Paso 2: Filtrar por categoría si se ha seleccionado
+        if (this.selectedCategory) {
+          filteredProducts = filteredProducts.filter(product => product.category === this.selectedCategory);
+          console.log('Productos filtrados por categoría:', filteredProducts);
+        }
+  
+        // Paso 3: Filtrar por localización si se ha marcado la casilla
+        if (this.searchInLocality) {
+          const userLocation = this.user?.locationName;
+          if (!userLocation) {
+            console.warn('No se ha especificado la ubicación del usuario.');
+            return;
+          }
+  
+          // Llamar al servicio para obtener productos por localización
+          this.productService.getProductsByLocation(userLocation).subscribe(
+            (locationFilteredProducts) => {
+              // Filtrar los productos ya obtenidos por los IDs devueltos por el backend
+              const locationFilteredIds = new Set(locationFilteredProducts.map(p => p.id));
+              filteredProducts = filteredProducts.filter(product => locationFilteredIds.has(product.id));
+              console.log('Productos filtrados por localización:', filteredProducts);
+  
+              // Actualizar la lista de productos y mostrar los resultados
+              this.products = filteredProducts;
+              this.search = true; // Mostrar los resultados de búsqueda
+              this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
+            },
+            (error) => {
+              console.error('Error al filtrar productos por localización:', error);
+            }
+          );
+        } else {
+          // Si no se filtra por localización, actualizar directamente
+          this.products = filteredProducts;
+          this.search = true; // Mostrar los resultados de búsqueda
+          this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
+        }
+      },
+      (error) => {
+        console.error('Error al buscar productos:', error);
+      }
+    );
   }
 
   startChat(productId: string) {
