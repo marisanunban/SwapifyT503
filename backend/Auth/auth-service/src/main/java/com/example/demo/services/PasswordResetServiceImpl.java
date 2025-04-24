@@ -29,7 +29,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     @Override
     public MessageDto requestPasswordReset(ResetPasswordRequestDto requestDto) {
-        Users user = userService.findByEmail(requestDto.getEmail()); // Lanza EntityNotFoundException si no existe
+        Users user = userService.findByEmail(requestDto.getUseremail()); // Lanza EntityNotFoundException si no existe
 
         String resetToken = UUID.randomUUID().toString();
         LocalDateTime expiresAt = LocalDateTime.now().plusHours(1);

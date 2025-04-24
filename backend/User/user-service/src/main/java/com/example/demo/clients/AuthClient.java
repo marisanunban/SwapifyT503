@@ -13,13 +13,9 @@ public class AuthClient {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8081").build();
     }
 
-    public Mono<UserInfoDto> validateUserToken(String token, Long id) {
-        String uri = "/auth/validate-user";
-        if (id != null) {
-            uri += "?userId=" + id;
-        }
+    public Mono<UserInfoDto> validateUserToken(String token) {
         return webClient.get()
-                .uri(uri)
+                .uri("/auth/validate-user")
                 .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .bodyToMono(UserInfoDto.class)

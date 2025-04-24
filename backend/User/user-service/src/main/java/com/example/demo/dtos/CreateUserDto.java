@@ -6,6 +6,16 @@ import lombok.Data;
 public class CreateUserDto {
     private Long id; // Agregamos el ID para mapearlo desde el UserInfoDto
     private String username;
+    private String nickname;
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     private String email; // Agregamos el email para mapearlo desde el UserInfoDto
 
 

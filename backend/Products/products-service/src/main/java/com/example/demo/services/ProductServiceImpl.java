@@ -9,7 +9,9 @@
     import com.example.demo.repositories.ProductRepository;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.stereotype.Service;
+    import com.example.demo.clients.UserClient;
 
+    import java.util.ArrayList;
     import java.util.List;
     import java.util.NoSuchElementException; // Reemplazo de EntityNotFoundException
     import java.util.stream.Collectors;
@@ -22,6 +24,12 @@
 
         @Autowired
         private AuthClient authClient;
+        private final UserClient userClient;
+
+        public ProductServiceImpl(UserClient userClient, ProductRepository productRepository) {
+            this.userClient = userClient;
+            this.productRepository = productRepository;
+        }
 
         @Override
         public ProductDto createProduct(CreateProductDto dto, Long ownerId) {
@@ -126,6 +134,22 @@
         public List<Product> findByKeyword(String keyword) {
             return productRepository.findByKeyword(keyword);
         }
+
+        public List<ProductDto> getProductsByLocation(String location) {
+            // Llamar al user-service para obtener los IDs
+            List<Long> userIds = userClient.getUserIdsByLocation(location);
+
+            // Buscar productos cuyo ownerId esté en esa lista
+            List<Product> products = productRepository.findByOwnerIdIn(userIds);
+
+            List<ProductDto> dtos = new ArrayList<>();
+            for (Product product : products) {
+                dtos.add(mapToDto(product));
+            }
+            return dtos;
+        }
+
+
         public ProductDto mapToDto(Product product) {
             ProductDto dto = new ProductDto();
             dto.setId(product.getId());

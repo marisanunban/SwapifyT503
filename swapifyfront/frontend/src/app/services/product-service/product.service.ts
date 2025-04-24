@@ -29,6 +29,11 @@ export class ProductService {
     return this.http.get(`${this.apiUrl}`, { headers });
   }
 
+  getProductsByCategory(category: string): Observable<any[]> {
+    const params = { category }; // Parámetro de categoría
+    return this.http.get<any[]>(this.apiUrl, { params });
+  }
+
   getProductsByOwner(ownerId: number, token: string): Observable<any> {
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
@@ -65,7 +70,19 @@ export class ProductService {
     return this.http.patch(`${this.apiUrl}/${productId}`, productData, { headers });
   }
 
-  searchProducts(keyword: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/search`, { params: { keyword } });
+  searchProducts(keyword?: string, category?: string): Observable<any[]> {
+    const params: any = {};
+    if (keyword) {
+      params.keyword = keyword;
+    }
+    if (category) {
+      params.category = category;
+    }
+  
+    return this.http.get<any[]>(`${this.apiUrl}`, { params });
+  }
+
+  getProductsByLocation(location: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/by-location/${location}`);
   }
 }

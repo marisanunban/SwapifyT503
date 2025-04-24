@@ -16,7 +16,7 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  email: string = '';
+  usermail: string = '';
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
@@ -34,8 +34,8 @@ export class LoginComponent {
   onSubmit() {
     console.log('Iniciando login...');
     const loginData = {
-      email: this.email,
-      password: this.password
+      useremail: this.usermail,
+      password: this.password,
     };
 
     console.log('Enviando datos:', loginData);
@@ -50,7 +50,7 @@ export class LoginComponent {
         localStorage.setItem('token', token);
 
         this.successMessage = '¡Login exitoso! Creando usuario...';
-        this.email = '';
+        this.usermail = '';
         this.password = '';
 
         // Llamada a /api/users/create
@@ -60,7 +60,7 @@ export class LoginComponent {
             // Actualizamos el usuario en el AuthService
             this.authService.updateUser({
               id: userInfo.id,
-              username: userInfo.username,
+              username: userInfo.useremail,
               credits: userInfo.credits
             });
             this.successMessage = '¡Usuario creado! Redirigiendo a home...';
@@ -82,8 +82,8 @@ export class LoginComponent {
   }
 
   enviarSolicitudReset() {
-    console.log(this.email)
-    this.resetPasswordService.requestPasswordReset(this.email).subscribe({
+    console.log(this.usermail)
+    this.resetPasswordService.requestPasswordReset(this.usermail).subscribe({
       next: (response) => {
         console.log('Correo de reseteo enviado:', response.message);
         this.successMessage = 'Correo enviado. Revisa tu bandeja de entrada.';
@@ -102,7 +102,7 @@ export class LoginComponent {
         this.successMessage = 'Contraseña cambiada exitosamente. Ya podés iniciar sesión.';
         this.resetPassword = false;
         this.error = null;
-        this.email = '';
+        this.usermail = '';
         this.password = '';
       },
       error: (err) => {

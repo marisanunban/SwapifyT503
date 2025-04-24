@@ -3,6 +3,7 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-register',
@@ -12,7 +13,8 @@ import { RouterLink } from '@angular/router';
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
-  email: string = '';
+  useremail: string = '';
+  nickname: string = '';
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
@@ -21,12 +23,12 @@ export class RegisterComponent {
   constructor(private authService: AuthService, private router: Router) {}
 
   onSubmit() {
-    console.log('onSubmit ejecutado', this.email, this.password);
+    console.log('onSubmit ejecutado', this.useremail, this.password);
     this.error = null;
     this.successMessage = null;
   
     // Validar campos vacíos
-    if (!this.email || !this.password || !this.confirmPassword) {
+    if (!this.useremail || !this.password || !this.confirmPassword) {
       this.error = 'Por favor, complete todos los campos.';
       console.log('Campos incompletos');
       return;
@@ -41,8 +43,8 @@ export class RegisterComponent {
     }
   
     const registerData = {
-      email: this.email,
-      password: this.password
+      useremail: this.useremail,
+      password: this.password,
     };
   
     console.log('Enviando datos:', registerData);
@@ -50,7 +52,7 @@ export class RegisterComponent {
       next: (response) => {
         console.log('Respuesta del backend:', response);
         this.successMessage = '¡Registro exitoso! Redirigiendo al login...';
-        this.email = '';
+        this.useremail = '';
         this.password = '';
         this.confirmPassword = ''; // Limpiar el campo de confirmación
         this.router.navigate(['/login']);

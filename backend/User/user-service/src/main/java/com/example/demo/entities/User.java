@@ -11,7 +11,18 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String usermail;
+
+    @Column
+    private String nickname;
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
 
     @Column(nullable = false)
     private int credits;
@@ -28,22 +39,11 @@ public class User {
     @Column(name = "profile_picture_id")
     private String profilePictureId;
 
-    @Column(name = "location_name")
-    private String locationName;
-
     @Column(name = "latitude")
     private Double latitude;
 
     @Column(name = "longitude")
     private Double longitude;
-
-    public String getLocationName() {
-        return locationName;
-    }
-
-    public void setLocationName(String locationName) {
-        this.locationName = locationName;
-    }
 
     public Double getLatitude() {
         return latitude;
@@ -61,6 +61,18 @@ public class User {
         this.longitude = longitude;
     }
 
+    public String getLocationName() {
+        return locationName;
+    }
+
+    public void setLocationName(String locationName) {
+        this.locationName = locationName;
+    }
+
+    @Column(name = "location_name")
+    private String locationName;
+
+
     public String getProfilePictureId() {
         return profilePictureId;
     }
@@ -74,8 +86,9 @@ public class User {
     }
 
     // Constructor con campos (opcional, para facilitar la creación de instancias)
-    public User(String username, int credits, LocalDateTime updatedAt, String aboutMe, String profilePicture) {
-        this.username = username;
+    public User(String usermail, String nickname, int credits, LocalDateTime updatedAt, String aboutMe, String profilePicture) {
+        this.usermail = usermail;
+        this.nickname = nickname;
         this.credits = credits;
         this.updatedAt = updatedAt;
         this.aboutMe = aboutMe;
@@ -91,12 +104,12 @@ public class User {
         this.id = id;
     }
 
-    public String getUsername() {
-        return username;
+    public String getUsermail() {
+        return usermail;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUsermail(String username) {
+        this.usermail = username;
     }
 
     public int getCredits() {
