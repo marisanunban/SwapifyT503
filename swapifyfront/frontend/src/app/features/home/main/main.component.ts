@@ -16,12 +16,17 @@ import { UserService } from '../../../services/user-service/user.service';
   styleUrls: ['./main.component.css']
 })
 export class MainComponent implements OnInit {
-  user: { id: number; username: string; credits: number } | null = null;
+  user: { id: number; username: string; credits: number; location_name: string} | null = null;
   products: any[] = [];
   search: boolean = false;
   searchKeyword: string = '';
   conversations: any[] = [];
   otherUserNames: { [conversationId: number]: string } = {};
+  isSearchActive: boolean = false; // Controla si se muestran los resultados de búsqueda
+  isCategoryActive: boolean = false; // Controla si se muestran los resultados de la categoría
+  selectedCategory: string = '';
+  searchCategory = false; // Controla si se muestran los resultados de búsqueda por categoría
+  searchInLocality = '';
 
   constructor(
     private router: Router,
@@ -32,13 +37,33 @@ export class MainComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.authService.user$.subscribe((user) => {
-      this.user = user;
-      if (user) {
-        this.loadConversations();
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.userService.getUserProfile(token).subscribe({
+        next: (profile) => {
+          this.user = profile; // Asigna el perfil del usuario
+          console.log('Perfil del usuario cargado:', this.user);
+        },
+        error: (error) => {
+          console.error('Error al cargar el perfil del usuario:', error);
+        }
+      });
+    }
+    this.recogerProductos();
+  }
+
+  filtrarPorCategoria(categoria: string): void {
+    this.productService.getProductsByCategory(categoria).subscribe({
+      next: (response) => {
+        this.products = response;
+        this.searchCategory = true; // Mostrar los resultados de búsqueda por categoría
+        this.search = false; 
+        console.log('Productos filtrados:', this.products);
+      },
+      error: (error) => {
+        console.error('Error al filtrar productos:', error);
       }
     });
-    this.recogerProductos();
   }
 
   loadConversations() {
@@ -97,30 +122,40 @@ export class MainComponent implements OnInit {
   }
 
   buscarProductos() {
-    if (this.searchKeyword.length === 0) {
-      this.search = false;
-      this.recogerProductos();
-      return;
-    } else if (this.searchKeyword.length < 4) {
-      console.error('El término de búsqueda debe tener al menos 4 caracteres.');
-      return;
-    }
-
-    this.productService.searchProducts(this.searchKeyword).subscribe({
-      next: (response) => {
-        this.products = response;
-        if (this.user) {
-          this.updateProductsWithConversations();
-        }
-        this.search = true;
-        console.log('Resultados de búsqueda:', this.products);
-      },
-      error: (error) => {
-        console.error('Error al buscar productos:', error);
-        this.products = [];
-        this.search = true;
+    if (this.searchInLocality) {
+      // Si la casilla "En mi Localidad" está marcada
+      const userLocation = this.user?.location_name; // Obtener la localización del usuario
+      console.log('Localización del usuario:', this.user);
+      if (!userLocation) {
+        console.warn('No se ha especificado la ubicación del usuario.');
+        return;
       }
-    });
+  
+      this.productService.getProductsByLocation(userLocation).subscribe(
+        (response) => {
+          this.products = response; // Actualiza la lista de productos con los resultados
+          console.log('Productos en mi localidad:', response);
+          this.search = true; // Mostrar los resultados de búsqueda
+          this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
+        },
+        (error) => {
+          console.error('Error al buscar productos en la localidad:', error);
+        }
+      );
+    } else {
+      // Si la casilla no está marcada, realiza la búsqueda normal
+      this.productService.searchProducts(this.searchKeyword, this.selectedCategory).subscribe(
+        (response) => {
+          this.products = response; // Actualiza la lista de productos con los resultados
+          console.log('Productos encontrados:', response);
+          this.search = true; // Mostrar los resultados de búsqueda
+          this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
+        },
+        (error) => {
+          console.error('Error al buscar productos:', error);
+        }
+      );
+    }
   }
 
   startChat(productId: string) {

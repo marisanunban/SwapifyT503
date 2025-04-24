@@ -17,6 +17,7 @@ import { CommonModule } from '@angular/common';
 })
 export class LoginComponent {
   email: string = '';
+  username: string = ''; // Cambiado a string para almacenar el nombre de usuario
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
@@ -35,7 +36,8 @@ export class LoginComponent {
     console.log('Iniciando login...');
     const loginData = {
       email: this.email,
-      password: this.password
+      password: this.password,
+      username: this.username,
     };
 
     console.log('Enviando datos:', loginData);

@@ -30,13 +30,13 @@ public class    UserController {
 
     @GetMapping("/{id}")
     public Mono<ResponseEntity<UserDto>> getUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        UserInfoDto prueba = authClient.validateUserToken(token.replace("Bearer ", ""), id).block();
+        UserInfoDto prueba = authClient.validateUserToken(token.replace("Bearer ", "")).block();
         return Mono.just(ResponseEntity.ok(userService.getUser(id)));
     }
 
     @PatchMapping("/{id}")
     public Mono<ResponseEntity<Void>> updateUser(@PathVariable Long id, @RequestBody UpdateUserDto dto, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
+        return authClient.validateUserToken(token.replace("Bearer ", ""))
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!userInfo.getId().equals(id)) {
                         return Mono.<ResponseEntity<Void>>just(ResponseEntity.status(403).build());
@@ -49,7 +49,7 @@ public class    UserController {
 
     @PostMapping("/{id}/credits")
     public Mono<ResponseEntity<Void>> addCredits(@PathVariable Long id, @RequestBody CreditRequestDto dto, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
+        return authClient.validateUserToken(token.replace("Bearer ", ""))
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!userInfo.getId().equals(id)) {
                         return Mono.<ResponseEntity<Void>>just(ResponseEntity.status(403).build());
@@ -62,7 +62,7 @@ public class    UserController {
 
     @GetMapping("/{id}/credits/history")
     public Mono<ResponseEntity<List<CreditHistoryDto>>> getCreditHistory(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        return authClient.validateUserToken(token.replace("Bearer ", ""), id)
+        return authClient.validateUserToken(token.replace("Bearer ", ""))
                 .flatMap((UserInfoDto userInfo) -> { // Tipado explícito de userInfo
                     if (!userInfo.getId().equals(id)) {
                         return Mono.<ResponseEntity<List<CreditHistoryDto>>>just(ResponseEntity.status(403).build());
@@ -75,13 +75,13 @@ public class    UserController {
 
     @PostMapping("/create")
     public Mono<ResponseEntity<UserDto>> createUser(@RequestHeader("Authorization") String token) {
-        UserInfoDto respuesta = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+        UserInfoDto respuesta = authClient.validateUserToken(token.replace("Bearer ", "")).block();
         return Mono.just(new ResponseEntity<>(userService.createUser(respuesta), HttpStatus.CREATED));
     }
     @GetMapping("/me")
     public Mono<ResponseEntity<UserProfileDto>> getCurrentUserProfile(@RequestHeader("Authorization") String token) {
         try {
-            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", "")).block();
             if (userInfo == null || userInfo.getUseremail() == null) {
                 return Mono.just(ResponseEntity.status(401).build());
             }
@@ -98,7 +98,7 @@ public class    UserController {
                 @RequestHeader("Authorization") String token) {
             try {
                 // 1. Validar el token
-                UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+                UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", "")).block();
 
                 if (userInfo == null || !userInfo.getUseremail().equals(email)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -119,7 +119,7 @@ public class    UserController {
             @RequestHeader("Authorization") String token,
             @RequestBody UpdateUserProfileDto dto) {
         try {
-            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null).block();
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", "")).block();
             if (userInfo == null || userInfo.getUseremail() == null) {
                 return Mono.just(ResponseEntity.status(401).build());
             }
@@ -142,7 +142,7 @@ public class    UserController {
 
         try {
             // Validación síncrona del token usando .block()
-            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""), null)
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""))
                     .block();
 
             if (userInfo == null) {

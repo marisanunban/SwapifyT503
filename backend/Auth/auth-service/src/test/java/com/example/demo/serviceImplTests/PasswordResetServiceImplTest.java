@@ -49,7 +49,7 @@ class PasswordResetServiceImplTest {
         user.setEmail("test@example.com");
 
         resetPasswordRequestDto = new ResetPasswordRequestDto();
-        resetPasswordRequestDto.setEmail("test@example.com");
+        resetPasswordRequestDto.setUseremail("test@example.com");
     }
 
     @Test

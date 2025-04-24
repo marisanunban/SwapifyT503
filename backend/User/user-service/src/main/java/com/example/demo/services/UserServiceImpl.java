@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto createUser(UserInfoDto userInfoDto) {
         // Verificar si el usuario ya existe por email
-        Optional<User> existingUser = userRepository.findByUsername(userInfoDto.getUseremail());
+        Optional<User> existingUser = userRepository.findByUsermail(userInfoDto.getUseremail());
         if (existingUser.isPresent()) {
             User user = existingUser.get();
             return new UserDto(user.getId(), user.getUsermail(), user.getNickname(), user.getCredits());
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserByEmail(String email) {
-        User user = userRepository.findByUsername(email) // O findByEmail si tienes ese método
+        User user = userRepository.findByUsermail(email) // O findByEmail si tienes ese método
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
         return new UserDto(user.getId(), user.getUsermail(), user.getNickname(), user.getCredits());
     }
@@ -155,7 +155,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserProfileDto getUserProfileByEmail(String email) {
-        User user = userRepository.findByUsername(email)
+        User user = userRepository.findByUsermail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
         return new UserProfileDto(
                 user.getId(),

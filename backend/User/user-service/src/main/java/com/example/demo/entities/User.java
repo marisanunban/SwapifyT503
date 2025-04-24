@@ -13,7 +13,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String usermail;
 
-    @Column(nullable = false, unique = true)
+    @Column
     private String nickname;
 
     public String getNickname() {

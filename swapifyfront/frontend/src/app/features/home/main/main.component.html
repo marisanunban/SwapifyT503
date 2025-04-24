@@ -2,31 +2,50 @@
 <nav class="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-success-gradient">
   <!-- Logo -->
   <a href="#" class="text-2xl font-bold !text-green-700">
-    <img src="https://res.cloudinary.com/dgxpfv18c/image/upload/v1744636874/Untitled_logo_1_free-file-removebg-preview_ob6sxx.png" alt="Swapify Logo" class="h-20 w-20">
+    <img src="../../../../assets/Swapify.png" alt="Swapify Logo" class="h-20 w-20">
   </a>
 
-  <!-- Búsqueda -->
-  <div class="flex flex-1 mx-4">
-    <div class="relative flex items-center w-full max-w-3xl">
-      <div class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-          Categorías
-        </a>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="#">Mujer</a></li>
-          <li><a class="dropdown-item" href="#">Hombre</a></li>
-          <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" href="#">Tecnología</a></li>
-        </ul>
-      </div>
-      <input
-        type="text"
-        placeholder="Busca artículos"
-        [(ngModel)]="searchKeyword"
-        (keyup.enter)="buscarProductos()"
-        class="w-full m-2 px-3 py-2 bg-gray-100 rounded-r-md focus:outline-none text-black">
+  <!-- Contenedor de la barra de búsqueda y el checkbox -->
+<div class="flex flex-col mx-4">
+  <!-- Barra de búsqueda -->
+  <div class="relative flex items-center w-full max-w-3xl">
+    <div class="nav-item dropdown">
+      <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Categorías
+      </a>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" (click)="filtrarPorCategoria('Hogar')">Hogar</a></li>
+        <li><a class="dropdown-item" (click)="filtrarPorCategoria('Deportes')">Deportes</a></li>
+        <li><a class="dropdown-item" (click)="filtrarPorCategoria('Ropa')">Ropa</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" (click)="filtrarPorCategoria('Electrónica')">Electrónica</a></li>
+      </ul>
     </div>
+    <input
+      type="text"
+      placeholder="Busca artículos"
+      [(ngModel)]="searchKeyword"
+      class="w-full m-2 px-3 py-2 bg-gray-100 rounded-r-md focus:outline-none text-black">
+    <select [(ngModel)]="selectedCategory" class="form-select mx-2 w-1/4">
+      <option value="" disabled selected>Selecciona una categoría</option>
+      <option value="Hogar">Hogar</option>
+      <option value="Deportes">Deportes</option>
+      <option value="Ropa">Ropa</option>
+      <option value="Electrónica">Electrónica</option>
+    </select>
+    <button (click)="buscarProductos()" class="rounded-pill bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Buscar</button>
   </div>
+
+  <!-- Casilla de verificación -->
+  <div class="flex items-center mt-2">
+    <input
+      type="checkbox"
+      id="localidadCheckbox"
+      [(ngModel)]="searchInLocality"
+      class="mr-2">
+    <label for="localidadCheckbox" class="text-sm text-gray-700">En mi Localidad</label>
+  </div>
+</div>
 
   <!-- Acciones -->
   <div class="flex items-center gap-3">
@@ -105,7 +124,7 @@
   </div>
 
   <!-- Página Principal -->
-  <div *ngIf="!search">
+  <div *ngIf="!search && !searchCategory"> 
     <!-- Carrusel -->
     <div class="carrusel mb-10">
       <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
@@ -247,6 +266,29 @@
   </div>
 </main>
 
+
+<div *ngIf="searchCategory">
+  <h2 class="text-2xl font-bold mb-6">Resultados de la categoría</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div class="max-w-xs rounded-xl overflow-hidden shadow-lg bg-white" *ngFor="let product of products">
+      <!-- Imagen del producto -->
+      <div class="relative h-64 bg-gradient-to-r from-indigo-700 to-purple-400">
+        <img
+          [src]="product.imageUrl || 'https://via.placeholder.com/300'"
+          alt="{{ product.title }}"
+          class="h-full w-full object-contain p-4"
+        >
+      </div>
+
+      <!-- Información del producto -->
+      <div class="p-5">
+        <h2 class="text-xl font-semibold text-gray-800 mb-2 truncate">{{ product.title }}</h2>
+        <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ product.description || 'Sin descripción' }}</p>
+        <p class="text-xl font-bold text-gray-900">{{ product.price }} swapicoins</p>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Espacio -->
 <div class="hueco" style="height: 50px;"></div>
 
