@@ -102,6 +102,9 @@ public class UserServiceImpl implements UserService {
         if(dto.getProfilePictureId() != null){
             user.setProfilePictureId(dto.getProfilePictureId());
         }
+        if(dto.getNickname() != null){
+            user.setNickname(dto.getNickname());
+        }
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }

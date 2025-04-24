@@ -10,7 +10,7 @@ public class UserProfileDto {
     private Double latitude;
     private Double longitude;
     private String profilePictureUrl;
-
+    private String nickname;
     private String profilePictureId;
 
     public String getProfilePictureUrl() {
@@ -53,7 +53,7 @@ public class UserProfileDto {
         this.longitude = longitude;
     }
 
-    private String nickname;
+
 
     public String getNickname() {
         return nickname;
