@@ -25,4 +25,9 @@ public interface UserClient {
             @RequestParam("amount") int amount,
             @RequestHeader("Authorization") String token
     );
+    @GetMapping("/{userId}/credits")
+    Integer getUserCredits(
+            @PathVariable("userId") Long userId,
+            @RequestHeader("Authorization") String authToken
+    );
 }

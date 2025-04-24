@@ -252,25 +252,25 @@ public class TransactionServiceImpl implements TransactionService {
                             );
                         }
 
-                        // Transferencia de créditos ofrecidos (de buyer a seller) usando el token del comprador
+                        // Transferencia de créditos ofrecidos (del vendedor al comprador)
                         if (transaction.getCreditsOffered() != null && transaction.getCreditsOffered() > 0) {
-                            System.out.println("Transfiriendo créditos ofrecidos: " + transaction.getCreditsOffered() + " de " + transaction.getBuyerId() + " a " + transaction.getSellerId());
+                            System.out.println("Transfiriendo créditos ofrecidos: " + transaction.getCreditsOffered() + " de " + transaction.getSellerId() + " a " + transaction.getBuyerId());
                             userClient.transferCredits(
-                                    transaction.getBuyerId(),
-                                    transaction.getSellerId(),
+                                    transaction.getSellerId(),  // fromUserId (vendedor envía los créditos)
+                                    transaction.getBuyerId(),   // toUserId (comprador recibe los créditos)
                                     transaction.getCreditsOffered(),
-                                    tokens.getBuyerToken()
+                                    tokens.getSellerToken()
                             );
                         }
 
-                        // Transferencia de créditos solicitados (de seller a buyer) usando el token del vendedor
+                        // Transferencia de créditos solicitados (del comprador al vendedor)
                         if (transaction.getCreditsRequested() != null && transaction.getCreditsRequested() > 0) {
-                            System.out.println("Transfiriendo créditos solicitados: " + transaction.getCreditsRequested() + " de " + transaction.getSellerId() + " a " + transaction.getBuyerId());
+                            System.out.println("Transfiriendo créditos solicitados: " + transaction.getCreditsRequested() + " de " + transaction.getBuyerId() + " a " + transaction.getSellerId());
                             userClient.transferCredits(
-                                    transaction.getSellerId(),
-                                    transaction.getBuyerId(),
+                                    transaction.getBuyerId(),   // fromUserId (comprador envía los créditos)
+                                    transaction.getSellerId(),   // toUserId (vendedor recibe los créditos)
                                     transaction.getCreditsRequested(),
-                                    tokens.getSellerToken()
+                                    tokens.getBuyerToken()
                             );
                         }
 
