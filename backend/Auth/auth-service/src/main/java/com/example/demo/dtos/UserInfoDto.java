@@ -2,7 +2,7 @@ package com.example.demo.dtos;
 
 public class UserInfoDto {
     private Long id;
-    private String email;
+    private String useremail;
     private String role;
 
     // Constructor vacío (necesario para deserialización con WebClient)
@@ -10,9 +10,9 @@ public class UserInfoDto {
     }
 
     // Constructor con parámetros
-    public UserInfoDto(Long id, String email, String role) {
+    public UserInfoDto(Long id, String useremail, String role) {
         this.id = id;
-        this.email = email;
+        this.useremail = useremail;
         this.role = role;
     }
 
@@ -25,12 +25,12 @@ public class UserInfoDto {
         this.id = id;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUseremail() {
+        return useremail;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUseremail(String useremail) {
+        this.useremail = useremail;
     }
 
     public String getRole() {

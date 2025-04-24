@@ -26,4 +26,5 @@ public interface ProductService {
     List<ProductDto> findByOwnerId(long ownerId);
 
     List<Product> findByKeyword(String keyword);
+    public List<ProductDto> getProductsByLocation(String location);
 }

@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public class UsersDTO {
     private Long id;
-    private String email;
+    private String useremail;
     private Role role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -19,12 +19,12 @@ public class UsersDTO {
         this.id = id;
     }
 
-    public String getEmail() {
-        return email;
+    public String getUseremail() {
+        return useremail;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setUseremail(String useremail) {
+        this.useremail = useremail;
     }
 
     public Role getRole() {

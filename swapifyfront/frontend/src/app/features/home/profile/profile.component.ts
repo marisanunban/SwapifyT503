@@ -19,12 +19,13 @@ import { NegotiationService } from '../../../services/negotiation-service/negoti
 })
 export class ProfileComponent implements OnInit {
   user: { id: number; username: string; credits: number } | null = null;
-  username: string = '';
+  nickname: string = '';
   aboutMe: string = '';
   profileImageUrl: string = '';
   imageFile: File | null = null;
   isEditing: boolean = false;
   isEditingMe: boolean = false;
+  isEditingUsername: boolean = false;
   products: any[] = [];
   conversations: any[] = [];
   otherUserNames: { [conversationId: number]: string } = {};
@@ -53,7 +54,7 @@ export class ProfileComponent implements OnInit {
     if (token) {
       this.userService.getUserProfile(token).subscribe({
         next: response => {
-          this.username = response.username;
+          this.nickname = response.nickname;
           this.aboutMe = response.aboutMe;
           this.profileImageUrl = response.profilePicture;
           this.recuperarProductosPropietario();
@@ -69,6 +70,8 @@ export class ProfileComponent implements OnInit {
     this.obtenerUbicacion();
   }
 
+
+  
 
   mostrarProductos(): void {
     this.mostrarSeccionProductos = true;
@@ -335,6 +338,37 @@ export class ProfileComponent implements OnInit {
       },
       error: error => {
         console.error('Error al eliminar la imagen de Cloudinary:', error);
+      }
+    });
+  }
+
+
+  toggleEditUsername() {
+    this.isEditingUsername = true;
+  }
+
+  updateUsername() {
+    if (!this.nickname.trim()) {
+      console.warn('El nombre de usuario no puede estar vacío.');
+      return;
+    }
+
+    const token = localStorage.getItem('token'); // Obtener el token del almacenamiento local
+    if (!token) {
+      console.error('No se encontró el token de autenticación.');
+      return;
+    }
+
+    const profileData = { nickname: this.nickname }; // Datos a actualizar
+    console.log('Datos del perfil a actualizar:', profileData);
+
+    this.userService.updateUserProfile(token, profileData).subscribe({
+      next: (response) => {
+        console.log('Nombre de usuario actualizado:', response);
+        this.isEditingUsername = false; // Salir del modo de edición
+      },
+      error: (error) => {
+        console.error('Error al actualizar el nombre de usuario:', error);
       }
     });
   }

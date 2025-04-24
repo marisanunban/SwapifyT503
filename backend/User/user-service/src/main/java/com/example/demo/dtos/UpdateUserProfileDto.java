@@ -7,6 +7,15 @@ public class UpdateUserProfileDto {
     private String aboutMe;
     private String profilePictureUrl;
     private String profilePictureId;
+    private String nickname;
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
 
     public String getProfilePictureId() {
         return profilePictureId;
@@ -20,10 +29,11 @@ public class UpdateUserProfileDto {
     public UpdateUserProfileDto() {
     }
 
-    public UpdateUserProfileDto(String aboutMe, String profilePicture, String profilePictureId) {
+    public UpdateUserProfileDto(String aboutMe, String profilePicture, String profilePictureId, String nickname) {
         this.aboutMe = aboutMe;
         this.profilePictureUrl = profilePicture;
         this.profilePictureId = profilePictureId;
+        this.nickname = nickname;
     }
 
     // Getters y setters

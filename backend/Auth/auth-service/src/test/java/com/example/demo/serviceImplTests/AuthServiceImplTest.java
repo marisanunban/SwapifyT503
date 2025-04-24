@@ -48,7 +48,7 @@ public class AuthServiceImplTest {
     @Test
     void register_ShouldThrowException_WhenEmailAlreadyExists() {
         // Arrange
-        when(userService.existsByEmail(registerRequest.getEmail())).thenReturn(true);  // El email ya existe
+        when(userService.existsByEmail(registerRequest.getUseremail())).thenReturn(true);  // El email ya existe
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> authService.register(registerRequest),
@@ -58,7 +58,7 @@ public class AuthServiceImplTest {
     @Test
     void register_ShouldRegisterUser_WhenEmailDoesNotExist() {
         // Arrange
-        when(userService.existsByEmail(registerRequest.getEmail())).thenReturn(false);  // El email no existe
+        when(userService.existsByEmail(registerRequest.getUseremail())).thenReturn(false);  // El email no existe
 
         // Act
         MessageDto response = authService.register(registerRequest);

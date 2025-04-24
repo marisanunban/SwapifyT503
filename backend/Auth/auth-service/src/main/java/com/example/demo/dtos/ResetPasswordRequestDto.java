@@ -4,10 +4,10 @@ import lombok.Data;
 
 @Data
 public class ResetPasswordRequestDto {
- private  String email;
+ private  String useremail;
 
- public ResetPasswordRequestDto(String email) {
-  this.email = email;
+ public ResetPasswordRequestDto(String useremail) {
+  this.useremail = useremail;
  }
 
  public ResetPasswordRequestDto() {}
