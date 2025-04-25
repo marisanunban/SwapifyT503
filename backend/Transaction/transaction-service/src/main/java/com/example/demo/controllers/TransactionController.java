@@ -69,7 +69,6 @@ public class TransactionController {
         }
     }
 
-    // Nuevo endpoint para obtener una transacción por ID
     @GetMapping("/{id}")
     public ResponseEntity<TransactionDto> getTransaction(
             @PathVariable("id") Long id,

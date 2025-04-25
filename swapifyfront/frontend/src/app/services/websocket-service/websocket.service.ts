@@ -8,7 +8,8 @@ import { delay, switchMap } from 'rxjs/operators';
 })
 export class WebsocketService {
   private client!: Client;
-  private messageSubject = new Subject<any>();
+  private messageSubject = new Subject<any>(); // Para mensajes de conversación
+  private notificationSubject = new Subject<any>(); // Para notificaciones de usuario
   private connectionSubject = new Subject<boolean>();
   private isConnected = false;
 
@@ -76,12 +77,12 @@ export class WebsocketService {
     }
   }
 
+  // Suscripción a mensajes de una conversación
   subscribeToConversation(conversationId: number): Observable<any> {
     if (!this.isConnected) {
       console.warn(`Cannot subscribe to /topic/conversations/${conversationId}: WebSocket not connected`);
-      // Intentar reconectar y reintentar la suscripción
       return this.connect().pipe(
-        delay(1000), // Esperar un momento para la conexión
+        delay(1000),
         switchMap((connected) => {
           if (connected) {
             return this.subscribeToTopic(conversationId);
@@ -109,6 +110,43 @@ export class WebsocketService {
       return this.messageSubject.asObservable();
     } catch (error) {
       console.error('Error subscribing to conversation:', error);
+      throw error;
+    }
+  }
+
+  // Nuevo método para suscribirse a notificaciones del usuario
+  subscribeToUserNotifications(userId: number): Observable<any> {
+    if (!this.isConnected) {
+      console.warn(`Cannot subscribe to /user/${userId}/notifications: WebSocket not connected`);
+      return this.connect().pipe(
+        delay(1000),
+        switchMap((connected) => {
+          if (connected) {
+            return this.subscribeToUserTopic(userId);
+          } else {
+            throw new Error('Failed to connect to WebSocket');
+          }
+        })
+      );
+    }
+    return this.subscribeToUserTopic(userId);
+  }
+
+  private subscribeToUserTopic(userId: number): Observable<any> {
+    try {
+      console.log(`Subscribing to /user/${userId}/notifications`);
+      this.client.subscribe(`/user/${userId}/notifications`, (message: IMessage) => {
+        try {
+          console.log('Received WebSocket user notification:', message.body);
+          const parsedNotification = JSON.parse(message.body);
+          this.notificationSubject.next(parsedNotification);
+        } catch (error) {
+          console.error('Error parsing WebSocket notification:', error);
+        }
+      });
+      return this.notificationSubject.asObservable();
+    } catch (error) {
+      console.error('Error subscribing to user notifications:', error);
       throw error;
     }
   }

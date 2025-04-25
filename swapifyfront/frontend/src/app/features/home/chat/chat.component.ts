@@ -5,7 +5,7 @@ import {
   AfterViewChecked,
   ViewChild,
   ElementRef,
-  ChangeDetectorRef, // Importado para forzar detección de cambios
+  ChangeDetectorRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
@@ -65,6 +65,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   isAccepting: { [key: number]: boolean } = {};
   isRejecting: { [key: number]: boolean } = {};
   private wsSubscription: Subscription | null = null;
+  private wsNotificationSubscription: Subscription | null = null; // Nueva suscripción para notificaciones
   private routerSubscription: Subscription | null = null;
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
@@ -80,7 +81,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     private transactionService: TransactionService,
     private toastr: ToastrService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef // Inyectar ChangeDetectorRef
+    private cdr: ChangeDetectorRef
   ) {
     this.proposalForm = this.fb.group({
       productId: [''],
@@ -101,9 +102,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
               online: true,
             }
           : null;
-        console.log('Usuario actual cargado:', this.currentUser); // Log para depuración
+        console.log('Usuario actual cargado:', this.currentUser);
         if (user) {
           this.loadUserProducts();
+          // Suscribirse a las notificaciones del usuario
+          this.subscribeToUserNotifications(user.id);
         }
       },
       error: (error) => {
@@ -278,6 +281,37 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  // Nuevo método para suscribirse a las notificaciones del usuario
+  subscribeToUserNotifications(userId: number) {
+    if (this.wsNotificationSubscription) this.wsNotificationSubscription.unsubscribe();
+
+    this.websocketService.connect().subscribe({
+      next: (connected) => {
+        if (connected) {
+          this.wsNotificationSubscription = this.websocketService
+            .subscribeToUserNotifications(userId)
+            .subscribe({
+              next: (notification: any) => {
+                console.log('Notificación recibida para el usuario:', notification);
+                const transactionId = notification.transactionId;
+                const newStatus = notification.status;
+
+                if (transactionId) {
+                  // Actualizar el estado de la transacción
+                  this.loadTransactionState(transactionId);
+                  this.toastr.info(`La transacción ${transactionId} ha cambiado a estado: ${newStatus}`);
+                }
+              },
+              error: (error) => this.toastr.error('Error al recibir notificaciones WebSocket: ' + error.message),
+            });
+        } else {
+          this.toastr.error('No se pudo conectar al WebSocket para notificaciones');
+        }
+      },
+      error: (error) => this.toastr.error('Error al conectar al WebSocket para notificaciones: ' + error.message),
+    });
+  }
+
   sendMessage() {
     if (!this.newMessage.trim() || !this.conversation || !this.currentUser) return;
 
@@ -415,7 +449,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       next: (transaction) => {
         console.log(`Transacción ${transactionId} cargada:`, transaction);
         this.transactions[transactionId] = transaction;
-        this.cdr.detectChanges(); // Forzar detección de cambios
+        this.cdr.detectChanges();
         console.log('Estado actual de this.transactions:', this.transactions);
       },
       error: (error) => {
@@ -432,7 +466,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.negotiationService.confirmTransaction(this.conversation.id, transactionId, true).subscribe({
       next: (transaction) => {
         this.transactions[transactionId] = transaction;
-        this.cdr.detectChanges(); // Forzar detección de cambios después de actualizar
+        this.cdr.detectChanges();
         this.toastr.success('Transacción aceptada');
         this.isAccepting[transactionId] = false;
       },
@@ -450,7 +484,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.negotiationService.confirmTransaction(this.conversation.id, transactionId, false).subscribe({
       next: (transaction) => {
         this.transactions[transactionId] = transaction;
-        this.cdr.detectChanges(); // Forzar detección de cambios después de actualizar
+        this.cdr.detectChanges();
         this.toastr.success('Transacción rechazada');
         this.isRejecting[transactionId] = false;
       },
@@ -536,10 +570,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnDestroy() {
     if (this.wsSubscription) this.wsSubscription.unsubscribe();
+    if (this.wsNotificationSubscription) this.wsNotificationSubscription.unsubscribe();
     if (this.routerSubscription) this.routerSubscription.unsubscribe();
   }
 
-  // Método auxiliar para depurar desde la plantilla
   consoleLog(transaction: Transaction): boolean {
     console.log('Transacción en la plantilla:', transaction);
     return true;

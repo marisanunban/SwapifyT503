@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.clients.AuthClient;
+import com.example.demo.clients.ChatClient; // Añadir esta importación
 import com.example.demo.clients.ProductClient;
 import com.example.demo.clients.UserClient;
 import com.example.demo.dtos.CreateTransactionDto;
@@ -15,12 +16,14 @@ import com.example.demo.interfaces.TransactionService;
 import com.example.demo.repositories.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,6 +47,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private ChatClient chatClient; // Inyectar el Feign Client
 
     // Mapa temporal para almacenar los tokens (ID de transacción -> Tokens)
     private final Map<Long, TransactionTokens> transactionTokensMap = new ConcurrentHashMap<>();
@@ -157,7 +163,6 @@ public class TransactionServiceImpl implements TransactionService {
                 throw new IllegalArgumentException("El usuario no es parte de esta transacción");
             }
 
-            // Capturar el token del usuario que acepta
             TransactionTokens tokens = getOrCreateTransactionTokens(id);
             if (isBuyer) {
                 tokens.setBuyerToken(authToken);
@@ -205,18 +210,15 @@ public class TransactionServiceImpl implements TransactionService {
                 if (transaction.isBuyerAccepted() && transaction.isSellerAccepted()) {
                     System.out.println("Ambos usuarios han aceptado la transacción ID: " + id + ". Procediendo con las transferencias.");
 
-                    // Verificar que tengamos ambos tokens
                     if (tokens.getBuyerToken() == null || tokens.getSellerToken() == null) {
                         throw new IllegalStateException("No se han capturado los tokens de ambos usuarios para la transacción ID: " + id);
                     }
 
-                    // Cambiar el estado a COMPLETED y guardar antes de las transferencias
                     transaction.setStatus(Status.COMPLETED);
                     transaction.setUpdatedAt(LocalDateTime.now());
                     transactionRepository.save(transaction);
 
                     try {
-                        // Transferencia de producto ofrecido (de seller a buyer) usando el token del vendedor
                         if (transaction.getProductOfferedId() != null) {
                             System.out.println("Transfiriendo producto ofrecido ID: " + transaction.getProductOfferedId() + " de " + transaction.getSellerId() + " a " + transaction.getBuyerId());
                             ProductDto offeredProduct = productClient.getProduct(transaction.getProductOfferedId());
@@ -234,7 +236,6 @@ public class TransactionServiceImpl implements TransactionService {
                             );
                         }
 
-                        // Transferencia de producto solicitado (de buyer a seller) usando el token del comprador
                         if (transaction.getProductRequestedId() != null) {
                             System.out.println("Transfiriendo producto solicitado ID: " + transaction.getProductRequestedId() + " de " + transaction.getBuyerId() + " a " + transaction.getSellerId());
                             ProductDto requestedProduct = productClient.getProduct(transaction.getProductRequestedId());
@@ -252,23 +253,21 @@ public class TransactionServiceImpl implements TransactionService {
                             );
                         }
 
-                        // Transferencia de créditos ofrecidos (del vendedor al comprador)
                         if (transaction.getCreditsOffered() != null && transaction.getCreditsOffered() > 0) {
                             System.out.println("Transfiriendo créditos ofrecidos: " + transaction.getCreditsOffered() + " de " + transaction.getSellerId() + " a " + transaction.getBuyerId());
                             userClient.transferCredits(
-                                    transaction.getSellerId(),  // fromUserId (vendedor envía los créditos)
-                                    transaction.getBuyerId(),   // toUserId (comprador recibe los créditos)
+                                    transaction.getSellerId(),
+                                    transaction.getBuyerId(),
                                     transaction.getCreditsOffered(),
                                     tokens.getSellerToken()
                             );
                         }
 
-                        // Transferencia de créditos solicitados (del comprador al vendedor)
                         if (transaction.getCreditsRequested() != null && transaction.getCreditsRequested() > 0) {
                             System.out.println("Transfiriendo créditos solicitados: " + transaction.getCreditsRequested() + " de " + transaction.getBuyerId() + " a " + transaction.getSellerId());
                             userClient.transferCredits(
-                                    transaction.getBuyerId(),   // fromUserId (comprador envía los créditos)
-                                    transaction.getSellerId(),   // toUserId (vendedor recibe los créditos)
+                                    transaction.getBuyerId(),
+                                    transaction.getSellerId(),
                                     transaction.getCreditsRequested(),
                                     tokens.getBuyerToken()
                             );
@@ -276,13 +275,11 @@ public class TransactionServiceImpl implements TransactionService {
 
                         System.out.println("Transacción ID: " + id + " completada exitosamente");
                     } catch (Exception e) {
-                        // Revertir el estado a PENDING si las transferencias fallan
                         transaction.setStatus(Status.PENDING);
                         transactionRepository.save(transaction);
                         System.err.println("Error al procesar las transferencias de la transacción ID: " + id + ", mensaje: " + e.getMessage());
                         throw new RuntimeException("Error al completar la transacción: " + e.getMessage(), e);
                     } finally {
-                        // Limpiar los tokens después de completar o fallar la transacción
                         removeTransactionTokens(id);
                     }
                 } else {
@@ -299,11 +296,34 @@ public class TransactionServiceImpl implements TransactionService {
                     id,
                     updatedTransaction.getStatus().toString()
             );
+
+            // Notificar al microservicio de chat usando el Feign Client
+            Long conversationId = dto.getConversationId();
+            if (conversationId != null) {
+                try {
+                    // Crear el mensaje para enviar al microservicio de chat
+                    Map<String, Object> message = new HashMap<>();
+                    message.put("id", System.currentTimeMillis());
+                    message.put("conversationId", conversationId);
+                    message.put("senderId", 0);
+                    message.put("content", "Transacción ID: " + id + " ha pasado a estado " + updatedTransaction.getStatus());
+                    message.put("timestamp", LocalDateTime.now().toString());
+                    message.put("type", "SYSTEM");
+
+                    // Enviar la notificación al microservicio de chat
+                    ResponseEntity<Void> response = chatClient.notifyTransactionUpdate(conversationId, message);
+                    System.out.println("Notificación enviada al microservicio de chat: " + response.getStatusCode());
+                } catch (Exception e) {
+                    System.err.println("Error al notificar al microservicio de chat: " + e.getMessage());
+                }
+            } else {
+                System.out.println("No se proporcionó conversationId, no se puede notificar al microservicio de chat");
+            }
+
             return mapToDto(updatedTransaction);
         } finally {
             transaction.setProcessing(false);
             transactionRepository.save(transaction);
-            // Si la transacción fue rechazada, también limpiar los tokens
             if (transaction.getStatus() == Transaction.Status.REJECTED) {
                 removeTransactionTokens(id);
             }
@@ -312,7 +332,6 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionDto getTransaction(Long id, String authToken) {
-        // Validar el token y obtener el ID del usuario
         UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
         if (userInfo == null) {
             throw new EntityNotFoundException("Token inválido o usuario no encontrado");
@@ -321,7 +340,6 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
 
-        // Verificar si el usuario es el comprador o el vendedor
         boolean isBuyer = userInfo.getId().equals(transaction.getBuyerId());
         boolean isSeller = userInfo.getId().equals(transaction.getSellerId());
 
@@ -334,7 +352,6 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionDto> getTransactionsByUser(String authToken) {
-        // Validar el token y obtener el ID del usuario
         UserInfoDto userInfo = authClient.validateUserToken(authToken, null);
         if (userInfo == null) {
             throw new EntityNotFoundException("Token inválido o usuario no encontrado");
@@ -345,7 +362,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactions.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    @Scheduled(fixedRate = 3600000) // Ejecutar cada hora (3600000 milisegundos = 1 hora)
+    @Scheduled(fixedRate = 3600000)
     public void cleanUpTransactionTokens() {
         System.out.println("Ejecutando limpieza de transactionTokensMap...");
         transactionTokensMap.entrySet().removeIf(entry -> {
@@ -353,7 +370,7 @@ public class TransactionServiceImpl implements TransactionService {
             Transaction transaction = transactionRepository.findById(transactionId).orElse(null);
             if (transaction == null) {
                 System.out.println("Eliminando tokens de la transacción " + transactionId + ": transacción no encontrada en la base de datos.");
-                return true; // Eliminar si la transacción ya no existe
+                return true;
             }
             boolean shouldRemove = transaction.getStatus() == Transaction.Status.PENDING
                     && transaction.getCreatedAt().isBefore(LocalDateTime.now().minusHours(1));

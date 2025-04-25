@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -364,6 +365,31 @@ public class NegotiationServiceImpl implements NegotiationService {
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
 
         return updatedTransaction;
+    }
+    @Override
+    @Transactional
+    public void notifyTransactionUpdate(Long conversationId, Map<String, Object> message) {
+        // Validar que la conversación exista
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+
+        // Crear un mensaje de sistema
+        Message systemMessage = new Message();
+        systemMessage.setId(messageIdGenerator.incrementAndGet());
+        systemMessage.setSenderId(0L); // 0 indica que es un mensaje del sistema
+        systemMessage.setContent((String) message.get("content"));
+        systemMessage.setTimestamp(LocalDateTime.now());
+        systemMessage.setType(MessageType.SYSTEM);
+
+        // Añadir el mensaje a la conversación y guardar
+        conversation.getMessages().add(systemMessage);
+        conversationRepository.save(conversation);
+
+        // Preparar el DTO para enviar por WebSocket
+        MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
+        messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+
+        System.out.println("Mensaje WebSocket enviado a /topic/conversations/" + conversationId + ": " + systemMessage.getContent());
     }
 
     private ConversationDto mapToDto(Conversation c) {

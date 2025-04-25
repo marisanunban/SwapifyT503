@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -98,5 +99,19 @@ public class NegotiationController {
             @RequestHeader("Authorization") String authToken) {
         TransactionDto transaction = negotiationService.confirmTransaction(conversationId, transactionId, authToken, accept);
         return new ResponseEntity<>(transaction, HttpStatus.OK);
+    }
+
+    @PostMapping("/notify/{conversationId}")
+    public ResponseEntity<Void> notifyTransactionUpdate(
+            @PathVariable("conversationId") Long conversationId,
+            @RequestBody Map<String, Object> message) {
+        try {
+            // Delegar la lógica al servicio
+            negotiationService.notifyTransactionUpdate(conversationId, message);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            System.err.println("Error al procesar la notificación: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

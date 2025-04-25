@@ -5,6 +5,7 @@ import com.example.demo.dtos.MessageDto;
 import com.example.demo.dtos.TransactionDto;
 
 import java.util.List;
+import java.util.Map;
 
 public interface NegotiationService {
     ConversationDto startNegotiation(String productId, String authToken);
@@ -16,4 +17,5 @@ public interface NegotiationService {
     void deleteNegotiation(Long id, String authToken);
     TransactionDto createTransaction(Long conversationId, String authToken);
     TransactionDto confirmTransaction(Long conversationId, Long transactionId, String authToken, boolean accept);
+    void notifyTransactionUpdate(Long conversationId, Map<String, Object> message);
 }
