@@ -16,7 +16,7 @@ import { UserService } from '../../../services/user-service/user.service';
   styleUrls: ['./main.component.css']
 })
 export class MainComponent implements OnInit {
-  user: { id: number; username: string; credits: number; locationName: string} | null = null;
+  user: { id: number; username: string; credits: number; locationName: string; profilePicture:string;} | null = null;
   products: any[] = [];
   search: boolean = false;
   searchKeyword: string = '';

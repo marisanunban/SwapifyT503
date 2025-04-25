@@ -85,9 +85,12 @@ export class EditProductComponent implements OnInit {
     if (this.imageFile) {
       // Si se seleccionó una nueva imagen, súbela a Cloudinary
       this.cloudinaryService.uploadImage(this.imageFile, this.token).subscribe({
+        
         next: (uploadResponse) => {
           console.log('Imagen subida exitosamente:', uploadResponse);
-          this.imageUrl = uploadResponse.url; // Actualiza la URL de la imagen
+          this.imageUrl = uploadResponse.imageUrl; // Actualiza la URL de la imagen
+          console.log("imeageFile", this.imageFile),
+          console.log("imageUrl", this.imageUrl);
           this.updateProduct(); // Llama a la función para actualizar el producto
         },
         error: (error) => {

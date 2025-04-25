@@ -29,9 +29,6 @@
       <button *ngIf="!user" class="text-teal-600" (click)="irARegistro()">Regístrate</button>
       <button *ngIf="!user" class="text-teal-600" (click)="irALogin()">Iniciar Sesión</button>
       <button class="px-4 py-2 text-white bg-teal-600 rounded-md" (click)="irAContacta()">Contáctanos</button>
-      <button class="p-2 text-gray-500 rounded-full hover:bg-gray-100">
-        <i class="fas fa-question"></i>
-      </button>
       <div *ngIf="user" class="flex items-center space-x-4">
         <span class="text-lg font-semibold">Hola, {{ nickname }}</span>
         <span class="bg-green-600 px-3 py-1 rounded text-white">Créditos: {{ user.credits }}</span>

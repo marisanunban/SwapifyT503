@@ -66,18 +66,7 @@ export class CreateProductComponent {
         this.productService.createProduct(productData, this.token).subscribe({
           next: (response) => {
             console.log('Producto creado exitosamente:', response);
-
-            // Crear la transacción después de crear el producto
-            const productId = response.id; // Usar response.id directamente como string
-            this.transactionService.createTransaction(productId, 0).subscribe({
-              next: (transactionResponse) => {
-                console.log('Transacción creada exitosamente:', transactionResponse);
-                this.router.navigate(['/main']);
-              },
-              error: (transactionError) => {
-                console.error('Error al crear la transacción:', transactionError);
-              }
-            });
+            this.router.navigate(['/home']);
           },
           error: (error) => {
             console.error('Error al crear el producto:', error);

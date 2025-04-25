@@ -68,7 +68,7 @@
     </div>
     <button (click)="irAContacta()" type="button" class="rounded-pill bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Contáctanos</button>
     <div *ngIf="user" class="flex items-center space-x-4">
-      <a (click)="irAProfile()"><img [src]="//user.profileImageUrl || 'https://via.placeholder.com/50'" alt="Imagen de perfil" class="w-10 h-10 rounded-full border-2 border-green-500 object-cover"></a>
+      <a (click)="irAProfile()"><img [src]="user.profilePicture" alt="Imagen de perfil" id="profile" class="rounded-full border-2 border-green-500 object-cover"></a>
       <span class="bg-green-600 px-3 py-1 rounded">Créditos: {{ user.credits }}</span>
       
       <button (click)="logout()" type="button" class="text-white rounded-pill bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">Cerrar sesión</button>
@@ -337,3 +337,12 @@
     </div>
   </div>
 </footer>
+
+<style>
+  #profile {
+    width: 170px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #08330a; /* Color del borde */
+  }
+</style>
