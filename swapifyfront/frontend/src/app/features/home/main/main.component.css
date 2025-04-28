@@ -8,6 +8,76 @@ background: radial-gradient(circle, rgba(195,235,189,1) 0%, rgba(69,196,41,0.725
   }
 
   .bg-success-gradient {
-    background: linear-gradient(90deg, #d4c47b, #a1945a); /* Gradiente de éxito */
+    background-color: rgb(94, 173, 118);
     color: white; /* Texto blanco para contraste */
   }
+  /* main.component.css */
+/* Estilos para el menú desplegable */
+.profile-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid #4ade80; /* Color del borde verde claro */
+  transition: all 0.2s ease;
+  object-fit: cover;
+}
+
+.profile-image:hover {
+  border-color: #22c55e; /* Color del borde verde más oscuro al hover */
+  transform: scale(1.05);
+}
+
+/* Animación para la flecha del menú */
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+/* Estilos para el menú desplegable */
+.dropdown-menu {
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+/* Estilos para el badge de créditos */
+.credits-badge {
+  background-color: rgba(74, 222, 128, 0.2);
+  color: #22c55e;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Estilos para el botón de cerrar sesión */
+.logout-button {
+  color: #ef4444;
+}
+
+.logout-button:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Estilos para el fondo del menú */
+.menu-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+}
+
+/* Animación para el menú */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.menu-animation {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Estilos para el gradiente de fondo */
+.bg-success-gradient {
+  background: linear-gradient(to right, #4ade80, #22c55e);
+}

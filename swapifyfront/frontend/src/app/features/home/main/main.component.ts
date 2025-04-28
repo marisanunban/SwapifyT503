@@ -1,3 +1,4 @@
+// main.component.ts
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
@@ -22,11 +23,12 @@ export class MainComponent implements OnInit {
   searchKeyword: string = '';
   conversations: any[] = [];
   otherUserNames: { [conversationId: number]: string } = {};
-  isSearchActive: boolean = false; // Controla si se muestran los resultados de búsqueda
-  isCategoryActive: boolean = false; // Controla si se muestran los resultados de la categoría
+  isSearchActive: boolean = false;
+  isCategoryActive: boolean = false;
   selectedCategory: string = '';
-  searchCategory = false; // Controla si se muestran los resultados de búsqueda por categoría
+  searchCategory = false;
   searchInLocality = '';
+  isProfileMenuOpen = false; // Nueva propiedad para controlar el menú desplegable
 
   constructor(
     private router: Router,
@@ -41,7 +43,7 @@ export class MainComponent implements OnInit {
     if (token) {
       this.userService.getUserProfile(token).subscribe({
         next: (profile) => {
-          this.user = profile; // Asigna el perfil del usuario
+          this.user = profile;
           console.log('Perfil del usuario cargado:', this.user);
         },
         error: (error) => {
@@ -52,11 +54,21 @@ export class MainComponent implements OnInit {
     this.recogerProductos();
   }
 
+  // Método para alternar el menú desplegable
+  toggleProfileMenu() {
+    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+  }
+
+  // Método para cerrar el menú desplegable
+  closeProfileMenu() {
+    this.isProfileMenuOpen = false;
+  }
+
   filtrarPorCategoria(categoria: string): void {
     this.productService.getProductsByCategory(categoria).subscribe({
       next: (response) => {
         this.products = response;
-        this.searchCategory = true; // Mostrar los resultados de búsqueda por categoría
+        this.searchCategory = true;
         this.search = false; 
         console.log('Productos filtrados:', this.products);
       },
@@ -127,19 +139,16 @@ export class MainComponent implements OnInit {
       return;
     }
   
-    // Paso 1: Buscar productos por palabra clave
     this.productService.searchProducts(this.searchKeyword).subscribe(
       (response) => {
-        let filteredProducts = response; // Productos encontrados por palabra clave
+        let filteredProducts = response;
         console.log('Productos encontrados por palabra clave:', filteredProducts);
   
-        // Paso 2: Filtrar por categoría si se ha seleccionado
         if (this.selectedCategory) {
           filteredProducts = filteredProducts.filter(product => product.category === this.selectedCategory);
           console.log('Productos filtrados por categoría:', filteredProducts);
         }
   
-        // Paso 3: Filtrar por localización si se ha marcado la casilla
         if (this.searchInLocality) {
           const userLocation = this.user?.locationName;
           if (!userLocation) {
@@ -147,28 +156,24 @@ export class MainComponent implements OnInit {
             return;
           }
   
-          // Llamar al servicio para obtener productos por localización
           this.productService.getProductsByLocation(userLocation).subscribe(
             (locationFilteredProducts) => {
-              // Filtrar los productos ya obtenidos por los IDs devueltos por el backend
               const locationFilteredIds = new Set(locationFilteredProducts.map(p => p.id));
               filteredProducts = filteredProducts.filter(product => locationFilteredIds.has(product.id));
               console.log('Productos filtrados por localización:', filteredProducts);
   
-              // Actualizar la lista de productos y mostrar los resultados
               this.products = filteredProducts;
-              this.search = true; // Mostrar los resultados de búsqueda
-              this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
+              this.search = true;
+              this.searchCategory = false;
             },
             (error) => {
               console.error('Error al filtrar productos por localización:', error);
             }
           );
         } else {
-          // Si no se filtra por localización, actualizar directamente
           this.products = filteredProducts;
-          this.search = true; // Mostrar los resultados de búsqueda
-          this.searchCategory = false; // Ocultar los resultados de búsqueda por categoría
+          this.search = true;
+          this.searchCategory = false;
         }
       },
       (error) => {
@@ -191,7 +196,6 @@ export class MainComponent implements OnInit {
       return;
     }
 
-    // Verificar si ya existe una conversación
     const existingConversation = this.conversations.find(conv =>
       (conv.buyerId === this.user!.id && conv.sellerId === product.ownerId) ||
       (conv.sellerId === this.user!.id && conv.buyerId === product.ownerId)
@@ -234,6 +238,7 @@ export class MainComponent implements OnInit {
 
   logout() {
     this.authService.logout();
+    this.closeProfileMenu(); // Cerrar el menú al hacer logout
     this.router.navigate(['/main']);
   }
 
@@ -243,6 +248,7 @@ export class MainComponent implements OnInit {
 
   irAProfile() {
     this.router.navigate(['/profile']);
+    this.closeProfileMenu(); // Cerrar el menú al navegar
   }
 
   irALogin() {
@@ -255,5 +261,15 @@ export class MainComponent implements OnInit {
 
   irACrear() {
     this.router.navigate(['/create']);
+  }
+
+  irAMisChats() {
+    this.router.navigate(['/chats']);
+    this.closeProfileMenu(); // Cerrar el menú al navegar
+  }
+
+  irAFavoritos() {
+    this.router.navigate(['/favorites']);
+    this.closeProfileMenu(); // Cerrar el menú al navegar
   }
 }
