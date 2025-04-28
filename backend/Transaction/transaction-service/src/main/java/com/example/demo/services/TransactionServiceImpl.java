@@ -1,7 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.clients.AuthClient;
-import com.example.demo.clients.ChatClient; // Añadir esta importación
+import com.example.demo.clients.ChatClient;
 import com.example.demo.clients.ProductClient;
 import com.example.demo.clients.UserClient;
 import com.example.demo.dtos.CreateTransactionDto;
@@ -49,15 +49,11 @@ public class TransactionServiceImpl implements TransactionService {
     private NotificationService notificationService;
 
     @Autowired
-    private ChatClient chatClient; // Inyectar el Feign Client
+    private ChatClient chatClient;
 
-    // Mapa temporal para almacenar los tokens (ID de transacción -> Tokens)
     private final Map<Long, TransactionTokens> transactionTokensMap = new ConcurrentHashMap<>();
-
-    // Formateador para convertir LocalDateTime a String
     private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
-    // Clase interna para almacenar los tokens del comprador y vendedor
     private static class TransactionTokens {
         private String buyerToken;
         private String sellerToken;
@@ -70,7 +66,6 @@ public class TransactionServiceImpl implements TransactionService {
         public void setSellerToken(String sellerToken) { this.sellerToken = sellerToken; }
     }
 
-    // Métodos para acceder al mapa
     private TransactionTokens getOrCreateTransactionTokens(Long transactionId) {
         return transactionTokensMap.computeIfAbsent(transactionId, k -> new TransactionTokens());
     }
@@ -124,6 +119,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setBuyerAccepted(false);
         transaction.setSellerAccepted(false);
         transaction.setProcessing(false);
+        transaction.setConversationId(dto.getConversationId());
 
         Transaction savedTransaction = transactionRepository.save(transaction);
         System.out.println("Transacción creada con ID: " + savedTransaction.getId());
@@ -298,10 +294,15 @@ public class TransactionServiceImpl implements TransactionService {
             );
 
             // Notificar al microservicio de chat usando el Feign Client
-            Long conversationId = dto.getConversationId();
+            Long conversationId = transaction.getConversationId();
+            // Validar que el conversationId del DTO coincida con el de la transacción
+            if (dto.getConversationId() != null && conversationId != null && !dto.getConversationId().equals(conversationId)) {
+                System.err.println("[Backend] Inconsistencia: el conversationId del DTO (" + dto.getConversationId() +
+                        ") no coincide con el de la transacción (" + conversationId + ")");
+                throw new IllegalStateException("El conversationId proporcionado no coincide con el de la transacción");
+            }
             if (conversationId != null) {
                 try {
-                    // Crear el mensaje para enviar al microservicio de chat
                     Map<String, Object> message = new HashMap<>();
                     message.put("id", System.currentTimeMillis());
                     message.put("conversationId", conversationId);
@@ -310,14 +311,14 @@ public class TransactionServiceImpl implements TransactionService {
                     message.put("timestamp", LocalDateTime.now().toString());
                     message.put("type", "SYSTEM");
 
-                    // Enviar la notificación al microservicio de chat
+                    System.out.println("[Backend] Enviando notificación al microservicio de chat: " + message);
                     ResponseEntity<Void> response = chatClient.notifyTransactionUpdate(conversationId, message);
-                    System.out.println("Notificación enviada al microservicio de chat: " + response.getStatusCode());
+                    System.out.println("[Backend] Notificación enviada al microservicio de chat: " + response.getStatusCode());
                 } catch (Exception e) {
-                    System.err.println("Error al notificar al microservicio de chat: " + e.getMessage());
+                    System.err.println("[Backend] Error al notificar al microservicio de chat: " + e.getMessage());
                 }
             } else {
-                System.out.println("No se proporcionó conversationId, no se puede notificar al microservicio de chat");
+                System.out.println("[Backend] No se encontró conversationId en la transacción, no se puede notificar al microservicio de chat");
             }
 
             return mapToDto(updatedTransaction);

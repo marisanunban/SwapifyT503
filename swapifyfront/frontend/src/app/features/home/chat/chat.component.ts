@@ -65,8 +65,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   isAccepting: { [key: number]: boolean } = {};
   isRejecting: { [key: number]: boolean } = {};
   private wsSubscription: Subscription | null = null;
-  private wsNotificationSubscription: Subscription | null = null; // Nueva suscripción para notificaciones
+  private wsNotificationSubscription: Subscription | null = null;
   private routerSubscription: Subscription | null = null;
+  private isWebSocketConnected = false;
+  private subscribedConversationId: number | null = null;
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
 
@@ -105,7 +107,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         console.log('Usuario actual cargado:', this.currentUser);
         if (user) {
           this.loadUserProducts();
-          // Suscribirse a las notificaciones del usuario
           this.subscribeToUserNotifications(user.id);
         }
       },
@@ -146,6 +147,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.productService.getProductsByOwner(this.currentUser.id, token).subscribe({
       next: (products) => {
         this.userProducts = products;
+        console.log('[loadUserProducts] Productos cargados:', this.userProducts);
+        this.cdr.detectChanges();
       },
       error: (error) => {
         this.toastr.error('Error al cargar los productos: ' + error.message);
@@ -231,6 +234,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.messages = [...this.conversation.messages];
         this.loadTransactionsFromMessages();
         this.scrollToBottom();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.toastr.error('Error al cargar la conversación');
@@ -240,76 +244,164 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   subscribeToMessages(conversationId: number) {
-    if (this.wsSubscription) this.wsSubscription.unsubscribe();
+    if (this.subscribedConversationId === conversationId) {
+      console.log(`[WebSocket] Ya está suscrito al canal /topic/conversations/${conversationId}, evitando suscripción duplicada`);
+      return;
+    }
 
-    this.websocketService.connect().subscribe({
-      next: (connected) => {
-        if (connected) {
-          this.wsSubscription = this.websocketService
-            .subscribeToConversation(conversationId)
-            .subscribe({
-              next: (message: any) => {
-                if (message.senderId !== this.currentUser?.id || message.type === 'SYSTEM') {
-                  this.messages.push({
-                    id: message.id,
-                    conversationId: message.conversationId,
-                    senderId: message.senderId,
-                    text: message.content,
-                    time: new Date(message.timestamp).toLocaleTimeString(),
-                    type: message.type,
-                    productId: message.productId,
-                    creditsOffered: message.creditsOffered,
-                    isSystem: message.type === 'SYSTEM',
-                  });
-                  this.messages = [...this.messages];
-                  if (message.type === 'SYSTEM') {
-                    const transactionId = this.getTransactionId(message.text);
-                    if (transactionId) {
-                      this.loadTransactionState(transactionId);
-                    }
-                  }
-                  this.scrollToBottom();
-                }
-              },
-              error: (error) => this.toastr.error('Error en la conexión WebSocket: ' + error.message),
-            });
-        } else {
-          this.toastr.error('No se pudo conectar al WebSocket');
-        }
-      },
-      error: (error) => this.toastr.error('Error al conectar al WebSocket: ' + error.message),
-    });
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+      console.log(`[WebSocket] Suscripción anterior al canal /topic/conversations/${this.subscribedConversationId} cancelada`);
+    }
+
+    this.subscribedConversationId = conversationId;
+
+    if (!this.isWebSocketConnected) {
+      console.log('[WebSocket] Intentando conectar al WebSocket...');
+      this.websocketService.connect().subscribe({
+        next: (connected) => {
+          if (connected) {
+            this.isWebSocketConnected = true;
+            console.log(`[WebSocket] Conectado al WebSocket`);
+            this.subscribeToConversation(conversationId);
+          } else {
+            console.error('[WebSocket] No se pudo conectar al WebSocket');
+            this.toastr.error('No se pudo conectar al WebSocket');
+          }
+        },
+        error: (error) => {
+          console.error('[WebSocket] Error al conectar:', error);
+          this.toastr.error('Error al conectar al WebSocket: ' + error.message);
+        },
+      });
+    } else {
+      console.log('[WebSocket] WebSocket ya está conectado, procediendo a suscribir...');
+      this.subscribeToConversation(conversationId);
+    }
   }
 
-  // Nuevo método para suscribirse a las notificaciones del usuario
+  private subscribeToConversation(conversationId: number) {
+    console.log(`[WebSocket] Suscribiendo al canal /topic/conversations/${conversationId}`);
+    this.wsSubscription = this.websocketService
+      .subscribeToConversation(conversationId)
+      .subscribe({
+        next: (message: any) => {
+          console.log(`[WebSocket] Mensaje recibido en /topic/conversations/${conversationId}:`, message);
+          if (!message) {
+            console.error('[WebSocket] Mensaje recibido es undefined o null');
+            return;
+          }
+          const content = message.content || 'Mensaje sin contenido';
+          const newMessage = {
+            id: message.id || Date.now(),
+            conversationId: message.conversationId || conversationId,
+            senderId: message.senderId || 0,
+            text: content,
+            time: message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
+            type: message.type || 'TEXT',
+            productId: message.productId || undefined,
+            creditsOffered: message.creditsOffered || 0,
+            isSystem: message.type === 'SYSTEM',
+          };
+
+          const messageExists = this.messages.some(
+            (msg) =>
+              msg.id === newMessage.id ||
+              (msg.senderId === newMessage.senderId &&
+               msg.text === newMessage.text &&
+               msg.time === newMessage.time &&
+               msg.type === newMessage.type)
+          );
+
+          if (!messageExists) {
+            if (newMessage.isSystem) {
+              newMessage.text = this.cleanSystemMessage(newMessage.text);
+            }
+            this.messages.push(newMessage);
+            this.messages = [...this.messages];
+            console.log('[WebSocket] Mensaje añadido a this.messages:', newMessage);
+          } else {
+            console.log('[WebSocket] Mensaje duplicado detectado y omitido:', newMessage);
+          }
+
+          if (message.type === 'SYSTEM') {
+            const transactionId = this.getTransactionId(content);
+            console.log(`[WebSocket] TransactionId extraído del mensaje de sistema: ${transactionId}`);
+            if (transactionId) {
+              console.log(`[WebSocket] Llamando a loadTransactionState para transactionId: ${transactionId}`);
+              this.loadTransactionState(transactionId);
+            } else {
+              console.warn('[WebSocket] No se pudo extraer el transactionId del mensaje:', content);
+            }
+            this.loadTransactionsFromMessages();
+          }
+          this.scrollToBottom();
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('[WebSocket] Error en la suscripción:', error);
+          this.toastr.error('Error en la conexión WebSocket: ' + error.message);
+          this.isWebSocketConnected = false;
+          this.subscribedConversationId = null;
+          this.subscribeToMessages(conversationId);
+        },
+      });
+  }
+
+  private cleanSystemMessage(text: string): string {
+    const sentences = text.split('. ').filter((sentence, index, self) => 
+      sentence && self.indexOf(sentence) === index
+    );
+    return sentences.join('. ') + (sentences.length > 0 ? '.' : '');
+  }
+
   subscribeToUserNotifications(userId: number) {
-    if (this.wsNotificationSubscription) this.wsNotificationSubscription.unsubscribe();
+    if (this.wsNotificationSubscription) {
+      this.wsNotificationSubscription.unsubscribe();
+      console.log(`[WebSocket] Suscripción anterior a notificaciones del usuario ${userId} cancelada`);
+    }
 
-    this.websocketService.connect().subscribe({
-      next: (connected) => {
-        if (connected) {
-          this.wsNotificationSubscription = this.websocketService
-            .subscribeToUserNotifications(userId)
-            .subscribe({
-              next: (notification: any) => {
-                console.log('Notificación recibida para el usuario:', notification);
-                const transactionId = notification.transactionId;
-                const newStatus = notification.status;
+    if (!this.isWebSocketConnected) {
+      console.log('[WebSocket] Intentando conectar al WebSocket para notificaciones...');
+      this.websocketService.connect().subscribe({
+        next: (connected) => {
+          if (connected) {
+            this.isWebSocketConnected = true;
+            console.log(`[WebSocket] Conectado al WebSocket para notificaciones`);
+            this.subscribeToNotifications(userId);
+          } else {
+            this.toastr.error('No se pudo conectar al WebSocket para notificaciones');
+          }
+        },
+        error: (error) => {
+          this.toastr.error('Error al conectar al WebSocket para notificaciones: ' + error.message);
+        },
+      });
+    } else {
+      console.log('[WebSocket] WebSocket ya está conectado, procediendo a suscribir a notificaciones...');
+      this.subscribeToNotifications(userId);
+    }
+  }
 
-                if (transactionId) {
-                  // Actualizar el estado de la transacción
-                  this.loadTransactionState(transactionId);
-                  this.toastr.info(`La transacción ${transactionId} ha cambiado a estado: ${newStatus}`);
-                }
-              },
-              error: (error) => this.toastr.error('Error al recibir notificaciones WebSocket: ' + error.message),
-            });
-        } else {
-          this.toastr.error('No se pudo conectar al WebSocket para notificaciones');
-        }
-      },
-      error: (error) => this.toastr.error('Error al conectar al WebSocket para notificaciones: ' + error.message),
-    });
+  private subscribeToNotifications(userId: number) {
+    console.log(`[WebSocket] Suscribiendo a notificaciones del usuario ${userId}`);
+    this.wsNotificationSubscription = this.websocketService
+      .subscribeToUserNotifications(userId)
+      .subscribe({
+        next: (notification: any) => {
+          console.log('[WebSocket] Notificación recibida para el usuario:', notification);
+          const transactionId = notification.transactionId;
+          const newStatus = notification.status;
+
+          if (transactionId) {
+            console.log(`[WebSocket] Notificación - Llamando a loadTransactionState para transactionId: ${transactionId}`);
+            this.loadTransactionState(transactionId);
+            this.toastr.info(`La transacción ${transactionId} ha cambiado a estado: ${newStatus}`);
+            this.cdr.detectChanges();
+          }
+        },
+        error: (error) => this.toastr.error('Error al recibir notificaciones WebSocket: ' + error.message),
+      });
   }
 
   sendMessage() {
@@ -321,8 +413,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    const tempId = -Date.now();
     const tempMessage: Message = {
-      id: Date.now(),
+      id: tempId,
       conversationId: this.conversation.id,
       senderId: this.currentUser.id,
       text: this.newMessage,
@@ -340,15 +433,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       .sendMessage(this.conversation.id, messageToSend, 'TEXT')
       .subscribe({
         next: (response) => {
-          const index = this.messages.findIndex((m) => m.id === tempMessage.id);
-          this.messages[index] = {
-            ...tempMessage,
-            id: response.id,
-            time: new Date(response.timestamp).toLocaleTimeString(),
-          };
+          const index = this.messages.findIndex((m) => m.id === tempId);
+          if (index !== -1) {
+            const updatedMessage = {
+              ...tempMessage,
+              id: response.id,
+              time: new Date(response.timestamp).toLocaleTimeString(),
+            };
+            this.messages[index] = updatedMessage;
+            this.messages = [...this.messages];
+            console.log('[sendMessage] Mensaje actualizado con ID del backend:', updatedMessage);
+          } else {
+            console.warn('[sendMessage] No se encontró el mensaje temporal para actualizar:', tempId);
+          }
+          this.cdr.detectChanges();
         },
         error: () => {
-          this.messages = this.messages.filter((msg) => msg !== tempMessage);
+          this.messages = this.messages.filter((msg) => msg.id !== tempId);
           this.newMessage = messageToSend;
           this.toastr.error('Error al enviar el mensaje');
         },
@@ -393,7 +494,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       .sendMessage(this.conversation.id, formValue.content, type, productId, creditsOffered)
       .subscribe({
         next: (message) => {
-          this.messages.push({
+          const newMessage = {
             id: message.id,
             conversationId: this.conversation!.id,
             senderId: this.currentUser!.id,
@@ -403,13 +504,35 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             productId: message.productId,
             creditsOffered: message.creditsOffered,
             isSystem: message.type === 'SYSTEM',
-          });
+          };
+
+          const messageExists = this.messages.some(
+            (msg) =>
+              msg.id === newMessage.id ||
+              (msg.senderId === newMessage.senderId &&
+               msg.text === newMessage.text &&
+               msg.time === newMessage.time &&
+               msg.type === newMessage.type)
+          );
+
+          if (!messageExists) {
+            if (newMessage.isSystem) {
+              newMessage.text = this.cleanSystemMessage(newMessage.text);
+            }
+            this.messages.push(newMessage);
+            this.messages = [...this.messages];
+            console.log('[submitProposal] Mensaje añadido:', newMessage);
+          } else {
+            console.log('[submitProposal] Mensaje duplicado detectado y omitido:', newMessage);
+          }
+
           this.showProposalForm = false;
           this.showResponseForm = false;
           this.respondingToMessage = null;
           this.proposalForm.reset();
           this.scrollToBottom();
           this.toastr.success(type === 'PROPOSAL' ? 'Propuesta enviada' : 'Respuesta enviada');
+          this.cdr.detectChanges();
 
           if (type === 'PROPOSAL_RESPONSE') {
             this.negotiationService.createTransaction(this.conversation!.id).subscribe({
@@ -430,13 +553,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   loadTransactionsFromMessages() {
-    console.log('Cargando transacciones desde mensajes...');
-    console.log('Mensajes actuales:', this.messages);
+    console.log('[loadTransactionsFromMessages] Cargando transacciones desde mensajes...');
+    console.log('[loadTransactionsFromMessages] Mensajes actuales:', this.messages);
     this.messages.forEach((message) => {
-      if (message.isSystem && message.text.includes('Transacción creada')) {
+      if (message.isSystem) {
         const transactionId = this.getTransactionId(message.text);
-        console.log(`Transacción encontrada con ID: ${transactionId}`);
+        console.log(`[loadTransactionsFromMessages] Transacción encontrada con ID: ${transactionId}`);
         if (transactionId) {
+          console.log(`[loadTransactionsFromMessages] Llamando a loadTransactionState para transactionId: ${transactionId}`);
           this.loadTransactionState(transactionId);
         }
       }
@@ -444,16 +568,48 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   loadTransactionState(transactionId: number) {
-    console.log(`Cargando estado de la transacción ${transactionId}...`);
+    console.log(`[loadTransactionState] Cargando estado de la transacción ${transactionId}...`);
     this.transactionService.getTransaction(transactionId).subscribe({
       next: (transaction) => {
-        console.log(`Transacción ${transactionId} cargada:`, transaction);
-        this.transactions[transactionId] = transaction;
-        this.cdr.detectChanges();
-        console.log('Estado actual de this.transactions:', this.transactions);
+        console.log(`[loadTransactionState] Transacción ${transactionId} cargada:`, transaction);
+        this.transactions[transactionId] = { ...transaction };
+        this.transactions = { ...this.transactions };
+
+        // Si la transacción está completada, actualizamos la lista de productos
+        if (transaction.status === 'COMPLETED') {
+          console.log(`[loadTransactionState] Transacción ${transactionId} completada, actualizando lista de productos...`);
+          
+          // Identificar los productos involucrados en la transacción
+          const proposalMessage = this.messages.find((m) => m.type === 'PROPOSAL' && this.getTransactionId(m.text) === transactionId);
+          const responseMessage = this.messages.find((m) => m.type === 'PROPOSAL_RESPONSE' && this.getTransactionId(m.text) === transactionId);
+
+          const tradedProductIds: (string | undefined)[] = [];
+          if (proposalMessage?.productId) {
+            tradedProductIds.push(proposalMessage.productId);
+          }
+          if (responseMessage?.productId) {
+            tradedProductIds.push(responseMessage.productId);
+          }
+          console.log('[loadTransactionState] Productos involucrados en la transacción:', tradedProductIds);
+
+          // Filtrar los productos intercambiados de userProducts inmediatamente
+          this.userProducts = this.userProducts.filter((product) => !tradedProductIds.includes(product.id));
+          console.log('[loadTransactionState] Productos filtrados de userProducts:', this.userProducts);
+
+          // Volver a cargar la lista de productos desde el backend para asegurarnos de que está actualizada
+          this.loadUserProducts();
+        }
+
+        setTimeout(() => {
+          this.cdr.detectChanges();
+          console.log('[loadTransactionState] Detección de cambios forzada con setTimeout');
+          console.log(`[loadTransactionState] transaction.status: ${transaction.status}, hasAccepted(${transactionId}): ${this.hasAccepted(transactionId)}`);
+          console.log(`[loadTransactionState] Condición para mostrar botones: ${transaction.status === 'PENDING' && !this.hasAccepted(transactionId)}`);
+        }, 0);
+        console.log('[loadTransactionState] Estado actual de this.transactions:', this.transactions);
       },
       error: (error) => {
-        console.error(`Error al cargar la transacción ${transactionId}:`, error);
+        console.error(`[loadTransactionState] Error al cargar la transacción ${transactionId}:`, error);
         this.toastr.error('Error al cargar el estado de la transacción: ' + error.message);
       },
     });
@@ -462,17 +618,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   acceptTransaction(transactionId: number) {
     if (!this.conversation || !this.currentUser) return;
 
+    console.log(`[acceptTransaction] Aceptando transacción ${transactionId}...`);
     this.isAccepting[transactionId] = true;
+    this.cdr.detectChanges();
     this.negotiationService.confirmTransaction(this.conversation.id, transactionId, true).subscribe({
       next: (transaction) => {
-        this.transactions[transactionId] = transaction;
+        console.log(`[acceptTransaction] Transacción ${transactionId} aceptada:`, transaction);
+        this.transactions[transactionId] = { ...transaction };
+        this.transactions = { ...this.transactions };
         this.cdr.detectChanges();
         this.toastr.success('Transacción aceptada');
         this.isAccepting[transactionId] = false;
+        console.log('[acceptTransaction] Evaluando condición para mostrar botones después de aceptar...');
+        console.log(`[acceptTransaction] transaction.status: ${transaction.status}, hasAccepted(${transactionId}): ${this.hasAccepted(transactionId)}`);
+        console.log(`[acceptTransaction] Condición para mostrar botones: ${transaction.status === 'PENDING' && !this.hasAccepted(transactionId)}`);
       },
       error: (error) => {
+        console.error(`[acceptTransaction] Error al aceptar la transacción ${transactionId}:`, error);
         this.toastr.error('Error al aceptar la transacción: ' + error.message);
         this.isAccepting[transactionId] = false;
+        this.cdr.detectChanges();
       },
     });
   }
@@ -480,24 +645,35 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   rejectTransaction(transactionId: number) {
     if (!this.conversation || !this.currentUser) return;
 
+    console.log(`[rejectTransaction] Rechazando transacción ${transactionId}...`);
     this.isRejecting[transactionId] = true;
+    this.cdr.detectChanges();
     this.negotiationService.confirmTransaction(this.conversation.id, transactionId, false).subscribe({
       next: (transaction) => {
-        this.transactions[transactionId] = transaction;
+        console.log(`[rejectTransaction] Transacción ${transactionId} rechazada:`, transaction);
+        this.transactions[transactionId] = { ...transaction };
+        this.transactions = { ...this.transactions };
         this.cdr.detectChanges();
         this.toastr.success('Transacción rechazada');
         this.isRejecting[transactionId] = false;
+        console.log('[rejectTransaction] Evaluando condición para mostrar botones después de rechazar...');
+        console.log(`[rejectTransaction] transaction.status: ${transaction.status}, hasAccepted(${transactionId}): ${this.hasAccepted(transactionId)}`);
+        console.log(`[rejectTransaction] Condición para mostrar botones: ${transaction.status === 'PENDING' && !this.hasAccepted(transactionId)}`);
       },
       error: (error) => {
+        console.error(`[rejectTransaction] Error al rechazar la transacción ${transactionId}:`, error);
         this.toastr.error('Error al rechazar la transacción: ' + error.message);
         this.isRejecting[transactionId] = false;
+        this.cdr.detectChanges();
       },
     });
   }
 
   showTransactionDetails(transactionId: number) {
+    console.log(`[showTransactionDetails] Mostrando detalles de la transacción ${transactionId}`);
     const transaction = this.transactions[transactionId];
     if (!transaction) {
+      console.warn('[showTransactionDetails] No se encontraron detalles de la transacción');
       this.toastr.error('No se encontraron detalles de la transacción');
       return;
     }
@@ -506,6 +682,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const responseMessage = this.messages.filter((m) => m.type === 'PROPOSAL_RESPONSE').slice(-1)[0];
 
     if (!proposalMessage || !responseMessage) {
+      console.warn('[showTransactionDetails] No se encontraron mensajes de propuesta o respuesta');
       this.toastr.error('No se encontraron detalles de la transacción');
       return;
     }
@@ -522,26 +699,51 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       Comprador ha aceptado: ${transaction.buyerAccepted ? 'Sí' : 'No'}
       Vendedor ha aceptado: ${transaction.sellerAccepted ? 'Sí' : 'No'}
     `;
+    console.log('[showTransactionDetails] Detalles mostrados:', details);
     this.toastr.info(details, 'Detalles de la Transacción', { timeOut: 10000 });
   }
 
   hasAccepted(transactionId: number): boolean {
     const transaction = this.transactions[transactionId];
     if (!transaction || !this.currentUser) {
-      console.log('Transacción o usuario no definido:', { transaction, currentUser: this.currentUser });
+      console.log('[hasAccepted] Transacción o usuario no definido:', { transaction, currentUser: this.currentUser });
       return false;
     }
 
     const isBuyer = this.currentUser.id === transaction.buyerId;
-    console.log(`Usuario ${this.currentUser.id}, es comprador: ${isBuyer}, buyerAccepted: ${transaction.buyerAccepted}, sellerAccepted: ${transaction.sellerAccepted}`);
     const hasAccepted = isBuyer ? transaction.buyerAccepted : transaction.sellerAccepted;
-    console.log(`hasAccepted para transacción ${transactionId}: ${hasAccepted}`);
+    console.log(`[hasAccepted] Usuario ${this.currentUser.id}, es comprador: ${isBuyer}, buyerAccepted: ${transaction.buyerAccepted}, sellerAccepted: ${transaction.sellerAccepted}, resultado: ${hasAccepted}`);
     return hasAccepted;
   }
 
   getTransactionId(messageText: string): number {
-    const match = messageText.match(/ID: (\d+)/);
-    return match ? parseInt(match[1], 10) : 0;
+    console.log(`[getTransactionId] Procesando mensaje: "${messageText}"`);
+    if (!messageText || typeof messageText !== 'string') {
+      console.warn('[getTransactionId] messageText es undefined, null o no es un string:', messageText);
+      return 0;
+    }
+    let match = messageText.match(/ID: (\d+)/);
+    if (match) {
+      console.log(`[getTransactionId] Coincidencia encontrada (ID:): ${match[1]}`);
+      return parseInt(match[1], 10);
+    }
+    match = messageText.match(/transacción (\d+)/i);
+    if (match) {
+      console.log(`[getTransactionId] Coincidencia encontrada (transacción): ${match[1]}`);
+      return parseInt(match[1], 10);
+    }
+    match = messageText.match(/Transaccion (\d+)/i);
+    if (match) {
+      console.log(`[getTransactionId] Coincidencia encontrada (Transaccion sin tilde): ${match[1]}`);
+      return parseInt(match[1], 10);
+    }
+    match = messageText.match(/Transacción ID: (\d+)/i);
+    if (match) {
+      console.log(`[getTransactionId] Coincidencia encontrada (Transacción ID:): ${match[1]}`);
+      return parseInt(match[1], 10);
+    }
+    console.warn('[getTransactionId] No se encontró transactionId en el mensaje');
+    return 0;
   }
 
   isCurrentUser(senderId: number): boolean {
@@ -569,13 +771,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy() {
-    if (this.wsSubscription) this.wsSubscription.unsubscribe();
-    if (this.wsNotificationSubscription) this.wsNotificationSubscription.unsubscribe();
-    if (this.routerSubscription) this.routerSubscription.unsubscribe();
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+      console.log('[ngOnDestroy] Suscripción al canal WebSocket cancelada');
+    }
+    if (this.wsNotificationSubscription) {
+      this.wsNotificationSubscription.unsubscribe();
+      console.log('[ngOnDestroy] Suscripción a notificaciones WebSocket cancelada');
+    }
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+      console.log('[ngOnDestroy] Suscripción al router cancelada');
+    }
+    this.isWebSocketConnected = false;
+    this.subscribedConversationId = null;
   }
 
   consoleLog(transaction: Transaction): boolean {
-    console.log('Transacción en la plantilla:', transaction);
+    console.log('[HTML] Transacción renderizada:', transaction);
+    const shouldShowButtons = transaction.status === 'PENDING' && !this.hasAccepted(transaction.id);
+    console.log('[HTML] Condición para mostrar botones:', shouldShowButtons);
+    console.log('[HTML] transaction.status:', transaction.status);
+    console.log('[HTML] hasAccepted:', this.hasAccepted(transaction.id));
     return true;
   }
 }

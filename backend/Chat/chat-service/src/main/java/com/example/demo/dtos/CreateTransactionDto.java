@@ -8,8 +8,9 @@ public class CreateTransactionDto {
     private String productRequestedId;
     private Integer creditsOffered;
     private Integer creditsRequested;
-    private Long sellerId;  // ID del vendedor
-    private Long buyerId;  // ID del comprador
+    private Long sellerId;
+    private Long buyerId;
+    private Long conversationId; // Campo añadido
 
     // Getters y setters
     public void setProductOfferedId(String productOfferedId) {
@@ -36,6 +37,10 @@ public class CreateTransactionDto {
         this.buyerId = buyerId;
     }
 
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
+    }
+
     public String getProductOfferedId() {
         return productOfferedId;
     }
@@ -60,16 +65,21 @@ public class CreateTransactionDto {
         return buyerId;
     }
 
-    // Constructor
+    public Long getConversationId() {
+        return conversationId;
+    }
+
+    // Constructor actualizado
     public CreateTransactionDto(String productOfferedId, String productRequestedId,
                                 Integer creditsOffered, Integer creditsRequested,
-                                Long sellerId, Long buyerId) {
+                                Long sellerId, Long buyerId, Long conversationId) {
         this.productOfferedId = productOfferedId;
         this.productRequestedId = productRequestedId;
         this.creditsOffered = creditsOffered;
         this.creditsRequested = creditsRequested;
         this.sellerId = sellerId;
         this.buyerId = buyerId;
+        this.conversationId = conversationId;
     }
 
     // Constructor por defecto

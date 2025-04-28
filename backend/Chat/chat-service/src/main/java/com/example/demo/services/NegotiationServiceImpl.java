@@ -297,6 +297,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         CreateTransactionDto transactionDto = new CreateTransactionDto();
         transactionDto.setSellerId(sellerId);
         transactionDto.setBuyerId(buyerId);
+        transactionDto.setConversationId(conversationId); // Añadido
         if (proposal.getSenderId().equals(sellerId)) {
             transactionDto.setProductOfferedId(proposal.getProductId());
             transactionDto.setCreditsOffered(proposal.getCreditsOffered());

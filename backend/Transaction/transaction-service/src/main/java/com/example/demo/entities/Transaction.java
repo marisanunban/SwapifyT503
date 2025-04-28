@@ -17,7 +17,22 @@ public class Transaction {
 
     private Long sellerId;
     private Long buyerId;
+    private String productOfferedId;
+    private String productRequestedId;
+    private Integer creditsOffered;
+    private Integer creditsRequested;
 
+    @Enumerated(EnumType.STRING)
+    private Status status;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private boolean buyerAccepted;
+    private boolean sellerAccepted;
+    private boolean isProcessing;
+    private Long conversationId; // Campo añadido
+
+    // Getters y setters generados por Lombok
     public Long getId() {
         return id;
     }
@@ -122,23 +137,16 @@ public class Transaction {
         this.sellerId = sellerId;
     }
 
-    private String productOfferedId;
-    private String productRequestedId;
-    private Integer creditsOffered;
-    private Integer creditsRequested;
+    // Nuevo getter y setter para conversationId
+    public Long getConversationId() {
+        return conversationId;
+    }
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
-
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private boolean buyerAccepted;
-    private boolean sellerAccepted;
-    private boolean isProcessing;
+    public void setConversationId(Long conversationId) {
+        this.conversationId = conversationId;
+    }
 
     public enum Status {
         PENDING, COMPLETED, REJECTED
     }
-
-    // Getters y setters generados por Lombok
 }
