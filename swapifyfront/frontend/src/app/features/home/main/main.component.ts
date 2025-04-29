@@ -29,6 +29,14 @@ export class MainComponent implements OnInit {
   searchCategory = false;
   searchInLocality = '';
   isProfileMenuOpen = false; // Nueva propiedad para controlar el menú desplegable
+  radius:number = 10;
+   // Variables para el modal de ubicación
+   isLocationModalOpen: boolean = false;
+
+   // Variables para el mapa
+   private map: google.maps.Map | undefined;
+   private marker: google.maps.Marker | undefined;
+   private circle: google.maps.Circle | undefined;
 
   constructor(
     private router: Router,
@@ -271,5 +279,106 @@ export class MainComponent implements OnInit {
   irAFavoritos() {
     this.router.navigate(['/favorites']);
     this.closeProfileMenu(); // Cerrar el menú al navegar
+  }
+
+
+
+
+
+
+
+  ngAfterViewInit(): void {
+
+  }
+
+  // Abrir el modal de ubicación
+  openLocationModal(): void {
+    this.isLocationModalOpen = true;
+  
+    // Esperar a que el modal se renderice antes de inicializar o actualizar el mapa
+    setTimeout(() => {
+      if (!this.map) {
+        // Inicializar el mapa si no está inicializado
+        this.initializeMap();
+        this.initializeAutocomplete();
+      } else {
+        // Forzar la actualización del mapa si ya está inicializado
+        google.maps.event.trigger(this.map, 'resize');
+        this.map.setCenter(this.marker?.getPosition() || { lat: 40.416775, lng: -3.703790 }); // Madrid, España
+      }
+    }, 0);
+  }
+
+  // Cerrar el modal de ubicación
+  closeLocationModal(): void {
+    this.isLocationModalOpen = false;
+  }
+
+  // Aplicar el filtro de ubicación
+  applyFilter(): void {
+    const position = this.marker?.getPosition();
+    if (position) {
+      console.log('Filtro aplicado:', {
+        lat: position.lat(),
+        lng: position.lng(),
+        radius: this.radius
+      });
+      this.closeLocationModal();
+      // Aquí puedes enviar los datos al backend o filtrar los productos localmente
+    }
+  }
+
+  // Inicializar el mapa
+  private initializeMap(): void {
+    const defaultLocation = { lat: 40.416775, lng: -3.703790 }; // Madrid, España
+    this.map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
+      center: defaultLocation,
+      zoom: 12
+    });
+  
+    this.marker = new google.maps.Marker({
+      position: defaultLocation,
+      map: this.map,
+      draggable: true
+    });
+  
+    this.circle = new google.maps.Circle({
+      map: this.map,
+      radius: this.radius * 1000, // Convertir kilómetros a metros
+      fillColor: '#FF0000',
+      fillOpacity: 0.2,
+      strokeColor: '#FF0000',
+      strokeOpacity: 0.5,
+      strokeWeight: 1
+    });
+  
+    this.circle.bindTo('center', this.marker, 'position');
+  }
+  // Inicializar el autocompletado de direcciones
+  private initializeAutocomplete(): void {
+    const input = document.getElementById('locationInput') as HTMLInputElement;
+    const autocomplete = new google.maps.places.Autocomplete(input);
+
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const lat = place.geometry.location.lat();
+        const lng = place.geometry.location.lng();
+
+        // Actualizar el mapa y el marcador
+        this.map?.setCenter({ lat, lng });
+        this.marker?.setPosition({ lat, lng });
+      }
+    });
+  }
+
+  // Geocodificación inversa para obtener la dirección a partir de coordenadas
+  private reverseGeocode(lat: number, lng: number): void {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === 'OK' && results && results[0]) {
+        console.log('Dirección seleccionada:', results[0].formatted_address);
+      }
+    });
   }
 }

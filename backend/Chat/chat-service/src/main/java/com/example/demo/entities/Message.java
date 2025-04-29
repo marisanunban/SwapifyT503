@@ -13,6 +13,24 @@ public class Message {
     private String productId;
 
     private String content;
+    private boolean inappropriate;
+    private String warningMessage;
+
+    public boolean isInappropriate() {
+        return inappropriate;
+    }
+
+    public void setInappropriate(boolean inappropriate) {
+        this.inappropriate = inappropriate;
+    }
+
+    public String getWarningMessage() {
+        return warningMessage;
+    }
+
+    public void setWarningMessage(String warningMessage) {
+        this.warningMessage = warningMessage;
+    }
 
     public Integer getCreditsOffered() {
         return creditsOffered;

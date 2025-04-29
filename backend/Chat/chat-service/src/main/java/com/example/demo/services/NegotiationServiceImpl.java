@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.clients.AuthClient;
+import com.example.demo.clients.ModerationClient;
 import com.example.demo.clients.ProductClient;
 import com.example.demo.clients.TransactionClient;
 import com.example.demo.config.IdGeneratorService;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -29,6 +31,8 @@ public class NegotiationServiceImpl implements NegotiationService {
     private final ObjectMapper objectMapper;
     private final IdGeneratorService idGeneratorService;
     private final AtomicLong messageIdGenerator = new AtomicLong(System.currentTimeMillis());
+    private final ModerationClient moderationClient;
+
 
     public NegotiationServiceImpl(
             ConversationRepository conversationRepository,
@@ -36,7 +40,8 @@ public class NegotiationServiceImpl implements NegotiationService {
             ProductClient productClient,
             TransactionClient transactionClient,
             SimpMessagingTemplate messagingTemplate,
-            IdGeneratorService idGeneratorService) {
+            IdGeneratorService idGeneratorService,
+            ModerationClient moderationClient) {
         this.conversationRepository = conversationRepository;
         this.authClient = authClient;
         this.productClient = productClient;
@@ -44,6 +49,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         this.messagingTemplate = messagingTemplate;
         this.objectMapper = new ObjectMapper();
         this.idGeneratorService = idGeneratorService;
+        this.moderationClient = moderationClient;
     }
 
     @Override
@@ -55,7 +61,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         ProductDto product;
         try {
@@ -69,7 +75,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         Long sellerId = Long.valueOf(product.getOwnerId());
 
         if (buyerId.equals(sellerId)) {
-            throw new IllegalArgumentException("No puedes iniciar una negociación para tu propio producto");
+            throw new IllegalArgumentException("No puedes iniciar una negociaci贸n para tu propio producto");
         }
 
         Optional<Conversation> existingConversation = conversationRepository
@@ -106,6 +112,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
+
         if (userInfo == null) throw new NoSuchElementException("Token inválido");
 
         Conversation conversation = conversationRepository.findById(conversationId)
@@ -124,6 +131,24 @@ public class NegotiationServiceImpl implements NegotiationService {
             }
         }
 
+        // 👉 Revisar contenido ANTES de crear el mensaje
+        Boolean isAppropriate = true;
+        try {
+            isAppropriate = moderationClient.isContentAppropriate(Map.of("content", content));
+        } catch (Exception e) {
+            System.err.println("Error al verificar contenido: " + e.getMessage());
+        }
+
+        if (!Boolean.TRUE.equals(isAppropriate)) {
+            // 👉 No se guarda ni se envía el mensaje
+            MessageDto warningDto = new MessageDto();
+//            warningDto.setContent(content);
+            warningDto.setInappropriate(true);
+            warningDto.setWarningMessage("El contenido del mensaje es inapropiado y no ha sido enviado.");
+            return warningDto;
+        }
+
+        // 👉 Solo se crea y guarda si es apropiado
         Message message = new Message();
         message.setId(messageIdGenerator.incrementAndGet());
         message.setSenderId(senderId);
@@ -154,14 +179,14 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         Conversation conversation = conversationRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+                .orElseThrow(() -> new NoSuchElementException("Conversaci贸n no encontrada"));
 
         Long requesterId = userInfo.getId();
         if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
-            throw new IllegalArgumentException("Solo los participantes de la conversación pueden verla");
+            throw new IllegalArgumentException("Solo los participantes de la conversaci贸n pueden verla");
         }
 
         return mapToDto(conversation);
@@ -176,10 +201,10 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         Conversation conversation = conversationRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+                .orElseThrow(() -> new NoSuchElementException("Conversaci贸n no encontrada"));
 
         Long senderId = userInfo.getId();
         if (!senderId.equals(conversation.getBuyerId()) && !senderId.equals(conversation.getSellerId())) {
@@ -195,7 +220,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         }
 
         String content = "Propuesta: " + (productId != null ? "Producto ID " + productId : "") +
-                (creditsOffered != null && creditsOffered > 0 ? ", " + creditsOffered + " créditos" : "");
+                (creditsOffered != null && creditsOffered > 0 ? ", " + creditsOffered + " cr茅ditos" : "");
 
         Message message = new Message();
         message.setId(messageIdGenerator.incrementAndGet());
@@ -228,7 +253,7 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         Long userId = userInfo.getId();
         List<Conversation> conversations = conversationRepository.findByBuyerIdOrSellerId(userId);
@@ -244,14 +269,14 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         Conversation conversation = conversationRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+                .orElseThrow(() -> new NoSuchElementException("Conversaci贸n no encontrada"));
 
         Long requesterId = userInfo.getId();
         if (!requesterId.equals(conversation.getBuyerId()) && !requesterId.equals(conversation.getSellerId())) {
-            throw new IllegalArgumentException("Solo los participantes de la conversación pueden eliminarla");
+            throw new IllegalArgumentException("Solo los participantes de la conversaci贸n pueden eliminarla");
         }
 
         conversationRepository.deleteById(id);
@@ -268,10 +293,10 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+                .orElseThrow(() -> new NoSuchElementException("Conversaci贸n no encontrada"));
 
         Long senderId = userInfo.getId();
         if (!senderId.equals(conversation.getBuyerId()) && !senderId.equals(conversation.getSellerId())) {
@@ -282,13 +307,13 @@ public class NegotiationServiceImpl implements NegotiationService {
         Message proposal = conversation.getMessages().stream()
                 .filter(m -> m.getType() == MessageType.PROPOSAL)
                 .reduce((first, second) -> second)
-                .orElseThrow(() -> new IllegalStateException("No se encontró una propuesta original"));
+                .orElseThrow(() -> new IllegalStateException("No se encontr贸 una propuesta original"));
 
         // Buscar la respuesta a la propuesta (PROPOSAL_RESPONSE)
         Message response = conversation.getMessages().stream()
                 .filter(m -> m.getType() == MessageType.PROPOSAL_RESPONSE)
                 .reduce((first, second) -> second)
-                .orElseThrow(() -> new IllegalStateException("No se encontró una respuesta a la propuesta"));
+                .orElseThrow(() -> new IllegalStateException("No se encontr贸 una respuesta a la propuesta"));
 
         Long sellerId = conversation.getSellerId();
         Long buyerId = conversation.getBuyerId();
@@ -312,7 +337,7 @@ public class NegotiationServiceImpl implements NegotiationService {
 
         Message systemMessage = new Message();
         systemMessage.setId(messageIdGenerator.incrementAndGet());
-        systemMessage.setContent("Transacción creada con ID: " + createdTransaction.getId());
+        systemMessage.setContent("Transacci贸n creada con ID: " + createdTransaction.getId());
         systemMessage.setTimestamp(LocalDateTime.now());
         systemMessage.setType(MessageType.SYSTEM);
         conversation.getMessages().add(systemMessage);
@@ -333,10 +358,10 @@ public class NegotiationServiceImpl implements NegotiationService {
         } catch (Exception e) {
             throw new RuntimeException("Error al validar el token: " + e.getMessage(), e);
         }
-        if (userInfo == null) throw new NoSuchElementException("Token inválido");
+        if (userInfo == null) throw new NoSuchElementException("Token inv谩lido");
 
         Conversation conversation = conversationRepository.findById(conversationId)
-                .orElseThrow(() -> new NoSuchElementException("Conversación no encontrada"));
+                .orElseThrow(() -> new NoSuchElementException("Conversaci贸n no encontrada"));
 
         Long userId = userInfo.getId();
         if (!userId.equals(conversation.getBuyerId()) && !userId.equals(conversation.getSellerId())) {
@@ -347,14 +372,14 @@ public class NegotiationServiceImpl implements NegotiationService {
         UpdateTransactionStatusDto statusDto = new UpdateTransactionStatusDto();
         statusDto.setStatus(accept ? "ACCEPTED" : "REJECTED");
 
-        // Actualizar el estado de la transacción
+        // Actualizar el estado de la transacci贸n
         TransactionDto updatedTransaction = transactionClient.updateTransactionStatus(transactionId, statusDto, authToken);
 
         Message systemMessage = new Message();
         systemMessage.setId(messageIdGenerator.incrementAndGet());
         systemMessage.setContent(accept ?
-                "Usuario " + userId + " ha aceptado la transacción " + transactionId :
-                "Usuario " + userId + " ha rechazado la transacción " + transactionId);
+                "Usuario " + userId + " ha aceptado la transacci贸n " + transactionId :
+                "Usuario " + userId + " ha rechazado la transacci贸n " + transactionId);
         systemMessage.setTimestamp(LocalDateTime.now());
         systemMessage.setType(MessageType.SYSTEM);
         conversation.getMessages().add(systemMessage);
@@ -389,7 +414,10 @@ public class NegotiationServiceImpl implements NegotiationService {
                 m.getTimestamp().toString(),
                 m.getType().toString(),
                 m.getProductId(),
-                m.getCreditsOffered()
+                m.getCreditsOffered(),
+                m.isInappropriate(),
+                m.getWarningMessage()
         );
     }
+
 }
