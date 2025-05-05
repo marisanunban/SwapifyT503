@@ -69,6 +69,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private routerSubscription: Subscription | null = null;
   private isWebSocketConnected = false;
   private subscribedConversationId: number | null = null;
+  private lastTransactionMessage: { [key: number]: Message } = {}; // Para rastrear el último mensaje por transacción
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
 
@@ -315,26 +316,36 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           if (!messageExists) {
             if (newMessage.isSystem) {
-              newMessage.text = this.cleanSystemMessage(newMessage.text);
+              const transactionId = this.getTransactionId(content);
+              if (transactionId) {
+                // Mostrar solo mensajes de creación, aceptación o rechazo
+                if (content.includes('creada con') || content.includes('ha aceptado') || content.includes('ha rechazado')) {
+                  this.lastTransactionMessage[transactionId] = newMessage;
+                  newMessage.text = this.cleanSystemMessage(content);
+                  const existingIndex = this.messages.findIndex(
+                    (msg) => msg.isSystem && this.getTransactionId(msg.text) === transactionId
+                  );
+                  if (existingIndex !== -1) {
+                    this.messages[existingIndex] = newMessage;
+                  } else {
+                    this.messages.push(newMessage);
+                  }
+                  this.messages = [...this.messages];
+                  console.log(`[WebSocket] Mensaje del sistema actualizado/añadido para transacción ${transactionId}:`, newMessage);
+                } else {
+                  console.log(`[WebSocket] Ignorando mensaje del sistema no relevante para transacción ${transactionId}:`, content);
+                }
+                this.loadTransactionState(transactionId);
+              }
+            } else {
+              this.messages.push(newMessage);
+              this.messages = [...this.messages];
+              console.log('[WebSocket] Mensaje no del sistema añadido:', newMessage);
             }
-            this.messages.push(newMessage);
-            this.messages = [...this.messages];
-            console.log('[WebSocket] Mensaje añadido a this.messages:', newMessage);
           } else {
             console.log('[WebSocket] Mensaje duplicado detectado y omitido:', newMessage);
           }
 
-          if (message.type === 'SYSTEM') {
-            const transactionId = this.getTransactionId(content);
-            console.log(`[WebSocket] TransactionId extraído del mensaje de sistema: ${transactionId}`);
-            if (transactionId) {
-              console.log(`[WebSocket] Llamando a loadTransactionState para transactionId: ${transactionId}`);
-              this.loadTransactionState(transactionId);
-            } else {
-              console.warn('[WebSocket] No se pudo extraer el transactionId del mensaje:', content);
-            }
-            this.loadTransactionsFromMessages();
-          }
           this.scrollToBottom();
           this.cdr.detectChanges();
         },
@@ -538,7 +549,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.negotiationService.createTransaction(this.conversation!.id).subscribe({
               next: (transaction) => {
                 this.toastr.success(`Transacción creada con ID: ${transaction.id}`);
+                // Forzar la carga inmediata de la transacción
                 this.loadTransactionState(transaction.id);
+                // Añadir la transacción manualmente para asegurar que se muestre
+                this.transactions[transaction.id] = { ...transaction, status: 'PENDING', buyerAccepted: false, sellerAccepted: false };
+                this.cdr.detectChanges();
               },
               error: (error) => {
                 this.toastr.error('Error al crear la transacción: ' + error.message);
@@ -555,12 +570,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   loadTransactionsFromMessages() {
     console.log('[loadTransactionsFromMessages] Cargando transacciones desde mensajes...');
     console.log('[loadTransactionsFromMessages] Mensajes actuales:', this.messages);
+    const processedTransactionIds = new Set<number>();
     this.messages.forEach((message) => {
       if (message.isSystem) {
         const transactionId = this.getTransactionId(message.text);
-        console.log(`[loadTransactionsFromMessages] Transacción encontrada con ID: ${transactionId}`);
-        if (transactionId) {
-          console.log(`[loadTransactionsFromMessages] Llamando a loadTransactionState para transactionId: ${transactionId}`);
+        if (transactionId && !processedTransactionIds.has(transactionId)) {
+          processedTransactionIds.add(transactionId);
           this.loadTransactionState(transactionId);
         }
       }
@@ -575,11 +590,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.transactions[transactionId] = { ...transaction };
         this.transactions = { ...this.transactions };
 
-        // Si la transacción está completada, actualizamos la lista de productos
         if (transaction.status === 'COMPLETED') {
           console.log(`[loadTransactionState] Transacción ${transactionId} completada, actualizando lista de productos...`);
           
-          // Identificar los productos involucrados en la transacción
           const proposalMessage = this.messages.find((m) => m.type === 'PROPOSAL' && this.getTransactionId(m.text) === transactionId);
           const responseMessage = this.messages.find((m) => m.type === 'PROPOSAL_RESPONSE' && this.getTransactionId(m.text) === transactionId);
 
@@ -592,11 +605,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           }
           console.log('[loadTransactionState] Productos involucrados en la transacción:', tradedProductIds);
 
-          // Filtrar los productos intercambiados de userProducts inmediatamente
           this.userProducts = this.userProducts.filter((product) => !tradedProductIds.includes(product.id));
           console.log('[loadTransactionState] Productos filtrados de userProducts:', this.userProducts);
 
-          // Volver a cargar la lista de productos desde el backend para asegurarnos de que está actualizada
           this.loadUserProducts();
         }
 
