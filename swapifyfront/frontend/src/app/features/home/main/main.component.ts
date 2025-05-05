@@ -35,7 +35,7 @@ export class MainComponent implements OnInit {
 
    // Variables para el mapa
    private map: google.maps.Map | undefined;
-   private marker: google.maps.Marker | undefined;
+   private marker: google.maps.marker.AdvancedMarkerElement | undefined; // Cambiado a AdvancedMarkerElement
    private circle: google.maps.Circle | undefined;
 
   constructor(
@@ -142,52 +142,56 @@ export class MainComponent implements OnInit {
   }
 
   buscarProductos() {
-    if (!this.searchKeyword) {
-      console.warn('Debe especificar una palabra clave para buscar.');
+    console.log('Iniciando búsqueda de productos...');
+    
+    // Verificar si hay al menos un criterio de búsqueda
+    if (!this.searchKeyword && !this.selectedCategory && !this.marker?.position) {
+      console.warn('Debe especificar al menos una palabra clave, categoría o ubicación para buscar.');
       return;
     }
   
-    this.productService.searchProducts(this.searchKeyword).subscribe(
-      (response) => {
-        let filteredProducts = response;
-        console.log('Productos encontrados por palabra clave:', filteredProducts);
+    // Obtener latitud y longitud solo si el marcador tiene posición
+    const latitude = this.marker?.position instanceof google.maps.LatLng
+      ? this.marker.position.lat()
+      : undefined;
   
-        if (this.selectedCategory) {
-          filteredProducts = filteredProducts.filter(product => product.category === this.selectedCategory);
-          console.log('Productos filtrados por categoría:', filteredProducts);
-        }
+    const longitude = this.marker?.position instanceof google.maps.LatLng
+      ? this.marker.position.lng()
+      : undefined;
   
-        if (this.searchInLocality) {
-          const userLocation = this.user?.locationName;
-          if (!userLocation) {
-            console.warn('No se ha especificado la ubicación del usuario.');
-            return;
-          }
+    console.log('Latitud:', latitude);
+    console.log('Longitud:', longitude);
   
-          this.productService.getProductsByLocation(userLocation).subscribe(
-            (locationFilteredProducts) => {
-              const locationFilteredIds = new Set(locationFilteredProducts.map(p => p.id));
-              filteredProducts = filteredProducts.filter(product => locationFilteredIds.has(product.id));
-              console.log('Productos filtrados por localización:', filteredProducts);
+    // Construir los parámetros de búsqueda
+    const searchParams = {
+      keyword: this.searchKeyword || undefined, // Si no hay keyword, enviar undefined
+      latitude: latitude, // Puede ser undefined si no hay posición
+      longitude: longitude, // Puede ser undefined si no hay posición
+      radius: latitude && longitude ? this.radius : undefined, // Solo enviar el radio si hay ubicación
+      category: this.selectedCategory || undefined, // Si no hay categoría, enviar undefined
+    };
   
-              this.products = filteredProducts;
-              this.search = true;
-              this.searchCategory = false;
-            },
-            (error) => {
-              console.error('Error al filtrar productos por localización:', error);
-            }
-          );
-        } else {
-          this.products = filteredProducts;
-          this.search = true;
-          this.searchCategory = false;
-        }
+    console.log('Parámetros de búsqueda construidos:', searchParams);
+  
+    // Llamar al servicio con los parámetros
+    this.productService.searchProducts(
+      searchParams.keyword || '', // Si es undefined, pasar una cadena vacía
+      searchParams.latitude,
+      searchParams.longitude,
+      searchParams.radius,
+      searchParams.category
+    ).subscribe({
+      next: (response) => {
+        console.log('Respuesta del backend:', response);
+        this.products = response;
+        this.search = true;
+        this.searchCategory = false;
+        console.log('Productos encontrados:', this.products);
       },
-      (error) => {
+      error: (error) => {
         console.error('Error al buscar productos:', error);
       }
-    );
+    });
   }
 
   startChat(productId: string) {
@@ -283,10 +287,6 @@ export class MainComponent implements OnInit {
 
 
 
-
-
-
-
   ngAfterViewInit(): void {
 
   }
@@ -295,53 +295,54 @@ export class MainComponent implements OnInit {
   openLocationModal(): void {
     this.isLocationModalOpen = true;
   
-    // Esperar a que el modal se renderice antes de inicializar o actualizar el mapa
     setTimeout(() => {
       if (!this.map) {
-        // Inicializar el mapa si no está inicializado
         this.initializeMap();
         this.initializeAutocomplete();
       } else {
-        // Forzar la actualización del mapa si ya está inicializado
         google.maps.event.trigger(this.map, 'resize');
-        this.map.setCenter(this.marker?.getPosition() || { lat: 40.416775, lng: -3.703790 }); // Madrid, España
       }
     }, 0);
   }
-
+  
   // Cerrar el modal de ubicación
   closeLocationModal(): void {
     this.isLocationModalOpen = false;
   }
-
+  
   // Aplicar el filtro de ubicación
   applyFilter(): void {
-    const position = this.marker?.getPosition();
-    if (position) {
+    const position = this.marker?.position; // Acceder directamente a la propiedad 'position'
+    if (position instanceof google.maps.LatLng) {
       console.log('Filtro aplicado:', {
         lat: position.lat(),
         lng: position.lng(),
-        radius: this.radius
+        radius: this.radius,
       });
-      this.closeLocationModal();
       // Aquí puedes enviar los datos al backend o filtrar los productos localmente
+    } else {
+      console.warn('No se ha seleccionado una ubicación. El filtro de radio no se aplicará.');
     }
+    this.closeLocationModal();
   }
-
-  // Inicializar el mapa
+  
   private initializeMap(): void {
-    const defaultLocation = { lat: 40.416775, lng: -3.703790 }; // Madrid, España
+    const defaultLocation = new google.maps.LatLng(40.416775, -3.703790); // Madrid, España
+  
+    // Inicializar el mapa
     this.map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
       center: defaultLocation,
-      zoom: 12
+      zoom: 12,
     });
   
-    this.marker = new google.maps.Marker({
-      position: defaultLocation,
+    // Usar AdvancedMarkerElement para el marcador
+    this.marker = new google.maps.marker.AdvancedMarkerElement({
       map: this.map,
-      draggable: true
+      position: defaultLocation,
+      title: 'Ubicación actual',
     });
   
+    // Crear un círculo alrededor del marcador
     this.circle = new google.maps.Circle({
       map: this.map,
       radius: this.radius * 1000, // Convertir kilómetros a metros
@@ -349,35 +350,47 @@ export class MainComponent implements OnInit {
       fillOpacity: 0.2,
       strokeColor: '#FF0000',
       strokeOpacity: 0.5,
-      strokeWeight: 1
+      strokeWeight: 1,
     });
   
-    this.circle.bindTo('center', this.marker, 'position');
+    // Actualizar manualmente la posición del círculo
+    if (this.marker.position) {
+      this.circle.setCenter(this.marker.position);
+    }
   }
-  // Inicializar el autocompletado de direcciones
   private initializeAutocomplete(): void {
     const input = document.getElementById('locationInput') as HTMLInputElement;
+  
+    // Crear un PlaceAutocompleteElement en lugar de Autocomplete
     const autocomplete = new google.maps.places.Autocomplete(input);
-
+  
+    // Escuchar el evento de cambio de lugar
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       if (place.geometry && place.geometry.location) {
-        const lat = place.geometry.location.lat();
-        const lng = place.geometry.location.lng();
-
-        // Actualizar el mapa y el marcador
-        this.map?.setCenter({ lat, lng });
-        this.marker?.setPosition({ lat, lng });
-      }
-    });
-  }
-
-  // Geocodificación inversa para obtener la dirección a partir de coordenadas
-  private reverseGeocode(lat: number, lng: number): void {
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results && results[0]) {
-        console.log('Dirección seleccionada:', results[0].formatted_address);
+        // Asegurarse de que lat y lng sean valores numéricos
+        const lat = typeof place.geometry.location.lat === 'function'
+          ? (place.geometry.location.lat as () => number)()
+          : place.geometry.location.lat;
+  
+        const lng = typeof place.geometry.location.lng === 'function'
+          ? (place.geometry.location.lng as () => number)()
+          : place.geometry.location.lng;
+  
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          // Actualizar el mapa y el marcador
+          this.map?.setCenter({ lat, lng });
+          if (this.marker) {
+            this.marker.position = new google.maps.LatLng(lat, lng); // Usar LatLng explícitamente
+          }
+  
+          // Actualizar el círculo si existe
+          if (this.circle) {
+            this.circle.setCenter(new google.maps.LatLng(lat, lng));
+          }
+        } else {
+          console.error('No se pudo obtener latitud o longitud del lugar seleccionado.');
+        }
       }
     });
   }

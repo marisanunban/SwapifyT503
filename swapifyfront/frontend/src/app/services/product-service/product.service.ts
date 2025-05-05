@@ -70,19 +70,21 @@ export class ProductService {
     return this.http.patch(`${this.apiUrl}/${productId}`, productData, { headers });
   }
 
-  searchProducts(keyword?: string, category?: string): Observable<any[]> {
-    const params: any = {};
-    if (keyword) {
-      params.keyword = keyword;
-    }
-    if (category) {
-      params.category = category;
-    }
+  searchProducts(
+    keyword: string,
+    latitude?: number,
+    longitude?: number,
+    radiusKm: number = 10.0,
+    category?: string
+  ): Observable<any[]> {
+    const params: any = {
+      keyword,
+      radiusKm,
+      ...(latitude !== undefined && { latitude }),
+      ...(longitude !== undefined && { longitude }),
+      ...(category && { category })
+    };
   
-    return this.http.get<any[]>(`${this.apiUrl}`, { params });
-  }
-
-  getProductsByLocation(location: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/by-location/${location}`);
+    return this.http.get<any[]>(`${this.apiUrl}/search`, { params });
   }
 }

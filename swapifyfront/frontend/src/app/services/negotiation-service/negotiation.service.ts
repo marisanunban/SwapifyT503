@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Transaction } from '../../models/transaction.model'; // Importar interfaz compartida
+import { Transaction } from '../../models/transaction.model';
 
 interface Conversation {
   id: number;
@@ -103,7 +103,7 @@ export class NegotiationService {
 
   createTransaction(conversationId: number): Observable<Transaction> {
     return this.http
-      .post<Transaction>(`${this.apiUrl}/${conversationId}/transactions`, null, {
+      .post<Transaction>(`${this.apiUrl}/${conversationId}/transactions`, { conversationId }, {
         headers: this.getHeaders(),
       })
       .pipe(
@@ -118,7 +118,7 @@ export class NegotiationService {
     return this.http
       .post<Transaction>(
         `${this.apiUrl}/${conversationId}/transactions/${transactionId}/confirm`,
-        null,
+        null, // No es necesario enviar el conversationId en el cuerpo
         {
           headers: this.getHeaders(),
           params: { accept: accept.toString() },
