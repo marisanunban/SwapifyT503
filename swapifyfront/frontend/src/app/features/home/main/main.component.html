@@ -127,6 +127,9 @@
       placeholder="Introduce una ubicación"
       class="location-input"
     />
+    <button (click)="centerMapOnLocation()" class="center-map-button">
+      Centrar en ubicación
+    </button>
 
     <!-- Contenedor del mapa -->
     <div id="map" class="location-map"></div>
@@ -142,21 +145,19 @@
         step="1"
         [(ngModel)]="radius"
         class="radius-slider"
+        (input)="updateRadius()"
       />
       <p class="radius-value">Radio seleccionado: {{ radius }} km</p>
     </div>
 
     <!-- Botones del modal -->
     <div class="modal-actions">
-      <button (click)="closeLocationModal()" class="cancel-button">
-        Cancelar
-      </button>
-      <button (click)="applyFilter()" class="apply-button">
-        Aplicar
-      </button>
+      <button (click)="closeLocationModal()" class="cancel-button">Cancelar</button>
+      <button (click)="applyFilter()" class="apply-button">Aplicar</button>
     </div>
   </div>
 </div>
+
 
 <!-- Contenido principal -->
 <main>

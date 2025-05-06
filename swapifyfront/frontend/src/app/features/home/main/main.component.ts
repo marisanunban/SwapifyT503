@@ -1,5 +1,5 @@
 // main.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,8 +16,8 @@ import { UserService } from '../../../services/user-service/user.service';
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.css']
 })
-export class MainComponent implements OnInit {
-  user: { id: number; username: string; credits: number; locationName: string; profilePicture:string;} | null = null;
+export class MainComponent implements OnInit, AfterViewInit {
+  user: { id: number; username: string; credits: number; locationName: string; profilePicture: string; } | null = null;
   products: any[] = [];
   search: boolean = false;
   searchKeyword: string = '';
@@ -29,22 +29,30 @@ export class MainComponent implements OnInit {
   searchCategory = false;
   searchInLocality = '';
   isProfileMenuOpen = false; // Nueva propiedad para controlar el menú desplegable
-  radius:number = 10;
-   // Variables para el modal de ubicación
-   isLocationModalOpen: boolean = false;
 
-   // Variables para el mapa
-   private map: google.maps.Map | undefined;
-   private marker: google.maps.marker.AdvancedMarkerElement | undefined; // Cambiado a AdvancedMarkerElement
-   private circle: google.maps.Circle | undefined;
+  // Variables para el modal de ubicación
+  isLocationModalOpen: boolean = false;
+  radius: number = 10;
 
+  // Variables para el mapa
+  private map: google.maps.Map | undefined;
+  private marker: google.maps.marker.AdvancedMarkerElement | undefined;
+  private markerPosition: google.maps.LatLngLiteral | undefined; // Para guardar posición
+  private circle: google.maps.Circle | undefined;
+  private geocoder: google.maps.Geocoder | undefined;
+  private autocomplete: google.maps.places.Autocomplete | undefined;
+  selectedLatLng: google.maps.LatLng | null = null;
+//variables para almacenar
+ // Variables temporales para almacenar la ubicación y la categoría seleccionadas
+ private tempSelectedCategory: string = '';
+ private tempSelectedLatLng: google.maps.LatLng | null = null;
   constructor(
     private router: Router,
     private authService: AuthService,
     private productService: ProductService,
     private negotiationService: NegotiationService,
     private userService: UserService
-  ) {}
+  ) { }
 
   ngOnInit() {
     const token = localStorage.getItem('token');
@@ -77,7 +85,7 @@ export class MainComponent implements OnInit {
       next: (response) => {
         this.products = response;
         this.searchCategory = true;
-        this.search = false; 
+        this.search = false;
         console.log('Productos filtrados:', this.products);
       },
       error: (error) => {
@@ -141,58 +149,59 @@ export class MainComponent implements OnInit {
     });
   }
 
-  buscarProductos() {
-    console.log('Iniciando búsqueda de productos...');
-    
-    // Verificar si hay al menos un criterio de búsqueda
-    if (!this.searchKeyword && !this.selectedCategory && !this.marker?.position) {
-      console.warn('Debe especificar al menos una palabra clave, categoría o ubicación para buscar.');
-      return;
-    }
-  
-    // Obtener latitud y longitud solo si el marcador tiene posición
-    const latitude = this.marker?.position instanceof google.maps.LatLng
-      ? this.marker.position.lat()
-      : undefined;
-  
-    const longitude = this.marker?.position instanceof google.maps.LatLng
-      ? this.marker.position.lng()
-      : undefined;
-  
-    console.log('Latitud:', latitude);
-    console.log('Longitud:', longitude);
-  
-    // Construir los parámetros de búsqueda
-    const searchParams = {
-      keyword: this.searchKeyword || undefined, // Si no hay keyword, enviar undefined
-      latitude: latitude, // Puede ser undefined si no hay posición
-      longitude: longitude, // Puede ser undefined si no hay posición
-      radius: latitude && longitude ? this.radius : undefined, // Solo enviar el radio si hay ubicación
-      category: this.selectedCategory || undefined, // Si no hay categoría, enviar undefined
-    };
-  
-    console.log('Parámetros de búsqueda construidos:', searchParams);
-  
-    // Llamar al servicio con los parámetros
-    this.productService.searchProducts(
-      searchParams.keyword || '', // Si es undefined, pasar una cadena vacía
-      searchParams.latitude,
-      searchParams.longitude,
-      searchParams.radius,
-      searchParams.category
-    ).subscribe({
-      next: (response) => {
-        console.log('Respuesta del backend:', response);
-        this.products = response;
-        this.search = true;
-        this.searchCategory = false;
-        console.log('Productos encontrados:', this.products);
-      },
-      error: (error) => {
-        console.error('Error al buscar productos:', error);
-      }
-    });
+  // Método para guardar temporalmente la categoría seleccionada
+  seleccionarCategoria(categoria: string): void {
+    this.tempSelectedCategory = categoria;
+    console.log('Categoría seleccionada:', categoria);
   }
+
+  // Método para guardar temporalmente la ubicación seleccionada desde el modal
+  seleccionarUbicacion(latLng: google.maps.LatLng): void {
+    this.tempSelectedLatLng = latLng;
+    console.log('Ubicación seleccionada:', latLng);
+  }
+
+ // Método para realizar la búsqueda de productos
+ buscarProductos() {
+  console.log('Iniciando búsqueda de productos...');
+
+  // Verificar si al menos uno de los criterios de búsqueda está presente
+  if (!this.searchKeyword && !this.tempSelectedCategory && !this.tempSelectedLatLng) {
+    console.warn('Debe especificar al menos una palabra clave, categoría o ubicación para buscar.');
+    return;
+  }
+
+  // Construir los parámetros de búsqueda
+  const searchParams: any = {
+    keyword: this.searchKeyword || undefined,  // Si no hay keyword, enviar undefined
+    latitude: this.tempSelectedLatLng ? this.tempSelectedLatLng.lat() : undefined,
+    longitude: this.tempSelectedLatLng ? this.tempSelectedLatLng.lng() : undefined,
+    radius: this.tempSelectedLatLng ? this.radius : undefined, // Solo si hay ubicación
+    category: this.selectedCategory || undefined,  // Si no hay categoría, enviar undefined
+  };
+
+  console.log('Parámetros de búsqueda construidos:', searchParams);
+
+  // Llamar al servicio para realizar la búsqueda
+  this.productService.searchProducts(
+    searchParams.keyword || '',  // Si no hay palabra clave, pasar una cadena vacía
+    searchParams.latitude,
+    searchParams.longitude,
+    searchParams.radius,
+    searchParams.category
+  ).subscribe({
+    next: (response) => {
+      console.log('Respuesta del backend:', response);
+      this.products = response;
+      this.search = true;
+      this.searchCategory = false;
+      console.log('Productos encontrados:', this.products);
+    },
+    error: (error) => {
+      console.error('Error al buscar productos:', error);
+    }
+  });
+}
 
   startChat(productId: string) {
     const token = localStorage.getItem('token');
@@ -285,113 +294,191 @@ export class MainComponent implements OnInit {
     this.closeProfileMenu(); // Cerrar el menú al navegar
   }
 
+  centerMapOnLocation(): void {
+    const input = (document.getElementById('locationInput') as HTMLInputElement)?.value;
+    if (!input || !this.geocoder) return;
 
-
-  ngAfterViewInit(): void {
-
-  }
-
-  // Abrir el modal de ubicación
-  openLocationModal(): void {
-    this.isLocationModalOpen = true;
-  
-    setTimeout(() => {
-      if (!this.map) {
-        this.initializeMap();
-        this.initializeAutocomplete();
+    this.geocoder.geocode({ address: input }, (results, status) => {
+      if (status === 'OK' && results && results[0].geometry.location) {
+        const latLng = results[0].geometry.location.toJSON();
+        this.setMapMarker(latLng);
       } else {
-        google.maps.event.trigger(this.map, 'resize');
+        console.error('No se pudo geocodificar la dirección:', status);
       }
-    }, 0);
+    });
   }
-  
-  // Cerrar el modal de ubicación
-  closeLocationModal(): void {
-    this.isLocationModalOpen = false;
-  }
-  
-  // Aplicar el filtro de ubicación
-  applyFilter(): void {
-    const position = this.marker?.position; // Acceder directamente a la propiedad 'position'
-    if (position instanceof google.maps.LatLng) {
-      console.log('Filtro aplicado:', {
-        lat: position.lat(),
-        lng: position.lng(),
-        radius: this.radius,
-      });
-      // Aquí puedes enviar los datos al backend o filtrar los productos localmente
+
+  setMapMarker(position: google.maps.LatLngLiteral): void {
+    this.markerPosition = position;
+
+    // Crear o mover el marcador
+    if (this.marker) {
+      this.marker.position = position;
     } else {
-      console.warn('No se ha seleccionado una ubicación. El filtro de radio no se aplicará.');
+      this.marker = new google.maps.marker.AdvancedMarkerElement({
+        position,
+        map: this.map!,
+      });
     }
-    this.closeLocationModal();
-  }
-  
-  private initializeMap(): void {
-    const defaultLocation = new google.maps.LatLng(40.416775, -3.703790); // Madrid, España
-  
-    // Inicializar el mapa
-    this.map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
-      center: defaultLocation,
-      zoom: 12,
-    });
-  
-    // Usar AdvancedMarkerElement para el marcador
-    this.marker = new google.maps.marker.AdvancedMarkerElement({
-      map: this.map,
-      position: defaultLocation,
-      title: 'Ubicación actual',
-    });
-  
-    // Crear un círculo alrededor del marcador
+
+    // Crear o actualizar el círculo de radio
+    if (this.circle) {
+      this.circle.setMap(null);
+    }
     this.circle = new google.maps.Circle({
-      map: this.map,
-      radius: this.radius * 1000, // Convertir kilómetros a metros
-      fillColor: '#FF0000',
-      fillOpacity: 0.2,
-      strokeColor: '#FF0000',
+      map: this.map!,
+      center: position,
+      radius: this.radius * 1000, // km a metros
+      fillColor: '#4285F4',
+      fillOpacity: 0.25,
+      strokeColor: '#4285F4',
       strokeOpacity: 0.5,
       strokeWeight: 1,
     });
-  
-    // Actualizar manualmente la posición del círculo
-    if (this.marker.position) {
-      this.circle.setCenter(this.marker.position);
+
+    this.map!.setCenter(position);
+    this.map!.setZoom(13);
+  }
+
+  updateRadius(): void {
+    if (this.circle && this.markerPosition) {
+      this.circle.setRadius(this.radius * 1000);
     }
   }
-  private initializeAutocomplete(): void {
+
+  ngAfterViewInit(): void {
+    if (typeof google === 'undefined') {
+      console.error('Google Maps no está cargado');
+      return;
+    }
+
+    const mapElement = document.getElementById('map');
+    if (!mapElement) return;
+
+    const defaultPosition = { lat: 40.4168, lng: -3.7038 }; // Madrid
+
+    this.map = new google.maps.Map(mapElement, {
+      center: defaultPosition,
+      zoom: 12,
+    });
+
+    this.geocoder = new google.maps.Geocoder();
+
+    // Autocompletado
     const input = document.getElementById('locationInput') as HTMLInputElement;
-  
-    // Crear un PlaceAutocompleteElement en lugar de Autocomplete
-    const autocomplete = new google.maps.places.Autocomplete(input);
-  
-    // Escuchar el evento de cambio de lugar
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (place.geometry && place.geometry.location) {
-        // Asegurarse de que lat y lng sean valores numéricos
-        const lat = typeof place.geometry.location.lat === 'function'
-          ? (place.geometry.location.lat as () => number)()
-          : place.geometry.location.lat;
-  
-        const lng = typeof place.geometry.location.lng === 'function'
-          ? (place.geometry.location.lng as () => number)()
-          : place.geometry.location.lng;
-  
-        if (typeof lat === 'number' && typeof lng === 'number') {
-          // Actualizar el mapa y el marcador
-          this.map?.setCenter({ lat, lng });
-          if (this.marker) {
-            this.marker.position = new google.maps.LatLng(lat, lng); // Usar LatLng explícitamente
-          }
-  
-          // Actualizar el círculo si existe
-          if (this.circle) {
-            this.circle.setCenter(new google.maps.LatLng(lat, lng));
-          }
-        } else {
-          console.error('No se pudo obtener latitud o longitud del lugar seleccionado.');
+    if (input) {
+      this.autocomplete = new google.maps.places.Autocomplete(input);
+      this.autocomplete.addListener('place_changed', () => {
+        const place = this.autocomplete!.getPlace();
+        if (place.geometry && place.geometry.location) {
+          const latLng = place.geometry.location.toJSON();
+          this.setMapMarker(latLng);
         }
+      });
+    }
+  }
+
+  applyFilter(): void {
+    if (!this.selectedLatLng) {
+      console.warn('No se ha seleccionado ninguna ubicación.');
+      this.closeLocationModal();
+      return;
+    }
+
+    // Actualizamos el marcador y círculo en el mapa antes de buscar
+    this.updateRadius();
+
+
+    this.closeLocationModal();
+  }
+
+  closeLocationModal(): void {
+    this.isLocationModalOpen = false;
+  }
+
+  openLocationModal(): void {
+    this.isLocationModalOpen = true;
+
+    // Inicializamos el mapa con un pequeño retraso para asegurar que el DOM esté listo
+    setTimeout(() => {
+      this.initMap();
+    }, 100);
+  }
+
+  initMap(): void {
+    // Creamos el objeto del mapa con las configuraciones iniciales
+    this.map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
+      center: { lat: 40.4168, lng: -3.7038 }, // Por defecto, se centra en Madrid (puedes cambiarlo)
+      zoom: 12,
+    });
+
+    // Configuramos el autocompletado de ubicaciones
+    this.autocomplete = new google.maps.places.Autocomplete(
+      document.getElementById('locationInput') as HTMLInputElement
+    );
+
+    this.autocomplete.addListener('place_changed', () => {
+      const place = this.autocomplete!.getPlace();
+      if (place.geometry) {
+        this.selectedLatLng = place.geometry.location as google.maps.LatLng;
+        this.addMarker(this.selectedLatLng);
       }
     });
+
+    // Si ya tenemos la ubicación del usuario, centramos el mapa allí
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const userLocation = new google.maps.LatLng(
+          position.coords.latitude,
+          position.coords.longitude
+        );
+        this.map?.setCenter(userLocation);
+        this.addMarker(userLocation);
+      });
+    }
+
+    // Creamos el círculo para seleccionar el radio de búsqueda
+    this.circle = new google.maps.Circle({
+      map: this.map,
+      radius: this.radius * 1000, // El radio en metros (convertimos de km a metros)
+      fillColor: '#FF6600',
+      fillOpacity: 0.2,
+      strokeColor: '#FF6600',
+      strokeOpacity: 0.5,
+    });
+
+    if (this.selectedLatLng) {
+      this.circle.setCenter(this.selectedLatLng);
+    }
   }
+
+  /// Método para agregar el marcador y verificar la latitud y longitud
+addMarker(latLng: google.maps.LatLng): void {
+  // Verificamos que latLng no sea undefined antes de continuar
+  if (!latLng) {
+    console.error('La latitud y longitud no están definidas correctamente.');
+    return;
+  }
+
+  // Si ya existe un marcador, actualizamos la posición
+  if (this.marker) {
+    this.marker.position = latLng;
+  } else {
+    this.marker = new google.maps.marker.AdvancedMarkerElement({
+      position: latLng,
+      map: this.map,
+    });
+  }
+
+  // Guardamos la ubicación seleccionada temporalmente
+  this.tempSelectedLatLng = latLng;
+  
+  // Verificar que la latitud y longitud están definidas
+  console.log('Latitud:', latLng.lat(), 'Longitud:', latLng.lng());
+
+  // Actualizamos el círculo (si existe)
+  if (this.circle) {
+    this.circle.setCenter(latLng);
+  }
+}
 }
