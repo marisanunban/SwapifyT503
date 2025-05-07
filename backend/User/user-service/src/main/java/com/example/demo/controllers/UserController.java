@@ -12,6 +12,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://localhost:4200") // TODO: Implementar archivo de seguridad y quitar esta etiqueta
 @RestController
@@ -168,20 +169,35 @@ public class    UserController {
     public ResponseEntity<User> updateLocation(
             @PathVariable Long id,
             @RequestBody Map<String, Object> payload) {
-
         Double latitude = Double.valueOf(payload.get("latitude").toString());
         Double longitude = Double.valueOf(payload.get("longitude").toString());
         String locationName = payload.get("locationName").toString();
 
         User updatedUser = userService.updateLocation(id, latitude, longitude, locationName);
-
         return ResponseEntity.ok(updatedUser);
     }
 
     @GetMapping("/get-by-location/{location}")
-    public ResponseEntity<List<User>> getUsersFromLocation(@PathVariable String location){
+    public ResponseEntity<List<User>> getUsersFromLocation(@PathVariable String location) {
         List<User> users = userService.getUsersByLocation(location);
         return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/all-with-location")
+    public ResponseEntity<List<UserLocationDto>> getAllUsersWithLocation(@RequestHeader("Authorization") String token) {
+        try {
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", "")).block();
+            if (userInfo == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            List<User> users = userService.getAllUsersWithLocation();
+            List<UserLocationDto> userDtos = users.stream()
+                    .map(user -> new UserLocationDto(user.getId(), user.getLatitude(), user.getLongitude()))
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(userDtos);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
 

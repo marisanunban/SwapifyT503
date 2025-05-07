@@ -13,6 +13,10 @@ public class AuthClient {
         this.webClient = webClientBuilder.baseUrl("http://localhost:8081").build(); // URL del auth-service
     }
 
+    public Mono<UserInfoDto> validateUserToken(String token) {
+        return validateUserToken(token, null);
+    }
+
     public Mono<UserInfoDto> validateUserToken(String token, Long id) {
         String uri = "/auth/validate-user";
         if (id != null) {

@@ -27,4 +27,6 @@ public interface ProductService {
 
     List<Product> findByKeyword(String keyword);
     public List<ProductDto> getProductsByLocation(String location);
+    List<ProductDto> getProductsByCoordinates(Double latitude, Double longitude, Double radius, String category, String keyword);
+
 }
