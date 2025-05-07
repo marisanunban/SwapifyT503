@@ -2,72 +2,76 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+export interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description?: string;
+  imageUrl?: string;
+  ownerId: number;
+  category?: string;
+  imageId?: string;
+  conversation?: { id: number };
+}
+
+export interface CreateProductDto {
+  title: string;
+  category: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  imageId: string;
+  ownerId: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  private apiUrl = 'http://localhost:8083/products'; // URL de tu API de productos
+  private apiUrl = 'http://localhost:8083/products';
 
   constructor(private http: HttpClient) {}
 
-  createProduct(productData: any, token: string): Observable<any> {
-    const headers = new HttpHeaders({
+  private getAuthHeaders(token: string): HttpHeaders {
+    return new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
-
-    return this.http.post(`${this.apiUrl}`, productData, { headers });
-  }
-  getAllProducts(token?: string): Observable<any> {
-    const headers = token
-      ? new HttpHeaders({
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        })
-      : undefined;
-  
-    return this.http.get(`${this.apiUrl}`, { headers });
   }
 
-  getProductsByCategory(category: string): Observable<any[]> {
-    const params = { category }; // Parámetro de categoría
-    return this.http.get<any[]>(this.apiUrl, { params });
+  createProduct(productData: CreateProductDto, token: string): Observable<Product> {
+    const headers = this.getAuthHeaders(token);
+    return this.http.post<Product>(`${this.apiUrl}`, productData, { headers });
   }
 
-  getProductsByOwner(ownerId: number, token: string): Observable<any> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
+  getAllProducts(token?: string): Observable<Product[]> {
+    const headers = token ? this.getAuthHeaders(token) : undefined;
+    return this.http.get<Product[]>(`${this.apiUrl}`, { headers });
+  }
 
-    return this.http.get(`${this.apiUrl}/ownerId/${ownerId}`, { headers });
+  getProductsByCategory(category: string): Observable<Product[]> {
+    const params = { category };
+    return this.http.get<Product[]>(this.apiUrl, { params });
+  }
+
+  getProductsByOwner(ownerId: number, token: string): Observable<Product[]> {
+    const headers = this.getAuthHeaders(token);
+    return this.http.get<Product[]>(`${this.apiUrl}/ownerId/${ownerId}`, { headers });
   }
 
   deleteProduct(productId: string, token: string): Observable<void> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-  
+    const headers = this.getAuthHeaders(token);
     return this.http.delete<void>(`${this.apiUrl}/${productId}`, { headers });
   }
 
-  getProductById(productId: string, token: string): Observable<any> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-  
-    return this.http.get(`${this.apiUrl}/${productId}`, { headers });
+  getProductById(productId: string, token: string): Observable<Product> {
+    const headers = this.getAuthHeaders(token);
+    return this.http.get<Product>(`${this.apiUrl}/${productId}`, { headers });
   }
 
-  updateProduct(productId: string, productData: any, token: string): Observable<any> {
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
-  
-    return this.http.patch(`${this.apiUrl}/${productId}`, productData, { headers });
+  updateProduct(productId: string, productData: Partial<Product>, token: string): Observable<Product> {
+    const headers = this.getAuthHeaders(token);
+    return this.http.patch<Product>(`${this.apiUrl}/${productId}`, productData, { headers });
   }
 
   searchProducts(
@@ -76,7 +80,7 @@ export class ProductService {
     longitude?: number,
     radiusKm: number = 10.0,
     category?: string
-  ): Observable<any[]> {
+  ): Observable<Product[]> {
     const params: any = {
       keyword,
       radiusKm,
@@ -84,7 +88,31 @@ export class ProductService {
       ...(longitude !== undefined && { longitude }),
       ...(category && { category })
     };
-  
-    return this.http.get<any[]>(`${this.apiUrl}/search`, { params });
+    return this.http.get<Product[]>(`${this.apiUrl}/search`, { params });
+  }
+
+  searchProductsByCoordinates(
+    latitude?: number,
+    longitude?: number,
+    radius: number = 10.0,
+    category?: string,
+    keyword?: string
+  ): Observable<Product[]> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No hay token disponible. Por favor, inicia sesión.');
+    }
+
+    const headers = this.getAuthHeaders(token);
+
+    const params: any = {
+      radius: radius.toString(),
+      ...(latitude !== undefined && { latitude: latitude.toString() }),
+      ...(longitude !== undefined && { longitude: longitude.toString() }),
+      ...(category && { category }),
+      ...(keyword && { keyword })
+    };
+
+    return this.http.get<Product[]>(`${this.apiUrl}/by-coordinates`, { headers, params });
   }
 }

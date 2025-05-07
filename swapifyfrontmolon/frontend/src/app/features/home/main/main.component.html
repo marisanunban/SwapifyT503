@@ -16,11 +16,17 @@
           </i>
           <input
             type="text"
-            placeholder="Buscar" 
+            placeholder="Buscar"
             [(ngModel)]="searchKeyword"
             class="search-input"
+            (keyup.enter)="buscarProductos()"
           />
         </div>
+
+        <!-- Botón de búsqueda -->
+        <button (click)="buscarProductos()" class="search-button">
+          Buscar
+        </button>
 
         <button (click)="irACrear()" class="create-product-button">
           Crear Producto
@@ -35,7 +41,6 @@
           <option value="Ropa">Ropa</option>
           <option value="Electrónica">Electrónica</option>
         </select>
-
       </div>
 
       <!-- Acciones de usuario -->
@@ -74,14 +79,14 @@
 
             <!-- Menú desplegable -->
             <div 
-            *ngIf="isProfileMenuOpen" 
-            class="dropdown-menu">
-            <a (click)="irAProfile()" class="dropdown-item">Perfil</a>
-            <a (click)="irAMisChats()" class="dropdown-item">Mis chats</a>
-            <a (click)="irAFavoritos()" class="dropdown-item">Favoritos</a>
-            <div class="dropdown-divider"></div>
-            <a (click)="logout()" class="dropdown-item logout-item">Cerrar sesión</a>
-          </div>
+              *ngIf="isProfileMenuOpen" 
+              class="dropdown-menu">
+              <a (click)="irAProfile()" class="dropdown-item">Perfil</a>
+              <a (click)="irAMisChats()" class="dropdown-item">Mis chats</a>
+              <a (click)="irAFavoritos()" class="dropdown-item">Favoritos</a>
+              <div class="dropdown-divider"></div>
+              <a (click)="logout()" class="dropdown-item logout-item">Cerrar sesión</a>
+            </div>
           </div>
         </div>
       </div>
@@ -114,7 +119,6 @@
   </div>
 </div>
 
-<!-- Modal de ubicación -->
 <!-- Modal de ubicación -->
 <div *ngIf="isLocationModalOpen" class="location-modal-backdrop">
   <div class="location-modal">
@@ -153,14 +157,16 @@
     <!-- Botones del modal -->
     <div class="modal-actions">
       <button (click)="closeLocationModal()" class="cancel-button">Cancelar</button>
-      <button (click)="applyFilter()" class="apply-button">Aplicar</button>
+      <button (click)="applyFilterAndSearch()" class="apply-button">Aplicar y Buscar</button>
     </div>
   </div>
 </div>
 
-
 <!-- Contenido principal -->
 <main>
+  <div *ngIf="isLoading" class="loading-spinner">
+    Cargando productos...
+  </div>
   <!-- Hero Section (estilo Wallapop) -->
   <div *ngIf="!search && !searchCategory" class="hero-section">
     <div class="container">

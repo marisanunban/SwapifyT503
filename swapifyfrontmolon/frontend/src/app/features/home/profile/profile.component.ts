@@ -10,6 +10,16 @@ import { ProductService } from '../../../services/product-service/product.servic
 import { CloudinaryService } from '../../../services/cloudinary-service/cloudinary.service';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 
+interface UserProfile {
+  id: number;
+  username: string;
+  credits: number;
+  locationName?: string;
+  nickname?: string;
+  aboutMe?: string;
+  profilePicture?: string;
+}
+
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -18,7 +28,7 @@ import { NegotiationService } from '../../../services/negotiation-service/negoti
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
-  user: { id: number; username: string; credits: number } | null = null;
+  user: UserProfile | null = null;
   nickname: string = '';
   aboutMe: string = '';
   profileImageUrl: string = '';
@@ -47,16 +57,25 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit() {
     this.authService.user$.subscribe(user => {
-      this.user = user;
+      this.user = user || null;
     });
 
     const token = localStorage.getItem('token');
     if (token) {
       this.userService.getUserProfile(token).subscribe({
         next: response => {
-          this.nickname = response.nickname;
-          this.aboutMe = response.aboutMe;
-          this.profileImageUrl = response.profilePicture;
+          this.user = {
+            id: response.id,
+            username: response.username,
+            credits: response.credits,
+            locationName: response.locationName || '',
+            nickname: response.nickname || '',
+            aboutMe: response.aboutMe || '',
+            profilePicture: response.profilePicture || ''
+          };
+          this.nickname = this.user.nickname || '';
+          this.aboutMe = this.user.aboutMe || '';
+          this.profileImageUrl = this.user.profilePicture || '';
           this.recuperarProductosPropietario();
         },
         error: error => {
@@ -70,18 +89,16 @@ export class ProfileComponent implements OnInit {
     this.obtenerUbicacion();
   }
 
-
-  
-
   mostrarProductos(): void {
     this.mostrarSeccionProductos = true;
-    this.recuperarProductosPropietario(); // Recupera los productos del propietario
+    this.recuperarProductosPropietario();
   }
-  
+
   mostrarConversaciones(): void {
     this.mostrarSeccionProductos = false;
-    this.recuperarConversaciones(); // Recupera las conversaciones activas
+    this.recuperarConversaciones();
   }
+
   recuperarConversaciones() {
     const token = localStorage.getItem('token');
     if (token && this.user?.id) {
@@ -89,7 +106,6 @@ export class ProfileComponent implements OnInit {
         next: (response) => {
           this.conversations = response;
           console.log('Conversaciones del usuario:', this.conversations);
-          // Asociar conversaciones a productos
           this.products = this.products.map(product => ({
             ...product,
             conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
@@ -117,7 +133,6 @@ export class ProfileComponent implements OnInit {
           console.log('Conversación eliminada:', conversationId);
           this.conversations = this.conversations.filter(conv => conv.id !== conversationId);
           delete this.otherUserNames[conversationId];
-          // Actualizar productos para quitar la referencia a la conversación eliminada
           this.products = this.products.map(product => {
             if (product.conversation && product.conversation.id === conversationId) {
               const { conversation, ...rest } = product;
@@ -172,17 +187,15 @@ export class ProfileComponent implements OnInit {
       console.error('No hay token o ID de usuario disponible.');
       return;
     }
-  
+
     if (this.latitude && this.longitude && this.municipio) {
-      const payload = {
-        latitude: this.latitude,
-        longitude: this.longitude,
-        locationName: this.municipio
-      };
-  
+      const payload = { latitude: this.latitude, longitude: this.longitude, locationName: this.municipio };
       this.userService.updateUserLocation(this.user.id, payload, token).subscribe({
         next: (response) => {
           console.log('Ubicación actualizada:', response);
+          if (this.user) {
+            this.user = { ...this.user, locationName: this.municipio } as UserProfile; // Casteo explícito
+          }
           alert('Ubicación actualizada correctamente.');
         },
         error: (error) => {
@@ -226,8 +239,8 @@ export class ProfileComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al subir la imagen:', error);
-          if(error.status == 403){
-            alert('Error 403: ' + error.error.error)
+          if (error.status == 403) {
+            alert('Error 403: ' + error.error.error);
           }
         }
       });
@@ -342,7 +355,6 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-
   toggleEditUsername() {
     this.isEditingUsername = true;
   }
@@ -353,19 +365,19 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    const token = localStorage.getItem('token'); // Obtener el token del almacenamiento local
+    const token = localStorage.getItem('token');
     if (!token) {
       console.error('No se encontró el token de autenticación.');
       return;
     }
 
-    const profileData = { nickname: this.nickname }; // Datos a actualizar
+    const profileData = { nickname: this.nickname };
     console.log('Datos del perfil a actualizar:', profileData);
 
     this.userService.updateUserProfile(token, profileData).subscribe({
       next: (response) => {
         console.log('Nombre de usuario actualizado:', response);
-        this.isEditingUsername = false; // Salir del modo de edición
+        this.isEditingUsername = false;
       },
       error: (error) => {
         console.error('Error al actualizar el nombre de usuario:', error);
@@ -401,6 +413,4 @@ export class ProfileComponent implements OnInit {
   irAEditar(productId: string): void {
     this.router.navigate(['/edit', productId]);
   }
-
-  
 }
