@@ -260,7 +260,7 @@ export class MainComponent implements OnInit, AfterViewInit {
   logout() {
     this.authService.logout();
     this.closeProfileMenu(); // Cerrar el menú al hacer logout
-    this.router.navigate(['/main']);
+    this.router.navigate(['home']);
   }
 
   irARegistro() {
