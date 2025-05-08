@@ -1,0 +1,383 @@
+<div class="chat-container">
+  <!-- Sidebar de conversaciones -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">Mensajes</h1>
+      
+      <div class="sidebar-tabs">
+        <button class="tab-button active">Todas las conversaciones</button>
+        <button class="tab-button">Archivado</button>
+        <button class="tab-button">Destacado</button>
+      </div>
+    </div>
+    
+    <div class="conversation-list">
+      <div
+        *ngFor="let user of users"
+        class="conversation-item"
+      >
+        <div class="conversation-content">
+          <div class="avatar-container">
+            <img
+              [src]="user.avatar"
+              alt="Profile"
+              class="avatar-img"
+            />
+            <div
+              *ngIf="user.online"
+              class="online-indicator"
+            ></div>
+          </div>
+          <div class="conversation-details">
+            <div class="conversation-header">
+              <span class="user-name">{{ user.name }}</span>
+              <span class="message-time">12:30</span>
+            </div>
+            <div class="conversation-footer">
+              <p class="message-preview">{{ user.status }}</p>
+              <div *ngIf="true" class="notification-badge">
+                2
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área principal del chat -->
+  <div class="chat-main">
+    <!-- Cabecera del chat -->
+    <div class="chat-header">
+      <div class="d-flex align-items-center">
+        <img
+          [src]="selectedChat.avatar"
+          alt="Chat"
+          class="avatar-img"
+        />
+        <div class="ms-3">
+          <div class="user-name">{{ selectedChat.name }}</div>
+          <div class="user-status"></div>
+        </div>
+      </div>
+      <button class="action-button" (click)="openProposalForm()" aria-label="Crear propuesta">
+        <i class="fas fa-exchange-alt"></i>
+      </button>
+    </div>
+
+    <!-- Mensajes -->
+    <div class="messages-container" #messageContainer>
+      <div class="messages-wrapper">
+        <div *ngIf="messages.length === 0" class="no-messages">
+          <div class="no-messages-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="no-messages-icon">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <p class="no-messages-text">No hay mensajes aún. ¡Empieza la conversación!</p>
+          </div>
+        </div>
+        
+        <div
+          *ngFor="let message of messages"
+          class="message-row"
+          [ngClass]="{
+            'justify-content-end': isCurrentUser(message.senderId),
+            'justify-content-start': !isCurrentUser(message.senderId) && !message.isSystem,
+            'justify-content-center': message.isSystem
+          }"
+        >
+          <!-- Mensaje del sistema -->
+          <div *ngIf="message.isSystem" class="system-message">
+            <div class="system-message-content">
+              <p class="mb-2">{{ message.text }}</p>
+              <!-- Obtener el transactionId y cargar la transacción -->
+              <ng-container *ngIf="getTransactionId(message.text) as transactionId">
+                <ng-container *ngIf="transactions[transactionId] as transaction; else loading">
+                  <!-- Log para depuración -->
+                  <ng-container *ngIf="consoleLog(transaction)">
+                    <!-- Mostrar botones solo si la transacción está pendiente y el usuario no ha aceptado -->
+                    <div *ngIf="transaction.status === 'PENDING' && !hasAccepted(transactionId)" class="transaction-actions">
+                      <button
+                        class="btn btn-sm btn-light"
+                        (click)="showTransactionDetails(transactionId)"
+                        aria-label="View transaction details"
+                      >
+                        Ver Detalles
+                      </button>
+                      <button
+                        class="btn btn-sm btn-primary"
+                        [disabled]="isAccepting[transactionId]"
+                        (click)="acceptTransaction(transactionId)"
+                        aria-label="Accept transaction"
+                      >
+                        Aceptar
+                      </button>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        [disabled]="isRejecting[transactionId]"
+                        (click)="rejectTransaction(transactionId)"
+                        aria-label="Reject transaction"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                    <!-- Mostrar mensaje de espera si el usuario ya aceptó pero el otro no -->
+                    <div *ngIf="transaction.status === 'PENDING' && hasAccepted(transactionId)" class="waiting-message">
+                      <div class="d-flex align-items-center justify-content-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                          <span class="visually-hidden">Loading...</span>
+                        </div>
+                        Esperando la aceptación del otro usuario...
+                      </div>
+                    </div>
+                    <!-- Mostrar estado final -->
+                    <div *ngIf="transaction.status === 'COMPLETED'" class="completed-message">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="me-1">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      </svg>
+                      Transacción completada.
+                    </div>
+                    <div *ngIf="transaction.status === 'REJECTED'" class="rejected-message">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor" class="me-1">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                      </svg>
+                      Transacción rechazada.
+                    </div>
+                  </ng-container>
+                </ng-container>
+                <ng-template #loading>
+                  <div class="loading-message">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    Cargando transacción...
+                  </div>
+                </ng-template>
+              </ng-container>
+            </div>
+            <div class="message-time text-center">{{ message.time }}</div>
+          </div>
+
+          <!-- Mensaje de propuesta -->
+          <div
+            *ngIf="message.type === 'PROPOSAL'"
+            class="message-wrapper"
+          >
+            <div class="d-flex" [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}">
+              <img
+                *ngIf="!isCurrentUser(message.senderId)"
+                [src]="getMessageSender(message.senderId)?.avatar || '/placeholder.svg?height=32&width=32'"
+                alt="Sender's avatar"
+                class="message-avatar"
+              />
+              <div 
+                class="message-bubble proposal-message"
+                [ngClass]="{
+                  'message-outgoing': isCurrentUser(message.senderId),
+                  'message-incoming': !isCurrentUser(message.senderId)
+                }"
+              >
+                <div class="message-type" [ngClass]="{'text-light-emphasis': isCurrentUser(message.senderId)}">Propuesta</div>
+                <div class="message-content" *ngIf="message.productId">
+                  <span class="fw-medium">Producto:</span> {{ getProductTitle(message.productId) }}
+                </div>
+                <div class="message-content" *ngIf="message.creditsOffered">
+                  <span class="fw-medium">Créditos:</span> {{ message.creditsOffered }}
+                </div>
+                <div class="message-content mt-1">{{ message.text }}</div>
+                <button
+                  *ngIf="!isCurrentUser(message.senderId)"
+                  class="btn-respond"
+                  (click)="openResponseForm(message)"
+                  aria-label="Respond to proposal"
+                >
+                  Responder
+                </button>
+              </div>
+            </div>
+            <div 
+              class="message-time"
+              [ngClass]="{
+                'text-end me-4': isCurrentUser(message.senderId),
+                'ms-5': !isCurrentUser(message.senderId)
+              }"
+            >
+              {{ message.time }}
+            </div>
+          </div>
+
+          <!-- Mensaje de respuesta a propuesta -->
+          <div
+            *ngIf="message.type === 'PROPOSAL_RESPONSE'"
+            class="message-wrapper"
+          >
+            <div class="d-flex" [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}">
+              <img
+                *ngIf="!isCurrentUser(message.senderId)"
+                [src]="getMessageSender(message.senderId)?.avatar || '/placeholder.svg?height=32&width=32'"
+                alt="Sender's avatar"
+                class="message-avatar"
+              />
+              <div 
+                class="message-bubble response-message"
+                [ngClass]="{
+                  'message-outgoing': isCurrentUser(message.senderId),
+                  'message-incoming': !isCurrentUser(message.senderId)
+                }"
+              >
+                <div class="message-type" [ngClass]="{'text-light-emphasis': isCurrentUser(message.senderId)}">Respuesta a Propuesta</div>
+                <div class="message-content" *ngIf="message.productId">
+                  <span class="fw-medium">Producto:</span> {{ getProductTitle(message.productId) }}
+                </div>
+                <div class="message-content" *ngIf="message.creditsOffered">
+                  <span class="fw-medium">Créditos:</span> {{ message.creditsOffered }}
+                </div>
+                <div class="message-content mt-1">{{ message.text }}</div>
+              </div>
+            </div>
+            <div 
+              class="message-time"
+              [ngClass]="{
+                'text-end me-4': isCurrentUser(message.senderId),
+                'ms-5': !isCurrentUser(message.senderId)
+              }"
+            >
+              {{ message.time }}
+            </div>
+          </div>
+
+          <!-- Mensaje de texto -->
+          <div
+            *ngIf="message.type === 'TEXT'"
+            class="message-wrapper"
+          >
+            <div class="d-flex" [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}">
+              <img
+                *ngIf="!isCurrentUser(message.senderId)"
+                [src]="getMessageSender(message.senderId)?.avatar || '/placeholder.svg?height=32&width=32'"
+                alt="Sender's avatar"
+                class="message-avatar"
+              />
+              <div 
+                class="message-bubble"
+                [ngClass]="{
+                  'message-outgoing': isCurrentUser(message.senderId),
+                  'message-incoming': !isCurrentUser(message.senderId)
+                }"
+              >
+                <div class="message-content">{{ message.text }}</div>
+              </div>
+            </div>
+            <div 
+              class="message-time"
+              [ngClass]="{
+                'text-end me-4': isCurrentUser(message.senderId),
+                'ms-5': !isCurrentUser(message.senderId)
+              }"
+            >
+              {{ message.time }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulario de propuesta -->
+    <div
+      *ngIf="showProposalForm || showResponseForm"
+      class="proposal-form"
+    >
+      <h3 class="form-title">{{ showResponseForm ? 'Responder Propuesta' : 'Crear Propuesta' }}</h3>
+      <div *ngIf="showResponseForm && respondingToMessage" class="responding-to">
+        <p class="fw-medium">Respondiendo a la propuesta:</p>
+        <p *ngIf="respondingToMessage.productId" class="response-detail">
+          <span class="fw-medium">Producto:</span> {{ getProductTitle(respondingToMessage.productId) }}
+        </p>
+        <p *ngIf="respondingToMessage.creditsOffered" class="response-detail">
+          <span class="fw-medium">Créditos:</span> {{ respondingToMessage.creditsOffered }}
+        </p>
+        <p class="response-detail">
+          <span class="fw-medium">Mensaje:</span> {{ respondingToMessage.text }}
+        </p>
+      </div>
+      <form [formGroup]="proposalForm" (ngSubmit)="submitProposal()">
+        <div class="mb-3">
+          <label for="productId" class="form-label">Producto:</label>
+          <select
+            id="productId"
+            formControlName="productId"
+            class="form-select"
+          >
+            <option value="">Ninguno</option>
+            <option *ngFor="let product of userProducts" [value]="product.id">{{ product.title }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="creditsOffered" class="form-label">Créditos:</label>
+          <input
+            id="creditsOffered"
+            type="number"
+            formControlName="creditsOffered"
+            class="form-control"
+            min="0"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="content" class="form-label">Mensaje:</label>
+          <textarea
+            id="content"
+            formControlName="content"
+            class="form-control"
+            rows="4"
+          ></textarea>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+          <button
+            type="button"
+            class="btn btn-light"
+            (click)="showProposalForm = false; showResponseForm = false"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="proposalForm.invalid"
+          >
+            Enviar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Input de mensaje -->
+    <div class="message-input-container" *ngIf="!showProposalForm && !showResponseForm">
+      <div class="input-group">
+        <input
+          type="text"
+          [(ngModel)]="newMessage"
+          placeholder="Escribe un mensaje"
+          class="form-control message-input"
+          (keyup.enter)="sendMessage()"
+        />
+        <button
+          (click)="sendMessage()"
+          class="btn btn-send"
+          [disabled]="!newMessage.trim()"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,31 @@
+.relative img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+  
+  .relative .absolute {
+    z-index: 1;
+  }
+  
+  .md\:w-1\/2 {
+    position: relative;
+  }
+  
+  .bg-white.bg-opacity-10 {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+.main{
+    background-color: rgb(0, 0, 0);
+}  
+.register{
+    background-color: rgb(132, 218, 160);
+    width: 200px;
+
+}
