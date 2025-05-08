@@ -100,7 +100,7 @@ export class ProductService {
   ): Observable<Product[]> {
     const token = localStorage.getItem('token');
     if (!token) {
-      throw new Error('No hay token disponible. Por favor, inicia sesión.');
+      throw new Error('No hay token disponible. Por favor, inicia sesiÃ³n.');
     }
 
     const headers = this.getAuthHeaders(token);
