@@ -4,6 +4,7 @@ import { ProductService } from '../../../services/product-service/product.servic
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 
 export interface Product {
   id: number;
@@ -43,12 +44,13 @@ export class MainComponent implements OnInit {
   searchCategory: boolean = false;
   isProfileMenuOpen: boolean = false;
   map: any;
-  isLoading: boolean = false; // Añadido para el indicador de carga
+  isLoading: boolean = false;
 
   constructor(
     private router: Router,
     private productService: ProductService,
-    private authService: AuthService
+    private authService: AuthService,
+    private negotiationService: NegotiationService
   ) {}
 
   ngOnInit() {
@@ -66,10 +68,11 @@ export class MainComponent implements OnInit {
       return;
     }
 
-    this.isLoading = true; // Mostrar indicador de carga
+    this.isLoading = true;
     this.productService.getAllProducts(token).subscribe({
       next: (products: Product[]) => {
         this.products = products;
+        this.fetchConversations();
         this.isLoading = false;
       },
       error: (error) => {
@@ -79,6 +82,23 @@ export class MainComponent implements OnInit {
         alert('No se pudieron cargar los productos. Por favor, inicia sesión o intenta de nuevo.');
       }
     });
+  }
+
+  fetchConversations() {
+    const token = localStorage.getItem('token');
+    if (token && this.user?.id) {
+      this.negotiationService.getUserConversations().subscribe({
+        next: (conversations) => {
+          this.products = this.products.map(product => ({
+            ...product,
+            conversation: conversations.find(conv => conv.productId === product.id.toString() && conv.status === 'ACTIVE')
+          }));
+        },
+        error: (error) => {
+          console.error('Error al obtener conversaciones:', error);
+        }
+      });
+    }
   }
 
   initializeMap() {
@@ -165,7 +185,6 @@ export class MainComponent implements OnInit {
 
   openLocationModal() {
     this.isLocationModalOpen = true;
-    // Inicializar el mapa después de que el modal sea visible
     setTimeout(() => {
       if (!google || !google.maps) {
         console.error('La API de Google Maps no está disponible. Asegúrate de que el script esté cargado.');
@@ -173,7 +192,7 @@ export class MainComponent implements OnInit {
         return;
       }
       this.initializeMap();
-    }, 0); // Ejecutar después de que el DOM se actualice
+    }, 0);
   }
 
   closeLocationModal() {
@@ -209,7 +228,7 @@ export class MainComponent implements OnInit {
       searchParams.category = this.selectedCategory;
     }
 
-    this.isLoading = true; // Mostrar indicador de carga
+    this.isLoading = true;
     this.productService.searchProductsByCoordinates(
       searchParams.latitude,
       searchParams.longitude,
@@ -266,6 +285,33 @@ export class MainComponent implements OnInit {
 
   startChat(productId: number) {
     console.log('Iniciando chat para producto:', productId);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No hay token disponible.');
+      alert('Por favor, inicia sesión para iniciar un chat.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.negotiationService.startNegotiation(productId.toString()).subscribe({
+      next: (conversation) => {
+        const conversationId = conversation.id;
+        this.router.navigate(['/chat'], { state: { conversationId } });
+        this.isLoading = false;
+        // Actualizar la lista de productos para reflejar la nueva conversación
+        this.products = this.products.map(product => {
+          if (product.id === productId) {
+            return { ...product, conversation: { id: conversationId } };
+          }
+          return product;
+        });
+      },
+      error: (error) => {
+        console.error('Error al iniciar el chat:', error);
+        alert('No se pudo iniciar el chat. Inténtalo de nuevo.');
+        this.isLoading = false;
+      }
+    });
   }
 
   goToChat(conversationId: number) {
