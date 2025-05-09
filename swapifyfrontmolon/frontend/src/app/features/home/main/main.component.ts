@@ -13,6 +13,8 @@ export interface Product {
   description?: string;
   imageUrl?: string;
   ownerId: number;
+  category?: string;
+  imageId?: string;
   conversation?: { id: number };
 }
 
@@ -214,42 +216,69 @@ export class MainComponent implements OnInit {
       return;
     }
 
-    const searchParams: any = {
-      keyword: this.searchKeyword || undefined,
-      radiusKm: this.radius,
-    };
-
-    if (this.tempSelectedLatLng) {
-      searchParams.latitude = this.tempSelectedLatLng.lat;
-      searchParams.longitude = this.tempSelectedLatLng.lng;
-    }
-
-    if (this.selectedCategory) {
-      searchParams.category = this.selectedCategory;
-    }
-
     this.isLoading = true;
-    this.productService.searchProductsByCoordinates(
-      searchParams.latitude,
-      searchParams.longitude,
-      searchParams.radiusKm,
-      searchParams.category,
-      searchParams.keyword
-    ).subscribe({
-      next: (response: Product[]) => {
-        console.log('Respuesta del backend:', response);
-        this.products = response;
-        this.search = !!this.searchKeyword || !!this.tempSelectedLatLng;
-        this.searchCategory = !!this.selectedCategory && !this.searchKeyword && !this.tempSelectedLatLng;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error al buscar productos:', error);
-        alert('Hubo un error al buscar productos. Por favor, intenta de nuevo más tarde.');
-        this.products = [];
-        this.isLoading = false;
+    if (this.tempSelectedLatLng) {
+      this.productService.searchProductsByCoordinates(
+        this.tempSelectedLatLng.lat,
+        this.tempSelectedLatLng.lng,
+        this.radius,
+        this.selectedCategory,
+        this.searchKeyword
+      ).subscribe({
+        next: (response: Product[]) => {
+          console.log('Respuesta del backend:', response);
+          this.products = response;
+          this.search = !!this.searchKeyword || !!this.tempSelectedLatLng;
+          this.searchCategory = !!this.selectedCategory && !this.searchKeyword && !this.tempSelectedLatLng;
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error al buscar productos:', error);
+          this.products = [];
+          this.isLoading = false;
+          alert('Hubo un error al buscar productos. Por favor, intenta de nuevo más tarde.');
+        }
+      });
+    } else {
+      // Usar getAllProducts con filtros solo si hay categoría o keyword no vacía
+      const effectiveKeyword = this.searchKeyword.trim() || undefined;
+      if (this.selectedCategory || effectiveKeyword) {
+        this.productService.getAllProducts(token).subscribe({
+          next: (response: Product[]) => {
+            this.products = response.filter(product => {
+              const matchesCategory = !this.selectedCategory || product.category === this.selectedCategory;
+              const matchesKeyword = !effectiveKeyword || (product.title?.toLowerCase().includes(effectiveKeyword.toLowerCase()) || false);
+              return matchesCategory && matchesKeyword;
+            });
+            this.search = !!effectiveKeyword;
+            this.searchCategory = !!this.selectedCategory && !effectiveKeyword;
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Error al recuperar productos:', error);
+            this.products = [];
+            this.isLoading = false;
+            alert('No se pudieron cargar los productos. Inténtalo de nuevo.');
+          }
+        });
+      } else {
+        // Si no hay filtros, cargar todos los productos
+        this.productService.getAllProducts(token).subscribe({
+          next: (response: Product[]) => {
+            this.products = response;
+            this.search = false;
+            this.searchCategory = false;
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Error al recuperar productos:', error);
+            this.products = [];
+            this.isLoading = false;
+            alert('No se pudieron cargar los productos. Por favor, inicia sesión o intenta de nuevo.');
+          }
+        });
       }
-    });
+    }
   }
 
   filtrarPorCategoria(category: string) {
