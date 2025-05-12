@@ -136,11 +136,13 @@ export class MainComponent implements OnInit {
 
   renderMap(mapElement: HTMLElement, center: { lat: number; lng: number }) {
     this.map = new google.maps.Map(mapElement, {
-      center,
+      center: new google.maps.LatLng(center.lat, center.lng), // Convertir a LatLng
       zoom: 12,
     });
     this.addAutocomplete();
-    this.addMarker(center);
+    this.addMarker(center); // Añadir marcador inicial
+    this.addClickListener(); // Añadir listener para clics
+    this.drawCircle(); // Dibujar círculo si hay tempSelectedLatLng
   }
 
   addAutocomplete() {
@@ -163,26 +165,84 @@ export class MainComponent implements OnInit {
   }
 
   addMarker(latLng: any) {
-    if (this.map) {
-      new google.maps.Marker({
-        position: latLng,
+    if (!this.map || !latLng) {
+      console.error('Mapa o latLng no definidos:', { map: this.map, latLng });
+      return;
+    }
+
+    // Depuración: Mostrar el valor de latLng
+    console.log('latLng recibido en addMarker:', latLng);
+
+    // Determinar las coordenadas de latLng
+    let lat: number;
+    let lng: number;
+
+    if (latLng instanceof google.maps.LatLng) {
+      lat = latLng.lat();
+      lng = latLng.lng();
+    } else if (typeof latLng.lat === 'number' && typeof latLng.lng === 'number') {
+      lat = latLng.lat;
+      lng = latLng.lng;
+    } else if (typeof latLng.lat === 'function' && typeof latLng.lng === 'function') {
+      lat = latLng.lat();
+      lng = latLng.lng();
+    } else {
+      console.error('Formato de latLng no soportado:', latLng);
+      return;
+    }
+
+    // Añadir el marcador al mapa
+    new google.maps.Marker({
+      position: new google.maps.LatLng(lat, lng),
+      map: this.map,
+    });
+
+    // Actualizar tempSelectedLatLng con el formato correcto
+    this.tempSelectedLatLng = { lat, lng };
+    this.drawCircle(); // Redibujar círculo tras mover el marcador
+  }
+
+  drawCircle() {
+    if (this.map && this.tempSelectedLatLng) {
+      // Remover círculo existente si lo hay
+      if (this.map.circle) {
+        this.map.circle.setMap(null);
+      }
+      // Dibujar nuevo círculo
+      this.map.circle = new google.maps.Circle({
+        strokeColor: '#FF0000',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#FF0000',
+        fillOpacity: 0.35,
         map: this.map,
+        center: new google.maps.LatLng(this.tempSelectedLatLng.lat, this.tempSelectedLatLng.lng),
+        radius: this.radius * 1000, // Convertir km a metros
       });
-      this.tempSelectedLatLng = {
-        lat: latLng.lat(),
-        lng: latLng.lng(),
-      };
+      this.map.fitBounds(this.map.circle.getBounds()); // Ajustar zoom al círculo
+    }
+  }
+
+  addClickListener() {
+    if (this.map) {
+      this.map.addListener('click', (event: google.maps.MapMouseEvent) => {
+        const latLng = event.latLng;
+        this.addMarker(latLng); // Añadir marcador y actualizar tempSelectedLatLng
+        this.buscarProductos(); // Buscar productos con la nueva ubicación
+      });
     }
   }
 
   centerMapOnLocation() {
     if (this.tempSelectedLatLng) {
-      this.map.setCenter(this.tempSelectedLatLng);
+      this.map.setCenter(new google.maps.LatLng(this.tempSelectedLatLng.lat, this.tempSelectedLatLng.lng));
+      this.drawCircle();
     }
   }
 
   updateRadius() {
-    // Método vacío, ya que radius se usa directamente
+    // Método para actualizar el radio si se cambia dinámicamente
+    this.drawCircle();
   }
 
   openLocationModal() {
