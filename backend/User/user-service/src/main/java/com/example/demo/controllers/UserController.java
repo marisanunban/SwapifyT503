@@ -5,6 +5,7 @@ import com.example.demo.dtos.*;
 import com.example.demo.entities.User;
 import com.example.demo.interfaces.CreditHistoryService;
 import com.example.demo.interfaces.UserService;
+import com.example.demo.services.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -114,6 +115,14 @@ public class    UserController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
         }
+
+    @GetMapping ("/viewOtherUser/{userEmail}")
+    public Mono<ResponseEntity<UserProfileDto>> getOtherUserProfile(
+            @PathVariable String userEmail
+    ){
+        UserProfileDto profile = userService.getUserProfileByEmail(userEmail);
+        return Mono.just(ResponseEntity.ok(profile));
+    }
 
     @PatchMapping("/me")
     public Mono<ResponseEntity<Void>> updateCurrentUserProfile(

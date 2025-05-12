@@ -8,6 +8,7 @@ import { ContactComponent } from './features/home/contact/contact.component';
 import { EditProductComponent } from './features/home/products/edit-product/edit-product.component';
 import { ChatComponent } from './features/home/chat/chat.component';
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
+import { NavigationProfileComponent } from './features/home/navigation-profile/navigation-profile.component';
 
 export const routes: Routes = [
   {path: 'main' , component: MainComponent},
@@ -23,5 +24,6 @@ export const routes: Routes = [
   {path: 'contact', component: ContactComponent},
   {path: 'chat', component: ChatComponent},
   {path: 'resetPassword', component: ResetPasswordComponent},
+  {path: 'viewOtherUser/:userEmail', component: NavigationProfileComponent},
   
 ];

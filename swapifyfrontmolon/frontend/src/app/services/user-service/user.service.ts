@@ -49,4 +49,9 @@ export class UserService {
     const headers = { Authorization: `Bearer ${token}` };
     return this.http.put(`${this.apiUrl}/${userId}/location`, payload, { headers });
   }
+
+    // Método para obtener el perfil de otro usuario
+    getOtherUserProfile(userEmail: string): Observable<any> {
+      return this.http.get(`${this.apiUrl}/viewOtherUser/${userEmail}`);
+    }
 }
