@@ -45,6 +45,28 @@ public class User {
     @Column(name = "longitude")
     private Double longitude;
 
+    @Column(name = "average_rating")
+    private Double averageRating;
+
+    @Column(name = "total_reviews")
+    private Integer totalReviews;
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Integer getTotalReviews() {
+        return totalReviews;
+    }
+
+    public void setTotalReviews(Integer totalReviews) {
+        this.totalReviews = totalReviews;
+    }
+
     public Double getLatitude() {
         return latitude;
     }
