@@ -40,8 +40,6 @@ public class UserServiceImpl implements UserService {
                 user.getNickname(),
                 user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : "",
                 user.getProfilePictureId() != null ? user.getProfilePictureId() : ""
-
-
         );
     }
 
@@ -108,6 +106,7 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
+
     @Override
     public void transferCredits(Long fromUserId, Long toUserId, int amount) {
         User fromUser = userRepository.findById(fromUserId)
@@ -146,8 +145,6 @@ public class UserServiceImpl implements UserService {
                 userProfile.getNickname(),
                 userProfile.getProfilePictureUrl() != null ? userProfile.getProfilePictureUrl() : "",
                 userProfile.getProfilePictureId() != null ? userProfile.getProfilePictureId() : ""
-
-
         );
     }
 
@@ -170,10 +167,9 @@ public class UserServiceImpl implements UserService {
                 user.getNickname(),
                 user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : "",
                 user.getProfilePictureId() != null ? user.getProfilePictureId() : ""
-
-
         );
     }
+
     @Override
     public User updateLocation(Long userId, Double latitude, Double longitude, String locationName) {
         User user = userRepository.findById(userId)
@@ -194,5 +190,8 @@ public class UserServiceImpl implements UserService {
         return users;
     }
 
-
+    @Override
+    public List<User> getAllUsersWithLocation() {
+        return userRepository.findByLatitudeIsNotNullAndLongitudeIsNotNull();
+    }
 }

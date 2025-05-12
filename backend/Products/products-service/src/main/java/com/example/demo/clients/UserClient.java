@@ -1,10 +1,12 @@
 package com.example.demo.clients;
 
 import com.example.demo.dtos.UserInfoDto;
+import com.example.demo.dtos.UserLocationDto;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +16,7 @@ public class UserClient {
     private final WebClient webClient;
 
     String userServiceUrl = "http://localhost:8082";
+
     public UserClient(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.baseUrl(userServiceUrl).build();
     }
@@ -28,5 +31,16 @@ public class UserClient {
         return users.stream()
                 .map(UserInfoDto::getId)
                 .collect(Collectors.toList());
+    }
+
+    public List<UserLocationDto> getUsersWithLocation(String token) {
+        List<UserLocationDto> users = webClient.get()
+                .uri(userServiceUrl + "/api/users/all-with-location")
+                .header("Authorization", token) // Añadir el encabezado Authorization con el token
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<List<UserLocationDto>>() {})
+                .block();
+
+        return users != null ? users : Collections.emptyList(); // Manejo de null para evitar NPE
     }
 }

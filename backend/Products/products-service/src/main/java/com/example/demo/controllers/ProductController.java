@@ -8,6 +8,7 @@ import com.example.demo.dtos.UserInfoDto;
 import com.example.demo.entities.Product;
 import com.example.demo.interfaces.ProductService;
 import com.example.demo.repositories.ProductRepository;
+import com.example.demo.services.ProductServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,11 +20,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
-
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/products")
-
 public class ProductController {
     @Autowired
     private ProductRepository productRepository;
@@ -93,7 +92,6 @@ public class ProductController {
         return ResponseEntity.ok(product);
     }
 
-//Por ahora este nos da igual
     public ProductDto getProductsByOwnerAndId(long ownerId, String productId) {
         Product product = productRepository.findByOwnerIdAndId(ownerId, productId);
         if (product != null){
@@ -102,11 +100,11 @@ public class ProductController {
         }
         return null;
     }
-@GetMapping("/ownerId/{ownerId}")
+
+    @GetMapping("/ownerId/{ownerId}")
     public List<ProductDto> getProductByOwnerId(@PathVariable long ownerId) {
         return productService.findByOwnerId(ownerId);
     }
-
 
     @PatchMapping("/{id}")
     public ResponseEntity<ProductDto> updateProduct(
@@ -144,14 +142,38 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
 
-
     private Long getOwnerIdFromToken(String token) {
         String bearerToken = token.replace("Bearer ", "");
-        UserInfoDto userInfo = authClient.validateUserToken(bearerToken, null)
+        UserInfoDto userInfo = authClient.validateUserToken(bearerToken)
                 .block(); // Nota: .block() está bien para pruebas, pero considera alternativas asíncronas en producción
         if (userInfo == null || userInfo.getId() == null) {
             throw new IllegalArgumentException("Invalid token or user not found");
         }
         return userInfo.getId();
+    }
+
+    @GetMapping("/by-coordinates")
+    public ResponseEntity<List<ProductDto>> getProductsByCoordinates(
+            @RequestParam Double latitude,
+            @RequestParam Double longitude,
+            @RequestParam(defaultValue = "10") Double radius,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String keyword,
+            @RequestHeader("Authorization") String token) {
+        // Establecer el token en el ThreadLocal
+        ProductServiceImpl.setCurrentToken(token);
+
+        try {
+            UserInfoDto userInfo = authClient.validateUserToken(token.replace("Bearer ", ""))
+                    .block();
+            if (userInfo == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            List<ProductDto> products = productService.getProductsByCoordinates(latitude, longitude, radius, category, keyword);
+            return ResponseEntity.ok(products);
+        } finally {
+            // Limpiar el token después de usar el servicio
+            ProductServiceImpl.clearCurrentToken();
+        }
     }
 }

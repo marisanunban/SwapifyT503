@@ -17,7 +17,8 @@ public interface UserService {
     UserProfileDto getUserProfileByEmail(String email);
     UserDto getUserByEmail(String email);
     void transferCredits(Long fromUserId, Long toUserId, int amount);
-     User updateLocation(Long userId, Double latitude, Double longitude, String locationName);
-     List<User> getUsersByLocation(String locationName);
+    User updateLocation(Long userId, Double latitude, Double longitude, String locationName);
+    List<User> getUsersByLocation(String locationName);
+    List<User> getAllUsersWithLocation();
 
 }

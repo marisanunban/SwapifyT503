@@ -1,484 +1,358 @@
-// main.component.ts
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { AuthService } from '../../../services/auth-service/auth.service';
 import { ProductService } from '../../../services/product-service/product.service';
+import { AuthService } from '../../../services/auth-service/auth.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
-import { UserService } from '../../../services/user-service/user.service';
+
+export interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description?: string;
+  imageUrl?: string;
+  ownerId: number;
+  category?: string;
+  imageId?: string;
+  conversation?: { id: number };
+}
+
+export interface User {
+  id: number;
+  username: string;
+  credits: number;
+  profilePicture?: string;
+}
+
+declare var google: any;
 
 @Component({
   selector: 'app-main',
   standalone: true,
-  imports: [FormsModule, RouterLink, CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.css']
 })
-export class MainComponent implements OnInit, AfterViewInit {
-  user: { id: number; username: string; credits: number; locationName: string; profilePicture: string; } | null = null;
-  products: any[] = [];
-  search: boolean = false;
+export class MainComponent implements OnInit {
+  user: User | null = null;
+  products: Product[] = [];
   searchKeyword: string = '';
-  conversations: any[] = [];
-  otherUserNames: { [conversationId: number]: string } = {};
-  isSearchActive: boolean = false;
-  isCategoryActive: boolean = false;
   selectedCategory: string = '';
-  searchCategory = false;
-  searchInLocality = '';
-  isProfileMenuOpen = false; // Nueva propiedad para controlar el menú desplegable
-
-  // Variables para el modal de ubicación
   isLocationModalOpen: boolean = false;
+  tempSelectedLatLng: { lat: number; lng: number } | null = null;
   radius: number = 10;
+  search: boolean = false;
+  searchCategory: boolean = false;
+  isProfileMenuOpen: boolean = false;
+  map: any;
+  isLoading: boolean = false;
 
-  // Variables para el mapa
-  private map: google.maps.Map | undefined;
-  private marker: google.maps.marker.AdvancedMarkerElement | undefined;
-  private markerPosition: google.maps.LatLngLiteral | undefined; // Para guardar posición
-  private circle: google.maps.Circle | undefined;
-  private geocoder: google.maps.Geocoder | undefined;
-  private autocomplete: google.maps.places.Autocomplete | undefined;
-  selectedLatLng: google.maps.LatLng | null = null;
-//variables para almacenar
- // Variables temporales para almacenar la ubicación y la categoría seleccionadas
- private tempSelectedCategory: string = '';
- private tempSelectedLatLng: google.maps.LatLng | null = null;
   constructor(
     private router: Router,
-    private authService: AuthService,
     private productService: ProductService,
-    private negotiationService: NegotiationService,
-    private userService: UserService
-  ) { }
+    private authService: AuthService,
+    private negotiationService: NegotiationService
+  ) {}
 
   ngOnInit() {
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.userService.getUserProfile(token).subscribe({
-        next: (profile) => {
-          this.user = profile;
-          console.log('Perfil del usuario cargado:', this.user);
-        },
-        error: (error) => {
-          console.error('Error al cargar el perfil del usuario:', error);
-        }
-      });
-    }
-    this.recogerProductos();
-  }
-
-  // Método para alternar el menú desplegable
-  toggleProfileMenu() {
-    this.isProfileMenuOpen = !this.isProfileMenuOpen;
-  }
-
-  // Método para cerrar el menú desplegable
-  closeProfileMenu() {
-    this.isProfileMenuOpen = false;
-  }
-
-  filtrarPorCategoria(categoria: string): void {
-    this.productService.getProductsByCategory(categoria).subscribe({
-      next: (response) => {
-        this.products = response;
-        this.searchCategory = true;
-        this.search = false;
-        console.log('Productos filtrados:', this.products);
-      },
-      error: (error) => {
-        console.error('Error al filtrar productos:', error);
-      }
+    this.authService.user$.subscribe(user => {
+      this.user = user;
+      this.recuperarProductos();
     });
   }
 
-  loadConversations() {
+  recuperarProductos() {
     const token = localStorage.getItem('token');
-    if (!token || !this.user?.id) {
-      console.error('No hay token o usuario disponible.');
+    if (!token) {
+      console.error('No hay token disponible. No se pueden recuperar productos.');
+      this.products = [];
       return;
     }
 
-    this.negotiationService.getUserConversations().subscribe({
-      next: (response) => {
-        this.conversations = response;
-        this.conversations.forEach(conv => {
-          const otherUserId = conv.buyerId === this.user!.id ? conv.sellerId : conv.buyerId;
-          this.userService.getUserById(otherUserId, token).subscribe({
-            next: (userInfo) => {
-              this.otherUserNames[conv.id] = userInfo.username || `Usuario ${otherUserId}`;
-            },
-            error: () => {
-              this.otherUserNames[conv.id] = `Usuario ${otherUserId}`;
-            }
-          });
-        });
-        this.updateProductsWithConversations();
-        console.log('Conversaciones cargadas:', this.conversations);
+    this.isLoading = true;
+    this.productService.getAllProducts(token).subscribe({
+      next: (products: Product[]) => {
+        this.products = products;
+        this.fetchConversations();
+        this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error al cargar conversaciones:', error);
+        console.error('Error al recuperar productos:', error);
+        this.products = [];
+        this.isLoading = false;
+        alert('No se pudieron cargar los productos. Por favor, inicia sesión o intenta de nuevo.');
       }
     });
   }
 
-  updateProductsWithConversations() {
-    this.products = this.products.map(product => {
-      const conversation = this.conversations.find(conv =>
-        (conv.buyerId === this.user?.id && conv.sellerId === product.ownerId) ||
-        (conv.sellerId === this.user?.id && conv.buyerId === product.ownerId)
+  fetchConversations() {
+    const token = localStorage.getItem('token');
+    if (token && this.user?.id) {
+      this.negotiationService.getUserConversations().subscribe({
+        next: (conversations) => {
+          this.products = this.products.map(product => ({
+            ...product,
+            conversation: conversations.find(conv => conv.productId === product.id.toString() && conv.status === 'ACTIVE')
+          }));
+        },
+        error: (error) => {
+          console.error('Error al obtener conversaciones:', error);
+        }
+      });
+    }
+  }
+
+  initializeMap() {
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+      console.error('No se encontró el elemento del mapa (#map)');
+      return;
+    }
+    if (!google || !google.maps) {
+      console.error('La API de Google Maps no está cargada');
+      return;
+    }
+
+    let initialLatLng = { lat: 40.4168, lng: -3.7038 }; // Madrid por defecto
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          initialLatLng = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          this.renderMap(mapElement, initialLatLng);
+        },
+        error => {
+          console.error('Error al obtener la ubicación:', error);
+          this.renderMap(mapElement, initialLatLng);
+        }
       );
-      return { ...product, conversation };
-    });
+    } else {
+      this.renderMap(mapElement, initialLatLng);
+    }
   }
 
-  recogerProductos() {
-    this.productService.getAllProducts().subscribe({
-      next: (response) => {
-        this.products = response;
-        if (this.user) {
-          this.updateProductsWithConversations();
-        }
-        console.log('Productos:', this.products);
-      },
-      error: (error) => {
-        console.error('Error al obtener productos:', error);
+  renderMap(mapElement: HTMLElement, center: { lat: number; lng: number }) {
+    this.map = new google.maps.Map(mapElement, {
+      center,
+      zoom: 12,
+    });
+    this.addAutocomplete();
+    this.addMarker(center);
+  }
+
+  addAutocomplete() {
+    const input = document.getElementById('locationInput') as HTMLInputElement;
+    if (!input) {
+      console.error('No se encontró el input de ubicación (#locationInput)');
+      return;
+    }
+    const autocomplete = new google.maps.places.Autocomplete(input, {
+      types: ['geocode'],
+    });
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (place.geometry && place.geometry.location) {
+        const latLng = place.geometry.location;
+        this.map.setCenter(latLng);
+        this.addMarker(latLng);
       }
     });
   }
 
-  // Método para guardar temporalmente la categoría seleccionada
-  seleccionarCategoria(categoria: string): void {
-    this.tempSelectedCategory = categoria;
-    console.log('Categoría seleccionada:', categoria);
-  }
-
-  // Método para guardar temporalmente la ubicación seleccionada desde el modal
-  seleccionarUbicacion(latLng: google.maps.LatLng): void {
-    this.tempSelectedLatLng = latLng;
-    console.log('Ubicación seleccionada:', latLng);
-  }
-
- // Método para realizar la búsqueda de productos
- buscarProductos() {
-  console.log('Iniciando búsqueda de productos...');
-
-  // Verificar si al menos uno de los criterios de búsqueda está presente
-  if (!this.searchKeyword && !this.tempSelectedCategory && !this.tempSelectedLatLng) {
-    console.warn('Debe especificar al menos una palabra clave, categoría o ubicación para buscar.');
-    return;
-  }
-
-  // Construir los parámetros de búsqueda
-  const searchParams: any = {
-    keyword: this.searchKeyword || undefined,  // Si no hay keyword, enviar undefined
-    latitude: this.tempSelectedLatLng ? this.tempSelectedLatLng.lat() : undefined,
-    longitude: this.tempSelectedLatLng ? this.tempSelectedLatLng.lng() : undefined,
-    radius: this.tempSelectedLatLng ? this.radius : undefined, // Solo si hay ubicación
-    category: this.selectedCategory || undefined,  // Si no hay categoría, enviar undefined
-  };
-
-  console.log('Parámetros de búsqueda construidos:', searchParams);
-
-  // Llamar al servicio para realizar la búsqueda
-  this.productService.searchProducts(
-    searchParams.keyword || '',  // Si no hay palabra clave, pasar una cadena vacía
-    searchParams.latitude,
-    searchParams.longitude,
-    searchParams.radius,
-    searchParams.category
-  ).subscribe({
-    next: (response) => {
-      console.log('Respuesta del backend:', response);
-      this.products = response;
-      this.search = true;
-      this.searchCategory = false;
-      console.log('Productos encontrados:', this.products);
-    },
-    error: (error) => {
-      console.error('Error al buscar productos:', error);
+  addMarker(latLng: any) {
+    if (this.map) {
+      new google.maps.Marker({
+        position: latLng,
+        map: this.map,
+      });
+      this.tempSelectedLatLng = {
+        lat: latLng.lat(),
+        lng: latLng.lng(),
+      };
     }
-  });
-}
+  }
 
-  startChat(productId: string) {
+  centerMapOnLocation() {
+    if (this.tempSelectedLatLng) {
+      this.map.setCenter(this.tempSelectedLatLng);
+    }
+  }
+
+  updateRadius() {
+    // Método vacío, ya que radius se usa directamente
+  }
+
+  openLocationModal() {
+    this.isLocationModalOpen = true;
+    setTimeout(() => {
+      if (!google || !google.maps) {
+        console.error('La API de Google Maps no está disponible. Asegúrate de que el script esté cargado.');
+        alert('No se pudo cargar el mapa. Por favor, intenta de nuevo más tarde.');
+        return;
+      }
+      this.initializeMap();
+    }, 0);
+  }
+
+  closeLocationModal() {
+    this.isLocationModalOpen = false;
+  }
+
+  applyFilterAndSearch() {
+    if (this.tempSelectedLatLng) {
+      this.buscarProductos();
+    }
+    this.closeLocationModal();
+  }
+
+  buscarProductos() {
     const token = localStorage.getItem('token');
-    if (!this.user || !token) {
-      console.warn('Usuario no autenticado. Redirigiendo a login.');
-      this.router.navigate(['/login']);
+    if (!token) {
+      console.error('No hay token disponible.');
+      alert('Por favor, inicia sesión para buscar productos.');
       return;
     }
 
-    const product = this.products.find(p => p.id === productId);
-    if (!product) {
-      console.error('Producto no encontrado.');
-      return;
-    }
-
-    const existingConversation = this.conversations.find(conv =>
-      (conv.buyerId === this.user!.id && conv.sellerId === product.ownerId) ||
-      (conv.sellerId === this.user!.id && conv.buyerId === product.ownerId)
-    );
-
-    if (existingConversation) {
-      this.goToChat(existingConversation.id);
-    } else {
-      this.negotiationService.startNegotiation(productId).subscribe({
-        next: (conversation) => {
-          console.log('Conversación iniciada:', conversation);
-          this.conversations.push(conversation);
-          this.products = this.products.map(p => {
-            if (p.id === productId) {
-              return { ...p, conversation };
-            }
-            return p;
-          });
-          const otherUserId = conversation.buyerId === this.user!.id ? conversation.sellerId : conversation.buyerId;
-          this.userService.getUserById(otherUserId, token).subscribe({
-            next: (userInfo) => {
-              this.otherUserNames[conversation.id] = userInfo.username || `Usuario ${otherUserId}`;
-            },
-            error: () => {
-              this.otherUserNames[conversation.id] = `Usuario ${otherUserId}`;
-            }
-          });
-          this.goToChat(conversation.id);
+    this.isLoading = true;
+    if (this.tempSelectedLatLng) {
+      this.productService.searchProductsByCoordinates(
+        this.tempSelectedLatLng.lat,
+        this.tempSelectedLatLng.lng,
+        this.radius,
+        this.selectedCategory,
+        this.searchKeyword
+      ).subscribe({
+        next: (response: Product[]) => {
+          console.log('Respuesta del backend:', response);
+          this.products = response;
+          this.search = !!this.searchKeyword || !!this.tempSelectedLatLng;
+          this.searchCategory = !!this.selectedCategory && !this.searchKeyword && !this.tempSelectedLatLng;
+          this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error al iniciar la conversación:', error);
+          console.error('Error al buscar productos:', error);
+          this.products = [];
+          this.isLoading = false;
+          alert('Hubo un error al buscar productos. Por favor, intenta de nuevo más tarde.');
         }
       });
+    } else {
+      // Usar getAllProducts con filtros solo si hay categoría o keyword no vacía
+      const effectiveKeyword = this.searchKeyword.trim() || undefined;
+      if (this.selectedCategory || effectiveKeyword) {
+        this.productService.getAllProducts(token).subscribe({
+          next: (response: Product[]) => {
+            this.products = response.filter(product => {
+              const matchesCategory = !this.selectedCategory || product.category === this.selectedCategory;
+              const matchesKeyword = !effectiveKeyword || (product.title?.toLowerCase().includes(effectiveKeyword.toLowerCase()) || false);
+              return matchesCategory && matchesKeyword;
+            });
+            this.search = !!effectiveKeyword;
+            this.searchCategory = !!this.selectedCategory && !effectiveKeyword;
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Error al recuperar productos:', error);
+            this.products = [];
+            this.isLoading = false;
+            alert('No se pudieron cargar los productos. Inténtalo de nuevo.');
+          }
+        });
+      } else {
+        // Si no hay filtros, cargar todos los productos
+        this.productService.getAllProducts(token).subscribe({
+          next: (response: Product[]) => {
+            this.products = response;
+            this.search = false;
+            this.searchCategory = false;
+            this.isLoading = false;
+          },
+          error: (error) => {
+            console.error('Error al recuperar productos:', error);
+            this.products = [];
+            this.isLoading = false;
+            alert('No se pudieron cargar los productos. Por favor, inicia sesión o intenta de nuevo.');
+          }
+        });
+      }
     }
   }
 
-  goToChat(conversationId: number) {
-    this.router.navigate(['/chat'], { state: { conversationId } });
-  }
-
-  logout() {
-    this.authService.logout();
-    this.closeProfileMenu(); // Cerrar el menú al hacer logout
-    this.router.navigate(['home']);
-  }
-
-  irARegistro() {
-    this.router.navigate(['/register']);
-  }
-
-  irAProfile() {
-    this.router.navigate(['/profile']);
-    this.closeProfileMenu(); // Cerrar el menú al navegar
-  }
-
-  irALogin() {
-    this.router.navigate(['/login']);
-  }
-
-  irAContacta() {
-    this.router.navigate(['/contact']);
+  filtrarPorCategoria(category: string) {
+    this.selectedCategory = category;
+    this.searchCategory = true;
+    this.search = false;
+    this.buscarProductos();
   }
 
   irACrear() {
     this.router.navigate(['/create']);
   }
 
+  irALogin() {
+    this.router.navigate(['/login']);
+  }
+
+  irAProfile() {
+    this.router.navigate(['/profile']);
+  }
+
   irAMisChats() {
     this.router.navigate(['/chats']);
-    this.closeProfileMenu(); // Cerrar el menú al navegar
   }
 
   irAFavoritos() {
     this.router.navigate(['/favorites']);
-    this.closeProfileMenu(); // Cerrar el menú al navegar
   }
 
-  centerMapOnLocation(): void {
-    const input = (document.getElementById('locationInput') as HTMLInputElement)?.value;
-    if (!input || !this.geocoder) return;
+  irAContacta() {
+    this.router.navigate(['/contact']);
+  }
 
-    this.geocoder.geocode({ address: input }, (results, status) => {
-      if (status === 'OK' && results && results[0].geometry.location) {
-        const latLng = results[0].geometry.location.toJSON();
-        this.setMapMarker(latLng);
-      } else {
-        console.error('No se pudo geocodificar la dirección:', status);
+  startChat(productId: number) {
+    console.log('Iniciando chat para producto:', productId);
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No hay token disponible.');
+      alert('Por favor, inicia sesión para iniciar un chat.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.negotiationService.startNegotiation(productId.toString()).subscribe({
+      next: (conversation) => {
+        const conversationId = conversation.id;
+        this.router.navigate(['/chat'], { state: { conversationId } });
+        this.isLoading = false;
+        // Actualizar la lista de productos para reflejar la nueva conversación
+        this.products = this.products.map(product => {
+          if (product.id === productId) {
+            return { ...product, conversation: { id: conversationId } };
+          }
+          return product;
+        });
+      },
+      error: (error) => {
+        console.error('Error al iniciar el chat:', error);
+        alert('No se pudo iniciar el chat. Inténtalo de nuevo.');
+        this.isLoading = false;
       }
     });
   }
 
-  setMapMarker(position: google.maps.LatLngLiteral): void {
-    this.markerPosition = position;
-
-    // Crear o mover el marcador
-    if (this.marker) {
-      this.marker.position = position;
-    } else {
-      this.marker = new google.maps.marker.AdvancedMarkerElement({
-        position,
-        map: this.map!,
-      });
-    }
-
-    // Crear o actualizar el círculo de radio
-    if (this.circle) {
-      this.circle.setMap(null);
-    }
-    this.circle = new google.maps.Circle({
-      map: this.map!,
-      center: position,
-      radius: this.radius * 1000, // km a metros
-      fillColor: '#4285F4',
-      fillOpacity: 0.25,
-      strokeColor: '#4285F4',
-      strokeOpacity: 0.5,
-      strokeWeight: 1,
-    });
-
-    this.map!.setCenter(position);
-    this.map!.setZoom(13);
+  goToChat(conversationId: number) {
+    this.router.navigate(['/chat'], { state: { conversationId } });
   }
 
-  updateRadius(): void {
-    if (this.circle && this.markerPosition) {
-      this.circle.setRadius(this.radius * 1000);
-    }
+  toggleProfileMenu() {
+    this.isProfileMenuOpen = !this.isProfileMenuOpen;
   }
 
-  ngAfterViewInit(): void {
-    if (typeof google === 'undefined') {
-      console.error('Google Maps no está cargado');
-      return;
-    }
-
-    const mapElement = document.getElementById('map');
-    if (!mapElement) return;
-
-    const defaultPosition = { lat: 40.4168, lng: -3.7038 }; // Madrid
-
-    this.map = new google.maps.Map(mapElement, {
-      center: defaultPosition,
-      zoom: 12,
-    });
-
-    this.geocoder = new google.maps.Geocoder();
-
-    // Autocompletado
-    const input = document.getElementById('locationInput') as HTMLInputElement;
-    if (input) {
-      this.autocomplete = new google.maps.places.Autocomplete(input);
-      this.autocomplete.addListener('place_changed', () => {
-        const place = this.autocomplete!.getPlace();
-        if (place.geometry && place.geometry.location) {
-          const latLng = place.geometry.location.toJSON();
-          this.setMapMarker(latLng);
-        }
-      });
-    }
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/main']);
   }
-
-  applyFilter(): void {
-    if (!this.selectedLatLng) {
-      console.warn('No se ha seleccionado ninguna ubicación.');
-      this.closeLocationModal();
-      return;
-    }
-
-    // Actualizamos el marcador y círculo en el mapa antes de buscar
-    this.updateRadius();
-
-
-    this.closeLocationModal();
-  }
-
-  closeLocationModal(): void {
-    this.isLocationModalOpen = false;
-  }
-
-  openLocationModal(): void {
-    this.isLocationModalOpen = true;
-
-    // Inicializamos el mapa con un pequeño retraso para asegurar que el DOM esté listo
-    setTimeout(() => {
-      this.initMap();
-    }, 100);
-  }
-
-  initMap(): void {
-    // Creamos el objeto del mapa con las configuraciones iniciales
-    this.map = new google.maps.Map(document.getElementById('map') as HTMLElement, {
-      center: { lat: 40.4168, lng: -3.7038 }, // Por defecto, se centra en Madrid (puedes cambiarlo)
-      zoom: 12,
-    });
-
-    // Configuramos el autocompletado de ubicaciones
-    this.autocomplete = new google.maps.places.Autocomplete(
-      document.getElementById('locationInput') as HTMLInputElement
-    );
-
-    this.autocomplete.addListener('place_changed', () => {
-      const place = this.autocomplete!.getPlace();
-      if (place.geometry) {
-        this.selectedLatLng = place.geometry.location as google.maps.LatLng;
-        this.addMarker(this.selectedLatLng);
-      }
-    });
-
-    // Si ya tenemos la ubicación del usuario, centramos el mapa allí
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const userLocation = new google.maps.LatLng(
-          position.coords.latitude,
-          position.coords.longitude
-        );
-        this.map?.setCenter(userLocation);
-        this.addMarker(userLocation);
-      });
-    }
-
-    // Creamos el círculo para seleccionar el radio de búsqueda
-    this.circle = new google.maps.Circle({
-      map: this.map,
-      radius: this.radius * 1000, // El radio en metros (convertimos de km a metros)
-      fillColor: '#FF6600',
-      fillOpacity: 0.2,
-      strokeColor: '#FF6600',
-      strokeOpacity: 0.5,
-    });
-
-    if (this.selectedLatLng) {
-      this.circle.setCenter(this.selectedLatLng);
-    }
-  }
-
-  /// Método para agregar el marcador y verificar la latitud y longitud
-addMarker(latLng: google.maps.LatLng): void {
-  // Verificamos que latLng no sea undefined antes de continuar
-  if (!latLng) {
-    console.error('La latitud y longitud no están definidas correctamente.');
-    return;
-  }
-
-  // Si ya existe un marcador, actualizamos la posición
-  if (this.marker) {
-    this.marker.position = latLng;
-  } else {
-    this.marker = new google.maps.marker.AdvancedMarkerElement({
-      position: latLng,
-      map: this.map,
-    });
-  }
-
-  // Guardamos la ubicación seleccionada temporalmente
-  this.tempSelectedLatLng = latLng;
-  
-  // Verificar que la latitud y longitud están definidas
-  console.log('Latitud:', latLng.lat(), 'Longitud:', latLng.lng());
-
-  // Actualizamos el círculo (si existe)
-  if (this.circle) {
-    this.circle.setCenter(latLng);
-  }
-}
 }
