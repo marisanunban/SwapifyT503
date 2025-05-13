@@ -44,6 +44,8 @@ export class ProfileComponent implements OnInit {
   municipio: string | null = null;
   pais: string | null = null;
   mostrarSeccionProductos: boolean = true;
+  showReviewModal: boolean = false;
+purchasedProducts: any[] = [];
 
   constructor(
     private router: Router,
@@ -88,6 +90,20 @@ export class ProfileComponent implements OnInit {
 
     this.obtenerUbicacion();
   }
+
+  toggleReviewModal() {
+    this.showReviewModal = !this.showReviewModal;
+  }
+  
+  writeReview(productId: number) {
+    // Esta es una función de marcador de posición - la implementarás más tarde
+    console.log('Writing review for product ID:', productId);
+  }
+  openReviewModal() {
+    this.showReviewModal = true;
+  }
+
+
 
   mostrarProductos(): void {
     this.mostrarSeccionProductos = true;

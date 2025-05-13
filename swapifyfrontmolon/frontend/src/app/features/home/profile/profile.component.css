@@ -55,3 +55,149 @@ nav {
     min-width: 16px;
     min-height: 16px;
   }
+
+
+
+
+  /* Review Modal Styles - Añade esto al final de tu archivo CSS */
+.review-modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.review-modal {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 1rem;
+  overflow: hidden;
+}
+
+.review-modal-header {
+  background-color: #0d9488; /* teal-600 */
+  color: #fff;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-modal-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.review-modal-close {
+  color: #fff;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.review-modal-close:hover {
+  color: #e5e7eb; /* gray-200 */
+}
+
+.review-modal-content {
+  padding: 1rem;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.review-empty-state {
+  text-align: center;
+  padding: 2rem 0;
+  color: #6b7280; /* gray-500 */
+}
+
+.review-product-item {
+  border-bottom: 1px solid #e5e7eb; /* gray-200 */
+  padding: 1rem 0;
+}
+
+.review-product-item:last-child {
+  border-bottom: none;
+}
+
+.review-product-container {
+  display: flex;
+  align-items: center;
+}
+
+.review-product-image {
+  width: 5rem;
+  height: 5rem;
+  object-fit: cover;
+  border-radius: 0.375rem;
+  margin-right: 1rem;
+}
+
+.review-product-details {
+  flex-grow: 1;
+}
+
+.review-product-name {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.review-product-actions {
+  margin-top: 0.5rem;
+}
+
+.review-button {
+  padding: 0.25rem 0.75rem;
+  background-color: #0d9488; /* teal-600 */
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.review-button:hover {
+  background-color: #0f766e; /* teal-700 */
+}
+
+.review-completed {
+  color: #059669; /* green-600 */
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+}
+
+.review-check-icon {
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.25rem;
+}
+
+.review-modal-footer {
+  background-color: #f9fafb; /* gray-50 */
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.review-close-button {
+  padding: 0.5rem 1rem;
+  background-color: #e5e7eb; /* gray-200 */
+  color: #1f2937; /* gray-800 */
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.review-close-button:hover {
+  background-color: #d1d5db; /* gray-300 */
+}

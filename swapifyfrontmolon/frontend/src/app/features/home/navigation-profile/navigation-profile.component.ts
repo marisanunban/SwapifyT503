@@ -39,6 +39,7 @@ export class NavigationProfileComponent implements OnInit {
     this.userService.getOtherUserProfile(email).subscribe({
       next: (data: any) => {
         this.userProfile = data;
+        console.log('Perfil del usuario:', this.userProfile);
       },
       error: (err) => {
         console.error('Error al cargar el perfil del usuario:', err);
