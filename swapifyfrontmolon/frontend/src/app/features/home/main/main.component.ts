@@ -5,6 +5,7 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
+import { UserService } from '../../../services/user-service/user.service';
 
 export interface Product {
   id: number;
@@ -24,6 +25,9 @@ export interface User {
   credits: number;
   profilePicture?: string;
 }
+export interface UserProfile {
+  profilePicture: string;
+}
 
 declare var google: any;
 
@@ -36,6 +40,7 @@ declare var google: any;
 })
 export class MainComponent implements OnInit {
   user: User | null = null;
+  userProfile: UserProfile | null = null;
   products: Product[] = [];
   searchKeyword: string = '';
   selectedCategory: string = '';
@@ -52,7 +57,8 @@ export class MainComponent implements OnInit {
     private router: Router,
     private productService: ProductService,
     private authService: AuthService,
-    private negotiationService: NegotiationService
+    private negotiationService: NegotiationService,
+    private userService: UserService,
   ) {}
 
   ngOnInit() {
@@ -60,6 +66,20 @@ export class MainComponent implements OnInit {
       this.user = user;
       this.recuperarProductos();
     });
+      // Obtener el token desde localStorage
+  const token = localStorage.getItem('token');
+  if (token) {
+    this.userService.getUserProfile(token).subscribe({
+      next: (userProfile) => {
+        this.userProfile = userProfile;
+      },
+      error: (err) => {
+        console.error('Error al obtener el perfil del usuario:', err);
+      }
+    });
+  } else {
+    console.error('No se encontró un token en localStorage.');
+  }
   }
 
   recuperarProductos() {
