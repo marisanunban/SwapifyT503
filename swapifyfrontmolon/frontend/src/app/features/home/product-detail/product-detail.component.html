@@ -1,0 +1,53 @@
+<div *ngIf="isLoading" class="loading-spinner">
+  Cargando detalles del producto...
+</div>
+
+<div *ngIf="product" class="container mx-auto px-4 py-8">
+  <!-- Botón de regresar -->
+  <button (click)="goBack()" class="mb-4 flex items-center text-teal-600 hover:text-teal-800">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Volver
+  </button>
+
+  <!-- Detalles del producto -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Imagen del producto -->
+    <div class="product-image-container">
+      <img
+        [src]="product.imageUrl || '/placeholder.svg?height=400&width=400'"
+        alt="{{ product.title }}"
+        class="w-full h-auto rounded-lg shadow-sm"
+      >
+    </div>
+
+    <!-- Información del producto -->
+    <div class="product-info">
+      <h1 class="text-2xl font-bold mb-2">{{ product.title }}</h1>
+      <p class="text-xl text-teal-600 font-semibold mb-4">{{ product.price }} swapicoins</p>
+      <p class="text-gray-600 mb-4">{{ product.description || 'Sin descripción' }}</p>
+      <p class="text-gray-700 mb-2">Categoría: {{ product.category || 'No especificada' }}</p>
+      
+      <!-- Información del vendedor -->
+      <div class="border-t border-gray-200 pt-4 mt-4">
+        <h2 class="text-lg font-semibold mb-2">Información del Vendedor</h2>
+        <p class="text-gray-700">Vendedor: {{ product.ownerUsername || 'Desconocido' }}</p>
+        <p class="text-gray-700">Ubicación: {{ product.ownerLocation || 'No disponible' }}</p>
+        <p class="text-gray-700">Valoración: {{ product.ownerRating || 0 }} ({{ product.ownerReviewCount || 0 }} reseñas)</p>
+      </div>
+
+      <!-- Botón de chat -->
+      <button
+        (click)="product.conversation ? goToChat(product.conversation.id) : startChat(product.id)"
+        class="mt-4 px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+        [disabled]="!user || product.ownerId === user?.id">
+        {{ product.conversation ? 'Ir al chat' : 'Iniciar Chat' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!product && !isLoading" class="container mx-auto px-4 py-8">
+  <p class="text-center text-gray-600">Producto no encontrado.</p>
+</div>

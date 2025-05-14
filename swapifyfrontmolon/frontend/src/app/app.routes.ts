@@ -8,20 +8,19 @@ import { ContactComponent } from './features/home/contact/contact.component';
 import { EditProductComponent } from './features/home/products/edit-product/edit-product.component';
 import { ChatComponent } from './features/home/chat/chat.component';
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
+import { ProductDetailComponent } from './features/home/product-detail/product-detail.component';
 
 export const routes: Routes = [
-  {path: 'main' , component: MainComponent},
+  { path: 'main', component: MainComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'login', component: LoginComponent },
-  { path: '', redirectTo: '/main', pathMatch: 'full' }, 
-  {
-    path: 'home', redirectTo: '/main', pathMatch: 'full'
-  },
-  {path: 'profile', component: ProfileComponent},
-  {path: 'create', component: CreateProductComponent},
-  {path: 'edit/:id', component: EditProductComponent},
-  {path: 'contact', component: ContactComponent},
-  {path: 'chat', component: ChatComponent},
-  {path: 'resetPassword', component: ResetPasswordComponent},
-  
+  { path: '', redirectTo: '/main', pathMatch: 'full' },
+  { path: 'home', redirectTo: '/main', pathMatch: 'full' },
+  { path: 'profile', component: ProfileComponent },
+  { path: 'create', component: CreateProductComponent },
+  { path: 'edit/:id', component: EditProductComponent },
+  { path: 'contact', component: ContactComponent },
+  { path: 'chat', component: ChatComponent },
+  { path: 'resetPassword', component: ResetPasswordComponent },
+  { path: 'product/:id', component: ProductDetailComponent } // Nueva ruta añadida
 ];

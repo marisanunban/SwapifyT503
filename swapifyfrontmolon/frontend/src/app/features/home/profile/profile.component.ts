@@ -20,12 +20,22 @@ interface UserProfile {
   profilePicture?: string;
 }
 
+interface Conversation {
+  id: number;
+  productId?: string;
+  status: string;
+  createdAt: string;
+  otherUserId?: number;
+  productTitle?: string;
+  otherUserName?: string;
+}
+
 @Component({
   selector: 'app-profile',
   standalone: true,
   imports: [FormsModule, RouterLink, CommonModule],
   templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
   user: UserProfile | null = null;
@@ -37,7 +47,7 @@ export class ProfileComponent implements OnInit {
   isEditingMe: boolean = false;
   isEditingUsername: boolean = false;
   products: any[] = [];
-  conversations: any[] = [];
+  conversations: Conversation[] = [];
   otherUserNames: { [conversationId: number]: string } = {};
   latitude: number | null = null;
   longitude: number | null = null;
@@ -58,8 +68,13 @@ export class ProfileComponent implements OnInit {
   ngOnInit() {
     this.authService.user$.subscribe(user => {
       this.user = user || null;
+      if (user) {
+        this.loadUserProfile();
+      }
     });
+  }
 
+  loadUserProfile() {
     const token = localStorage.getItem('token');
     if (token) {
       this.userService.getUserProfile(token).subscribe({
@@ -103,21 +118,55 @@ export class ProfileComponent implements OnInit {
     const token = localStorage.getItem('token');
     if (token && this.user?.id) {
       this.negotiationService.getUserConversations().subscribe({
-        next: (response) => {
+        next: (response: Conversation[]) => {
           this.conversations = response;
           console.log('Conversaciones del usuario:', this.conversations);
-          this.products = this.products.map(product => ({
-            ...product,
-            conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
-          }));
+          
+          // Obtener nombres de los otros usuarios y títulos de productos
+          this.conversations.forEach(conversation => {
+            this.fetchOtherUserName(conversation);
+            this.fetchProductTitle(conversation);
+          });
         },
         error: (error) => {
           console.error('Error al obtener conversaciones:', error);
+          this.conversations = [];
         }
       });
     } else {
       console.error('No hay token o ID de usuario disponible.');
+      this.conversations = [];
     }
+  }
+
+  fetchOtherUserName(conversation: Conversation) {
+    const token = localStorage.getItem('token');
+    if (!token || !conversation.otherUserId) return;
+
+    this.userService.getUserById(conversation.otherUserId, token).subscribe({
+      next: (user) => {
+        this.otherUserNames[conversation.id] = user.username || 'Usuario desconocido';
+      },
+      error: (error) => {
+        console.error(`Error al obtener el nombre del usuario ${conversation.otherUserId}:`, error);
+        this.otherUserNames[conversation.id] = 'Usuario desconocido';
+      }
+    });
+  }
+
+  fetchProductTitle(conversation: Conversation) {
+    const token = localStorage.getItem('token');
+    if (!token || !conversation.productId) return;
+
+    this.productService.getProductById(conversation.productId, token).subscribe({
+      next: (product) => {
+        conversation.productTitle = product.title || 'Producto no disponible';
+      },
+      error: (error) => {
+        console.error(`Error al obtener el producto ${conversation.productId}:`, error);
+        conversation.productTitle = 'Producto no disponible';
+      }
+    });
   }
 
   goToChat(conversationId: number) {
@@ -133,13 +182,6 @@ export class ProfileComponent implements OnInit {
           console.log('Conversación eliminada:', conversationId);
           this.conversations = this.conversations.filter(conv => conv.id !== conversationId);
           delete this.otherUserNames[conversationId];
-          this.products = this.products.map(product => {
-            if (product.conversation && product.conversation.id === conversationId) {
-              const { conversation, ...rest } = product;
-              return rest;
-            }
-            return product;
-          });
         },
         error: (error) => {
           console.error('Error al eliminar la conversación:', error);
@@ -147,6 +189,10 @@ export class ProfileComponent implements OnInit {
         }
       });
     }
+  }
+
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
   }
 
   obtenerUbicacion(): void {
@@ -181,33 +227,33 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  updateLocation(): void {
-    const token = localStorage.getItem('token');
-    if (!token || !this.user?.id) {
-      console.error('No hay token o ID de usuario disponible.');
-      return;
-    }
-
-    if (this.latitude && this.longitude && this.municipio) {
-      const payload = { latitude: this.latitude, longitude: this.longitude, locationName: this.municipio };
-      this.userService.updateUserLocation(this.user.id, payload, token).subscribe({
-        next: (response) => {
-          console.log('Ubicación actualizada:', response);
-          if (this.user) {
-            this.user = { ...this.user, locationName: this.municipio } as UserProfile; // Casteo explícito
-          }
-          alert('Ubicación actualizada correctamente.');
-        },
-        error: (error) => {
-          console.error('Error al actualizar la ubicación:', error);
-          alert('No se pudo actualizar la ubicación. Inténtalo de nuevo.');
-        }
-      });
-    } else {
-      console.error('No se pudo obtener la ubicación completa.');
-      alert('No se pudo obtener la ubicación completa. Por favor, inténtalo de nuevo.');
-    }
+ updateLocation(): void {
+  const token = localStorage.getItem('token');
+  if (!token || !this.user?.id) {
+    console.error('No hay token o ID de usuario disponible.');
+    return;
   }
+
+  if (this.latitude && this.longitude && this.municipio) {
+    const payload = { latitude: this.latitude, longitude: this.longitude, locationName: this.municipio };
+    this.userService.updateUserLocation(this.user.id, payload, token).subscribe({
+      next: (response) => {
+        console.log('Ubicación actualizada:', response);
+        if (this.user) {
+          this.user = { ...this.user, locationName: this.municipio ?? undefined }; // Convertir null a undefined
+        }
+        alert('Ubicación actualizada correctamente.');
+      },
+      error: (error) => {
+        console.error('Error al actualizar la ubicación:', error);
+        alert('No se pudo actualizar la ubicación. Inténtalo de nuevo.');
+      }
+    });
+  } else {
+    console.error('No se pudo obtener la ubicación completa.');
+    alert('No se pudo obtener la ubicación completa. Por favor, inténtalo de nuevo.');
+  }
+}
 
   enableEditing() {
     this.isEditing = true;
@@ -239,9 +285,10 @@ export class ProfileComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error al subir la imagen:', error);
-          if (error.status == 403) {
+          if (error.status === 403) {
             alert('Error 403: ' + error.error.error);
           }
+          this.isEditing = false;
         }
       });
     } else {
@@ -257,15 +304,14 @@ export class ProfileComponent implements OnInit {
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
         console.log('Perfil actualizado:', response);
-        setTimeout(() => {
-          this.isEditing = false;
-        }, 0);
+        if (this.user) {
+          this.user.profilePicture = this.profileImageUrl;
+        }
+        this.isEditing = false;
       },
       error: error => {
         console.error('Error al actualizar perfil:', error);
-        setTimeout(() => {
-          this.isEditing = false;
-        }, 0);
+        this.isEditing = false;
       }
     });
   }
@@ -285,31 +331,16 @@ export class ProfileComponent implements OnInit {
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
         console.log('Perfil actualizado:', response);
-        setTimeout(() => {
-          this.isEditingMe = false;
-        }, 0);
+        if (this.user) {
+          this.user.aboutMe = this.aboutMe;
+        }
+        this.isEditingMe = false;
       },
       error: error => {
         console.error('Error al actualizar perfil:', error);
-        setTimeout(() => {
-          this.isEditingMe = false;
-        }, 0);
+        this.isEditingMe = false;
       }
     });
-  }
-
-  recogerProductos() {
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.productService.getAllProducts(token).subscribe({
-        next: response => {
-          this.products = response;
-        },
-        error: error => {
-          console.error('Error al obtener productos:', error);
-        }
-      });
-    }
   }
 
   recuperarProductosPropietario() {
@@ -322,10 +353,10 @@ export class ProfileComponent implements OnInit {
             imageUrl: product.imageUrl,
             imageId: product.imageId
           }));
-          this.recuperarConversaciones();
         },
         error: (error) => {
           console.error('Error al obtener productos del propietario:', error);
+          this.products = [];
         }
       });
     }
@@ -377,6 +408,9 @@ export class ProfileComponent implements OnInit {
     this.userService.updateUserProfile(token, profileData).subscribe({
       next: (response) => {
         console.log('Nombre de usuario actualizado:', response);
+        if (this.user) {
+          this.user.nickname = this.nickname;
+        }
         this.isEditingUsername = false;
       },
       error: (error) => {
