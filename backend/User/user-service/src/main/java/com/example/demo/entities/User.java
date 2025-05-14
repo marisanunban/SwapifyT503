@@ -16,14 +16,6 @@ public class User {
     @Column
     private String nickname;
 
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
     @Column(nullable = false)
     private int credits;
 
@@ -45,57 +37,49 @@ public class User {
     @Column(name = "longitude")
     private Double longitude;
 
-    public Double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(Double latitude) {
-        this.latitude = latitude;
-    }
-
-    public Double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(Double longitude) {
-        this.longitude = longitude;
-    }
-
-    public String getLocationName() {
-        return locationName;
-    }
-
-    public void setLocationName(String locationName) {
-        this.locationName = locationName;
-    }
-
     @Column(name = "location_name")
     private String locationName;
 
+    @Column(name = "rating") // Nuevo campo: valoración promedio del usuario
+    private Double rating;
 
-    public String getProfilePictureId() {
-        return profilePictureId;
-    }
-
-    public void setProfilePictureId(String profilePictureId) {
-        this.profilePictureId = profilePictureId;
-    }
+    @Column(name = "review_count") // Nuevo campo: número de valoraciones recibidas
+    private Integer reviewCount;
 
     // Constructor vacío (necesario para JPA)
     public User() {
     }
 
-    // Constructor con campos (opcional, para facilitar la creación de instancias)
-    public User(String usermail, String nickname, int credits, LocalDateTime updatedAt, String aboutMe, String profilePicture) {
+    // Constructor con campos (actualizado para incluir los nuevos campos)
+    public User(String usermail, String nickname, int credits, LocalDateTime updatedAt, String aboutMe, String profilePicture, Double rating, Integer reviewCount) {
         this.usermail = usermail;
         this.nickname = nickname;
         this.credits = credits;
         this.updatedAt = updatedAt;
         this.aboutMe = aboutMe;
         this.profilePictureUrl = profilePicture;
+        this.rating = rating;
+        this.reviewCount = reviewCount;
     }
 
-    // Getters y setters
+    // Getters y setters para los nuevos campos
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
+    // Resto de getters y setters (sin cambios)
     public Long getId() {
         return id;
     }
@@ -110,6 +94,14 @@ public class User {
 
     public void setUsermail(String username) {
         this.usermail = username;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     public int getCredits() {
@@ -142,5 +134,37 @@ public class User {
 
     public void setProfilePictureUrl(String profilePicture) {
         this.profilePictureUrl = profilePicture;
+    }
+
+    public String getProfilePictureId() {
+        return profilePictureId;
+    }
+
+    public void setProfilePictureId(String profilePictureId) {
+        this.profilePictureId = profilePictureId;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getLocationName() {
+        return locationName;
+    }
+
+    public void setLocationName(String locationName) {
+        this.locationName = locationName;
     }
 }

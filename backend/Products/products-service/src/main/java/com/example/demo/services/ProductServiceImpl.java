@@ -179,10 +179,10 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalStateException("No token available in the current context");
         }
 
-        // 2. Obtener todos los usuarios con ubicación desde el microservicio de Usuarios
+        // Obtener todos los usuarios con ubicación desde el microservicio de Usuarios
         List<UserLocationDto> users = userClient.getUsersWithLocation(token);
 
-        // 3. Filtrar usuarios dentro del radio
+        // Filtrar usuarios dentro del radio
         List<Long> userIdsInRange = users.stream()
                 .filter(user -> user.getLatitude() != null && user.getLongitude() != null) // Asegurarse de que tengan ubicación
                 .filter(user -> {
@@ -193,10 +193,10 @@ public class ProductServiceImpl implements ProductService {
                 .map(UserLocationDto::getId)
                 .collect(Collectors.toList());
 
-        // 3. Obtener productos de esos usuarios
+        // Obtener productos de esos usuarios
         List<Product> products = productRepository.findByOwnerIdIn(userIdsInRange);
 
-        // 4. Aplicar filtros adicionales (categoría y palabra clave)
+        // Aplicar filtros adicionales (categoría y palabra clave)
         if (category != null && !category.isEmpty()) {
             products = products.stream()
                     .filter(p -> p.getCategory() != null && p.getCategory().equalsIgnoreCase(category))
@@ -208,7 +208,7 @@ public class ProductServiceImpl implements ProductService {
                     .collect(Collectors.toList());
         }
 
-        // 5. Convertir a DTOs
+        // Convertir a DTOs
         return products.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -227,6 +227,40 @@ public class ProductServiceImpl implements ProductService {
         dto.setPrice(product.getPrice());
         dto.setCreatedAt(product.getCreatedAt());
         dto.setImageId(product.getImageId());
+
+        // Obtener la ubicación del usuario propietario
+        String token = currentToken.get();
+        if (token != null) {
+            List<UserLocationDto> users = userClient.getUsersWithLocation(token);
+            UserLocationDto ownerLocation = users.stream()
+                    .filter(user -> user.getId().equals(product.getOwnerId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (ownerLocation != null) {
+                dto.setLatitude(ownerLocation.getLatitude());
+                dto.setLongitude(ownerLocation.getLongitude());
+                dto.setOwnerLocation(ownerLocation.getLocationName() != null ? ownerLocation.getLocationName() : "Ubicación no disponible");
+                dto.setOwnerUsername(ownerLocation.getUsername() != null ? ownerLocation.getUsername() : "Desconocido");
+                dto.setOwnerRating(ownerLocation.getRating() != null ? ownerLocation.getRating() : 0.0);
+                dto.setOwnerReviewCount(ownerLocation.getReviewCount() != null ? ownerLocation.getReviewCount() : 0);
+            } else {
+                dto.setLatitude(null);
+                dto.setLongitude(null);
+                dto.setOwnerLocation("Ubicación no disponible");
+                dto.setOwnerUsername("Desconocido");
+                dto.setOwnerRating(0.0);
+                dto.setOwnerReviewCount(0);
+            }
+        } else {
+            dto.setLatitude(null);
+            dto.setLongitude(null);
+            dto.setOwnerLocation("Ubicación no disponible");
+            dto.setOwnerUsername("Desconocido");
+            dto.setOwnerRating(0.0);
+            dto.setOwnerReviewCount(0);
+        }
+
         return dto;
     }
 }

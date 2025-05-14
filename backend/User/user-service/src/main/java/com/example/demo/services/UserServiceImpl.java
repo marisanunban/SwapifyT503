@@ -30,7 +30,7 @@ public class UserServiceImpl implements UserService {
     public UserProfileDto getUserEntity(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        return new UserProfileDto(
+        UserProfileDto dto = new UserProfileDto(
                 user.getId(),
                 user.getUsermail(),
                 user.getAboutMe() != null ? user.getAboutMe() : "",
@@ -41,6 +41,9 @@ public class UserServiceImpl implements UserService {
                 user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : "",
                 user.getProfilePictureId() != null ? user.getProfilePictureId() : ""
         );
+        dto.setRating(user.getRating() != null ? user.getRating() : 0.0);
+        dto.setReviewCount(user.getReviewCount() != null ? user.getReviewCount() : 0);
+        return dto;
     }
 
     @Override
@@ -72,11 +75,14 @@ public class UserServiceImpl implements UserService {
 
         // Crear un nuevo usuario usando el ID del servicio de autenticación
         User user = new User();
-        user.setId(userInfoDto.getId()); // Establecer el ID del token (ej. "16")
-        user.setUsermail(userInfoDto.getUseremail()); // Usar el email como username
+        user.setId(userInfoDto.getId());
+        user.setUsermail(userInfoDto.getUseremail());
+        user.setNickname(userInfoDto.getNickname());
         user.setCredits(100); // Créditos iniciales
         user.setUpdatedAt(LocalDateTime.now());
         user.setProfilePictureId(userInfoDto.getImageId());
+        user.setRating(0.0); // Inicializar rating con valor por defecto
+        user.setReviewCount(0); // Inicializar reviewCount con valor por defecto
 
         try {
             user = userRepository.save(user);
@@ -97,10 +103,10 @@ public class UserServiceImpl implements UserService {
         if (dto.getProfilePictureUrl() != null) {
             user.setProfilePictureUrl(dto.getProfilePictureUrl());
         }
-        if(dto.getProfilePictureId() != null){
+        if (dto.getProfilePictureId() != null) {
             user.setProfilePictureId(dto.getProfilePictureId());
         }
-        if(dto.getNickname() != null){
+        if (dto.getNickname() != null) {
             user.setNickname(dto.getNickname());
         }
         user.setUpdatedAt(LocalDateTime.now());
@@ -127,7 +133,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserByEmail(String email) {
-        User user = userRepository.findByUsermail(email) // O findByEmail si tienes ese método
+        User user = userRepository.findByUsermail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
         return new UserDto(user.getId(), user.getUsermail(), user.getNickname(), user.getCredits());
     }
@@ -145,7 +151,10 @@ public class UserServiceImpl implements UserService {
                 userProfile.getNickname(),
                 userProfile.getProfilePictureUrl() != null ? userProfile.getProfilePictureUrl() : "",
                 userProfile.getProfilePictureId() != null ? userProfile.getProfilePictureId() : ""
-        );
+        ) {{
+            setRating(userProfile.getRating() != null ? userProfile.getRating() : 0.0);
+            setReviewCount(userProfile.getReviewCount() != null ? userProfile.getReviewCount() : 0);
+        }};
     }
 
     @Override
@@ -157,7 +166,7 @@ public class UserServiceImpl implements UserService {
     public UserProfileDto getUserProfileByEmail(String email) {
         User user = userRepository.findByUsermail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with email: " + email));
-        return new UserProfileDto(
+        UserProfileDto dto = new UserProfileDto(
                 user.getId(),
                 user.getUsermail(),
                 user.getAboutMe() != null ? user.getAboutMe() : "",
@@ -168,6 +177,9 @@ public class UserServiceImpl implements UserService {
                 user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : "",
                 user.getProfilePictureId() != null ? user.getProfilePictureId() : ""
         );
+        dto.setRating(user.getRating() != null ? user.getRating() : 0.0);
+        dto.setReviewCount(user.getReviewCount() != null ? user.getReviewCount() : 0);
+        return dto;
     }
 
     @Override
@@ -193,5 +205,21 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsersWithLocation() {
         return userRepository.findByLatitudeIsNotNullAndLongitudeIsNotNull();
+    }
+
+    @Override
+    public void addReview(Long userId, Double newRating) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        int currentReviewCount = user.getReviewCount() != null ? user.getReviewCount() : 0;
+        Double currentRating = user.getRating() != null ? user.getRating() : 0.0;
+
+        // Calcular nueva valoración promedio
+        double updatedRating = ((currentRating * currentReviewCount) + newRating) / (currentReviewCount + 1);
+        user.setRating(updatedRating);
+        user.setReviewCount(currentReviewCount + 1);
+        user.setUpdatedAt(LocalDateTime.now());
+
+        userRepository.save(user);
     }
 }

@@ -136,13 +136,13 @@ export class MainComponent implements OnInit {
 
   renderMap(mapElement: HTMLElement, center: { lat: number; lng: number }) {
     this.map = new google.maps.Map(mapElement, {
-      center: new google.maps.LatLng(center.lat, center.lng), // Convertir a LatLng
+      center: new google.maps.LatLng(center.lat, center.lng),
       zoom: 12,
     });
     this.addAutocomplete();
-    this.addMarker(center); // Añadir marcador inicial
-    this.addClickListener(); // Añadir listener para clics
-    this.drawCircle(); // Dibujar círculo si hay tempSelectedLatLng
+    this.addMarker(center);
+    this.addClickListener();
+    this.drawCircle();
   }
 
   addAutocomplete() {
@@ -170,10 +170,8 @@ export class MainComponent implements OnInit {
       return;
     }
 
-    // Depuración: Mostrar el valor de latLng
     console.log('latLng recibido en addMarker:', latLng);
 
-    // Determinar las coordenadas de latLng
     let lat: number;
     let lng: number;
 
@@ -191,24 +189,20 @@ export class MainComponent implements OnInit {
       return;
     }
 
-    // Añadir el marcador al mapa
     new google.maps.Marker({
       position: new google.maps.LatLng(lat, lng),
       map: this.map,
     });
 
-    // Actualizar tempSelectedLatLng con el formato correcto
     this.tempSelectedLatLng = { lat, lng };
-    this.drawCircle(); // Redibujar círculo tras mover el marcador
+    this.drawCircle();
   }
 
   drawCircle() {
     if (this.map && this.tempSelectedLatLng) {
-      // Remover círculo existente si lo hay
       if (this.map.circle) {
         this.map.circle.setMap(null);
       }
-      // Dibujar nuevo círculo
       this.map.circle = new google.maps.Circle({
         strokeColor: '#FF0000',
         strokeOpacity: 0.8,
@@ -217,9 +211,9 @@ export class MainComponent implements OnInit {
         fillOpacity: 0.35,
         map: this.map,
         center: new google.maps.LatLng(this.tempSelectedLatLng.lat, this.tempSelectedLatLng.lng),
-        radius: this.radius * 1000, // Convertir km a metros
+        radius: this.radius * 1000,
       });
-      this.map.fitBounds(this.map.circle.getBounds()); // Ajustar zoom al círculo
+      this.map.fitBounds(this.map.circle.getBounds());
     }
   }
 
@@ -227,8 +221,8 @@ export class MainComponent implements OnInit {
     if (this.map) {
       this.map.addListener('click', (event: google.maps.MapMouseEvent) => {
         const latLng = event.latLng;
-        this.addMarker(latLng); // Añadir marcador y actualizar tempSelectedLatLng
-        this.buscarProductos(); // Buscar productos con la nueva ubicación
+        this.addMarker(latLng);
+        this.buscarProductos();
       });
     }
   }
@@ -241,7 +235,6 @@ export class MainComponent implements OnInit {
   }
 
   updateRadius() {
-    // Método para actualizar el radio si se cambia dinámicamente
     this.drawCircle();
   }
 
@@ -300,7 +293,6 @@ export class MainComponent implements OnInit {
         }
       });
     } else {
-      // Usar getAllProducts con filtros solo si hay categoría o keyword no vacía
       const effectiveKeyword = this.searchKeyword.trim() || undefined;
       if (this.selectedCategory || effectiveKeyword) {
         this.productService.getAllProducts(token).subscribe({
@@ -322,7 +314,6 @@ export class MainComponent implements OnInit {
           }
         });
       } else {
-        // Si no hay filtros, cargar todos los productos
         this.productService.getAllProducts(token).subscribe({
           next: (response: Product[]) => {
             this.products = response;
@@ -361,7 +352,7 @@ export class MainComponent implements OnInit {
   }
 
   irAMisChats() {
-    this.router.navigate(['/chats']);
+    this.router.navigate(['/chat']); // Ajustado para coincidir con la ruta existente
   }
 
   irAFavoritos() {
@@ -387,7 +378,6 @@ export class MainComponent implements OnInit {
         const conversationId = conversation.id;
         this.router.navigate(['/chat'], { state: { conversationId } });
         this.isLoading = false;
-        // Actualizar la lista de productos para reflejar la nueva conversación
         this.products = this.products.map(product => {
           if (product.id === productId) {
             return { ...product, conversation: { id: conversationId } };
@@ -405,6 +395,17 @@ export class MainComponent implements OnInit {
 
   goToChat(conversationId: number) {
     this.router.navigate(['/chat'], { state: { conversationId } });
+  }
+
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
+  }
+
+  toggleFavorite(productId: number) {
+    console.log(`Toggling favorite for product ID: ${productId}`);
+    // Aquí puedes implementar la lógica para añadir o quitar el producto de favoritos
+    // Por ejemplo, podrías tener un servicio FavoriteService para manejar esto
+    alert('Funcionalidad de favoritos aún no implementada.');
   }
 
   toggleProfileMenu() {

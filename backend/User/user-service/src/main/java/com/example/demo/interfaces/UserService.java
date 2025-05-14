@@ -20,5 +20,5 @@ public interface UserService {
     User updateLocation(Long userId, Double latitude, Double longitude, String locationName);
     List<User> getUsersByLocation(String locationName);
     List<User> getAllUsersWithLocation();
-
+    void addReview(Long userId, Double newRating); // Nuevo método
 }

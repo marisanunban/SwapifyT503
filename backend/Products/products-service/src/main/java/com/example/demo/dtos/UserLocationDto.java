@@ -1,20 +1,28 @@
 package com.example.demo.dtos;
 
 public class UserLocationDto {
-
     private Long id;
     private Double latitude;
     private Double longitude;
+    private String locationName;
+    private String username;
+    private Double rating;
+    private Integer reviewCount;
 
     // Constructor vacío
     public UserLocationDto() {
     }
 
     // Constructor con parámetros
-    public UserLocationDto(Long id, Double latitude, Double longitude) {
+    public UserLocationDto(Long id, Double latitude, Double longitude, String locationName, String username,
+                           Double rating, Integer reviewCount) {
         this.id = id;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.locationName = locationName;
+        this.username = username;
+        this.rating = rating;
+        this.reviewCount = reviewCount;
     }
 
     // Getters y setters
@@ -40,5 +48,37 @@ public class UserLocationDto {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getLocationName() {
+        return locationName;
+    }
+
+    public void setLocationName(String locationName) {
+        this.locationName = locationName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
     }
 }
