@@ -9,6 +9,8 @@ import { EditProductComponent } from './features/home/products/edit-product/edit
 import { ChatComponent } from './features/home/chat/chat.component';
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { NavigationProfileComponent } from './features/home/navigation-profile/navigation-profile.component';
+import { NavbarComponent } from './features/shared/navbar/navbar.component';
+import { CreateReviewComponent } from './features/home/create-review/create-review.component';
 
 export const routes: Routes = [
   {path: 'main' , component: MainComponent},
@@ -25,5 +27,6 @@ export const routes: Routes = [
   {path: 'chat', component: ChatComponent},
   {path: 'resetPassword', component: ResetPasswordComponent},
   {path: 'viewOtherUser/:userEmail', component: NavigationProfileComponent},
+  {path: 'createReview/:productId', component: CreateReviewComponent},
   
 ];

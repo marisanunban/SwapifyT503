@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +11,8 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { ProductService } from '../../../services/product-service/product.service';
 import { CloudinaryService } from '../../../services/cloudinary-service/cloudinary.service';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
+import { TransactionService } from '../../../services/transaction-service/transaction.service';
+import { NavbarComponent } from '../../shared/navbar/navbar.component';
 
 interface UserProfile {
   id: number;
@@ -19,14 +23,32 @@ interface UserProfile {
   aboutMe?: string;
   profilePicture?: string;
 }
+export interface Transaction {
+  id: number;
+  sellerId: number;
+  buyerId: number;
+  productOfferedId: string;
+  productRequestedId: string;
+  creditsOffered: number;
+  creditsRequested: number;
+  status: 'PENDING' | 'COMPLETED' | 'REJECTED';
+  createdAt: string;
+  updatedAt: string;
+  buyerAccepted: boolean;
+  sellerAccepted: boolean;
+  isProcessing: boolean;
+  conversationId: number;
+}
+
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, RouterLink, CommonModule],
+  imports: [FormsModule, RouterLink, CommonModule,NavbarComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
+
 export class ProfileComponent implements OnInit {
   user: UserProfile | null = null;
   nickname: string = '';
@@ -45,7 +67,11 @@ export class ProfileComponent implements OnInit {
   pais: string | null = null;
   mostrarSeccionProductos: boolean = true;
   showReviewModal: boolean = false;
-purchasedProducts: any[] = [];
+  purchasedProducts: any[] = [];
+  isProfileMenuOpen: boolean = false;
+  reviewableProducts: any[] = []; // Productos que pueden recibir reseñas
+  currentPage: number = 1; // Página actual
+  itemsPerPage: number = 4; // Número de productos por página
 
   constructor(
     private router: Router,
@@ -54,7 +80,8 @@ purchasedProducts: any[] = [];
     private productService: ProductService,
     private cloudinaryService: CloudinaryService,
     private http: HttpClient,
-    private negotiationService: NegotiationService
+    private negotiationService: NegotiationService,
+    private transactionService: TransactionService
   ) {}
 
   ngOnInit() {
@@ -79,6 +106,7 @@ purchasedProducts: any[] = [];
           this.aboutMe = this.user.aboutMe || '';
           this.profileImageUrl = this.user.profilePicture || '';
           this.recuperarProductosPropietario();
+          this.loadReviewableProducts(); // Cargar productos que pueden recibir reseñas
         },
         error: error => {
           console.error('Error al obtener perfil:', error);
@@ -91,12 +119,24 @@ purchasedProducts: any[] = [];
     this.obtenerUbicacion();
   }
 
+  get paginatedProducts() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.products.slice(startIndex, endIndex);
+  }
+  get totalPages(): number[] {
+    return Array.from({ length: Math.ceil(this.products.length / this.itemsPerPage) }, (_, i) => i + 1);
+  }
+
+
+
   toggleReviewModal() {
     this.showReviewModal = !this.showReviewModal;
   }
   
   writeReview(productId: number) {
     // Esta es una función de marcador de posición - la implementarás más tarde
+    this.router.navigate(['/createReview/', productId]);
     console.log('Writing review for product ID:', productId);
   }
   openReviewModal() {
@@ -429,4 +469,64 @@ purchasedProducts: any[] = [];
   irAEditar(productId: string): void {
     this.router.navigate(['/edit', productId]);
   }
+
+
+
+  loadReviewableProducts() {
+    if (!this.user || !this.user.id) {
+      console.error('El usuario no está definido o no tiene un ID.');
+      return;
+    }
+  
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('No hay token disponible.');
+      return;
+    }
+  
+    const userId = this.user.id;
+    const productIdsToReview: string[] = [];
+  
+    this.productService.getAllProducts(token).subscribe({
+      next: (products) => {
+        const completedTransactionsObservables = products.map((product: any) =>
+          this.transactionService.getCompletedTransactionsBetweenUsers(userId, product.ownerId).pipe(
+            map((transactions) => {
+              // Recorrer transacciones y recolectar productos que debe reseñar el usuario
+              transactions.forEach((transaction) => {
+                if (transaction.sellerId === userId && transaction.productRequestedId) {
+                  productIdsToReview.push(transaction.productRequestedId);
+                } else if (transaction.buyerId === userId && transaction.productOfferedId) {
+                  productIdsToReview.push(transaction.productOfferedId);
+                }
+              });
+              
+  
+              // Si este producto está entre los recibidos, devolverlo para reseña
+              const shouldReview = productIdsToReview.includes(product.id.toString());
+              return shouldReview ? product : null;
+            }),
+            catchError((error) => {
+              console.error(`Error al obtener transacciones para el producto ${product.id}:`, error);
+              return of(null);
+            })
+          )
+        );
+  
+        forkJoin(completedTransactionsObservables).subscribe({
+          next: (results) => {
+            this.reviewableProducts = results.filter((product) => product !== null);
+            console.log('Productos que puedes reseñar:', this.reviewableProducts);
+          },
+          error: (error) => {
+            console.error('Error al verificar transacciones completadas:', error);
+          },
+        });
+      },
+      error: (error) => {
+        console.error('Error al cargar productos:', error);
+      },
+    });
+  }
+  
 }

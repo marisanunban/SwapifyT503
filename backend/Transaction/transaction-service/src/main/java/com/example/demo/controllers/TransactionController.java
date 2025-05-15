@@ -3,15 +3,22 @@
     import com.example.demo.clients.AuthClient;
     import com.example.demo.clients.UserClient;
     import com.example.demo.dtos.*;
+    import com.example.demo.entities.Transaction;
+    import com.example.demo.repositories.TransactionRepository;
     import com.example.demo.services.TransactionServiceImpl;
     import jakarta.persistence.EntityNotFoundException;
+    import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
 
+    import java.util.List;
+    import java.util.stream.Collectors;
+
     @CrossOrigin(origins = "http://localhost:4200")
     @RestController
     @RequestMapping("/transactions")
+
     public class TransactionController {
 
         private final TransactionServiceImpl transactionService;
@@ -26,6 +33,8 @@
             this.authClient = authClient;
             this.userClient = userClient;
         }
+        @Autowired
+        private TransactionRepository transactionRepository;
 
         @PostMapping
         public ResponseEntity<TransactionDto> createTransaction(
@@ -91,5 +100,18 @@
                 System.out.println("Error: " + e.getMessage());
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
+        }
+
+
+
+        @GetMapping("/completed/full")
+        public ResponseEntity<List<Transaction>> getCompletedTransactions(
+                @RequestParam Long userA,
+                @RequestParam Long userB) {
+
+            List<Transaction> transactions =
+                    transactionRepository.findCompletedTransactionsBetweenUsers(userA, userB);
+
+            return ResponseEntity.ok(transactions);
         }
     }

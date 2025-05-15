@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { UserService } from '../../../services/user-service/user.service';
-
+import { NavbarComponent } from '../../shared/navbar/navbar.component';
 export interface Product {
   id: number;
   title: string;
@@ -34,7 +34,7 @@ declare var google: any;
 @Component({
   selector: 'app-main',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.css']
 })

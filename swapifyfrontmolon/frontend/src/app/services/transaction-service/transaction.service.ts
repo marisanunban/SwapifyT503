@@ -66,4 +66,20 @@ export class TransactionService {
         })
       );
   }
+
+  getCompletedTransactionsBetweenUsers(userA: number, userB: number): Observable<Transaction[]> {
+    return this.http
+      .get<Transaction[]>(`${this.apiUrl}/completed/full`, {
+        headers: this.getHeaders(),
+        params: { userA: userA.toString(), userB: userB.toString() },
+      })
+      .pipe(
+        catchError((err) => {
+          console.error('Error fetching completed transactions:', err);
+          return throwError(() => new Error('No se pudieron obtener las transacciones completadas'));
+        })
+      );
+  }
+  
+
 }

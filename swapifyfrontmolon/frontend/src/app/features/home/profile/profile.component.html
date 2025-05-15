@@ -1,59 +1,13 @@
+<app-navbar></app-navbar>
 <!-- Header -->
-<nav class="flex items-center justify-between px-4 py-2 border-b border-gray-200">
-    <!-- Logo -->
-    <a href="#" class="text-2xl font-bold !text-green-700">Swapify</a>
-  
-    <!-- Búsqueda -->
-    <div class="flex flex-1 mx-4">
-      <div class="relative flex items-center w-full max-w-3xl">
-        <div class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Categorías
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">Mujer</a></li>
-            <li><a class="dropdown-item" href="#">Hombre</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#">Tecnología</a></li>
-          </ul>
-        </div>
-        <input
-          type="text"
-          placeholder="Busca artículos"
-          class="w-full m-2 px-3 py-2 bg-gray-100 rounded-r-md focus:outline-none">
-      </div>
-    </div>
-  
-    <!-- Acciones -->
-    <div class="flex items-center gap-3">
-      <button *ngIf="!user" class="text-teal-600" (click)="irARegistro()">Regístrate</button>
-      <button *ngIf="!user" class="text-teal-600" (click)="irALogin()">Iniciar Sesión</button>
-      <button class="px-4 py-2 text-white bg-teal-600 rounded-md" (click)="irAContacta()">Contáctanos</button>
-      <div *ngIf="user" class="flex items-center space-x-4">
-        <span class="text-lg font-semibold">Hola, {{ nickname }}</span>
-        <span class="bg-green-600 px-3 py-1 rounded text-white">Créditos: {{ user.credits }}</span>
-        <button (click)="logout()" class="bg-red-500 px-4 py-2 rounded text-white">Cerrar sesión</button>
-        <button class="text-teal-600 m-2" (click)="irACrear()">Crear producto</button>
-      </div>
-      <div class="flex items-center ml-2">
-        ES <i class="ml-1 fas fa-chevron-down text-xs"></i>
-      </div>
-    </div>
-  </nav>
+
   
   <!-- Contenido principal - Perfil de vendedor -->
   <div class="container mx-auto px-4 py-8 min-h-screen">
     <!-- Encabezado del perfil -->
     <div class="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
       <!-- Portada -->
-      <div class="h-48 bg-gradient-to-r from-teal-400 to-green-500 relative" style="background-image: url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80'); background-size: cover; background-position: center;">
-        <!-- Botón de editar portada -->
-        <button class="absolute top-3 right-3 bg-white text-gray-700 px-3 py-1 rounded-md text-sm flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-          Editar portada
-        </button>
+      <div class="h-48 bg-gradient-to-r from-teal-500 to-green-400 relative" style="background-color: rgb(132, 218, 160); background-size: cover; background-position: center;">
       </div>
       
       <!-- Información del perfil -->
@@ -73,8 +27,8 @@
           <!-- Nombre e info -->
           <div class="py-4 flex-grow">
             <div class="flex flex-wrap items-center justify-between">
-              <div>
-                <h3 class="text-2xl font-bold">{{nickname}}</h3>
+              <div class="flex items-center">
+                <h3 class="text-2xl font-bold m-1">{{nickname}} </h3>
                 <button class="text-teal-600 hover:text-teal-800" (click)="toggleEditUsername()">
                   <svg xmlns="http://www.w3.org/2000/svg"  class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -96,21 +50,9 @@
                       </button>
                     </div>
                   </div>
-                  <div class="hidden absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg z-10">
-                    <div class="py-1">
-                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nuevo mensaje de comprador</a>
-                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Producto vendido: Cámara Canon</a>
-                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Nueva valoración recibida</a>
-                    </div>
-                  </div>
+
                 </div>
                 <div class="relative">
-                  <button class="flex items-center px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </button>
                   <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
                     <div class="py-1">
                       <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar perfil</a>
@@ -162,12 +104,6 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 <span class="text-gray-700">Vendedor verificado</span>
-              </div>
-              <div class="flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <a href="#" class="text-teal-600 hover:underline">Contactar</a>
               </div>
             </div>
 
@@ -285,8 +221,8 @@
   <nav class="flex">
     <a 
       href="#" 
-      class="px-4 py-3 font-medium"
-      [class.text-teal-600]="mostrarSeccionProductos"
+      class="px-4 py-3 text-decoration-none font-medium "
+      [class.text-success]="mostrarSeccionProductos"
       [class.border-b-2]="mostrarSeccionProductos"
       [class.border-teal-600]="mostrarSeccionProductos"
       [class.text-gray-500]="!mostrarSeccionProductos"
@@ -296,8 +232,8 @@
     </a>
     <a 
       href="#" 
-      class="px-4 py-3 font-medium"
-      [class.text-teal-600]="!mostrarSeccionProductos"
+      class="px-4 py-3 text-decoration-none font-medium"
+      [class.text-success]="!mostrarSeccionProductos"
       [class.border-b-2]="!mostrarSeccionProductos"
       [class.border-teal-600]="!mostrarSeccionProductos"
       [class.text-gray-500]="mostrarSeccionProductos"
@@ -310,7 +246,7 @@
 
 <!-- Sección de productos -->
 <div *ngIf="mostrarSeccionProductos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <div *ngFor="let product of products" class="bg-white rounded-lg shadow-sm overflow-hidden">
+  <div *ngFor="let product of paginatedProducts" class="bg-white rounded-lg shadow-sm overflow-hidden">
     <div class="relative">
       <img [src]="product.imageUrl" class="w-full h-48 object-cover" alt="Producto">
     </div>
@@ -360,28 +296,49 @@
         <!-- Paginación -->
         <div class="mt-6 flex justify-center">
           <nav class="inline-flex rounded-md shadow">
-            <a href="#" class="py-2 px-4 bg-white border border-gray-300 rounded-l-md text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+            <!-- Botón Anterior -->
+            <button 
+              class="py-2 px-4 bg-white border border-gray-300 rounded-l-md text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+              [disabled]="currentPage === 1"
+              (click)="currentPage = currentPage - 1"
+            >
               Anterior
-            </a>
-            <a href="#" class="py-2 px-4 bg-teal-600 text-white border border-teal-600 hover:bg-teal-700">
-              1
-            </a>
-            <a href="#" class="py-2 px-4 bg-white border border-gray-300 text-gray-500 hover:bg-gray-50">
-              2
-            </a>
-            <a href="#" class="py-2 px-4 bg-white border border-gray-300 rounded-r-md text-gray-500 hover:bg-gray-50">
+            </button>
+        
+            <!-- Botones de páginas -->
+            <button 
+              *ngFor="let page of totalPages; let i = index"
+              class="py-2 px-4"
+              [class.bg-teal-600]="currentPage === page"
+              [class.text-white]="currentPage === page"
+              [class.bg-white]="currentPage !== page"
+              [class.text-gray-500]="currentPage !== page"
+              [class.border]="true"
+              [class.border-teal-600]="currentPage === page"
+              [class.border-gray-300]="currentPage !== page"
+              (click)="currentPage = page"
+            >
+              {{ page }}
+            </button>
+        
+            <!-- Botón Siguiente -->
+            <button 
+              class="py-2 px-4 bg-white border border-gray-300 rounded-r-md text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+              [disabled]="currentPage === totalPages.length"
+              (click)="currentPage = currentPage + 1"
+            >
               Siguiente
-            </a>
+            </button>
           </nav>
         </div>
       </div>
     </div>
   </div>
 
-<!-- Añade el modal de reseñas aquí, justo antes del footer -->
+<!-- Modal de reseñas -->
 <div *ngIf="showReviewModal" class="review-modal-overlay">
   <div class="review-modal">
-    <!-- Popup header -->
+    <!-- Encabezado del modal -->
     <div class="review-modal-header">
       <h3 class="review-modal-title">Productos comprados para reseñar</h3>
       <button (click)="toggleReviewModal()" class="review-modal-close">
@@ -390,18 +347,21 @@
         </svg>
       </button>
     </div>
-    
-    <!-- Popup content -->
+
+    <!-- Contenido del modal -->
     <div class="review-modal-content">
-      <div *ngIf="purchasedProducts.length === 0" class="review-empty-state">
+      <!-- Mostrar mensaje si no hay productos para reseñar -->
+      <div *ngIf="reviewableProducts.length === 0" class="review-empty-state">
         No tienes productos pendientes de reseñar.
       </div>
-      
-      <div *ngFor="let product of purchasedProducts" class="review-product-item">
+
+      <!-- Lista de productos para reseñar -->
+      <div *ngFor="let product of reviewableProducts" class="review-product-item">
         <div class="review-product-container">
           <img [src]="product.imageUrl" alt="Imagen del producto" class="review-product-image">
           <div class="review-product-details">
-            <h4 class="review-product-name">{{ product.name }}</h4>
+            <h4 class="review-product-name">{{ product.title }}</h4>
+            <p class="review-product-description">{{ product.description }}</p>
             <div class="review-product-actions">
               <button 
                 *ngIf="!product.reviewed" 
@@ -421,8 +381,8 @@
         </div>
       </div>
     </div>
-    
-    <!-- Popup footer -->
+
+    <!-- Pie del modal -->
     <div class="review-modal-footer">
       <button (click)="toggleReviewModal()" class="review-close-button">
         Cerrar
@@ -432,52 +392,65 @@
 </div>
   
   
-  <!-- Footer -->
-  <footer class="bg-green-900 text-white py-8">
-    <div class="container mx-auto px-4">
-      <!-- Logo y enlaces principales -->
-      <div class="row mb-8">
-        <!-- Logo -->
-        <div class="col-12 mb-6">
-          <h2 class="text-2xl font-bold">Swapify</h2>
-        </div>
-        
-        
-        <!-- Formulario de suscripción -->
-        <div class="col-12 col-md-6 mt-6 mt-md-0">
-          <p class="mb-3">Obtén las últimas novedades de nuestra plataforma</p>
-          
-          <div class="flex mb-3">
-            <input 
-              type="email" 
-              placeholder="Your email here" 
-              class="p-2 w-full bg-green-800 border border-green-700 text-white"
-            >
-            <button class="bg-white text-green-900 px-4 whitespace-nowrap">
-              Subscribe
-            </button>
-          </div>
-          
-          <div class="flex items-start gap-2">
-            <input type="checkbox" class="mt-1">
-            <p class="text-sm">Acepto las Normas y Términos de Condiciones</p>
-          </div>
-        </div>
+<!-- Footer simplificado estilo Wallapop -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Columna 1 -->
+      <div class="footer-column">
+        <h3 class="footer-title">Swapify</h3>
+        <ul class="footer-links">
+          <li><a href="#" class="footer-link">Quiénes somos</a></li>
+          <li><a href="#" class="footer-link">Cómo funciona</a></li>
+          <li><a href="#" class="footer-link">Seguridad</a></li>
+        </ul>
       </div>
       
-      <!-- Línea divisoria -->
-      <hr class="border-green-700 mb-4">
-      
-      <!-- Enlaces legales -->
-      <div class="text-sm flex flex-wrap gap-x-4 gap-y-2 mb-2">
-        <a href="#" class="hover:underline">Términos de la página web</a>
-        <span class="hidden md:inline">|</span>
-        <a href="#" class="hover:underline">Política de privacidad</a>
+      <!-- Columna 2 -->
+      <div class="footer-column">
+        <h3 class="footer-title">Soporte</h3>
+        <ul class="footer-links">
+          <li><a href="#" class="footer-link">Centro de ayuda</a></li>
+          <li><a href="#" class="footer-link">Contacto</a></li>
+          <li><a href="#" class="footer-link">Reglas de publicación</a></li>
+        </ul>
       </div>
       
-      <!-- Copyright -->
-      <div class="text-sm">
-        ©2025 Swapify, LLC. Todos los derechos reservados.
+      <!-- Columna 3 -->
+      <div class="footer-column">
+        <h3 class="footer-title">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="#" class="footer-link">Condiciones de uso</a></li>
+          <li><a href="#" class="footer-link">Política de privacidad</a></li>
+          <li><a href="#" class="footer-link">Cookies</a></li>
+        </ul>
+      </div>
+      
+      <!-- Columna 4 -->
+      <div class="footer-column">
+        <h3 class="footer-title">Síguenos</h3>
+        <div class="social-links">
+          <a href="#" class="social-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M5.026 15c6.038 0 9.341-5.003 9.341-9.334 0-.14 0-.282-.006-.422A6.685 6.685 0 0 0 16 3.542a6.658 6.658 0 0 1-1.889.518 3.301 3.301 0 0 0 1.447-1.817 6.533 6.533 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.325 9.325 0 0 1-6.767-3.429 3.289 3.289 0 0 0 1.018 4.382A3.323 3.323 0 0 1 .64 6.575v.045a3.288 3.288 0 0 0 2.632 3.218 3.203 3.203 0 0 1-.865.115 3.23 3.23 0 0 1-.614-.057 3.283 3.283 0 0 0 3.067 2.277A6.588 6.588 0 0 1 .78 13.58a6.32 6.32 0 0 1-.78-.045A9.344 9.344 0 0 0 5.026 15z"/>
+            </svg>
+          </a>
+          <a href="#" class="social-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z"/>
+            </svg>
+          </a>
+          <a href="#" class="social-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+            </svg>
+          </a>
+        </div>
       </div>
     </div>
-  </footer>
+    
+    <div class="footer-bottom">
+      <p class="copyright">© 2025 Swapify. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
