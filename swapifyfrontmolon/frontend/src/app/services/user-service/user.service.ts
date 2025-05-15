@@ -44,6 +44,11 @@ export class UserService {
 
     return this.http.patch(`${this.apiUrl}/me`, profileData, { headers });
   }
+  // Método para obtener el perfil de otro usuario
+    getOtherUserProfile(userEmail: string): Observable<any> {
+      return this.http.get(`${this.apiUrl}/viewOtherUser/${userEmail}`);
+    }
+  
 
   updateUserLocation(userId: number, payload: any, token: string): Observable<any> {
     const headers = new HttpHeaders({
@@ -52,4 +57,5 @@ export class UserService {
     });
     return this.http.put(`${this.apiUrl}/${userId}/location`, payload, { headers });
   }
+
 }

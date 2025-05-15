@@ -1,3 +1,4 @@
+// src/app/features/main/main.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../services/product-service/product.service';
@@ -5,13 +6,18 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
-import { Product } from '../../../models/product.model'; // Importar la interfaz compartida
+import { UserService } from '../../../services/user-service/user.service';
+import { Product } from '../../../models/product.model';
 
 export interface User {
   id: number;
   username: string;
   credits: number;
   profilePicture?: string;
+}
+
+export interface UserProfile {
+  profilePicture: string;
 }
 
 declare var google: any;
@@ -25,6 +31,7 @@ declare var google: any;
 })
 export class MainComponent implements OnInit {
   user: User | null = null;
+  userProfile: UserProfile | null = null;
   products: Product[] = [];
   searchKeyword: string = '';
   selectedCategory: string = '';
@@ -41,7 +48,8 @@ export class MainComponent implements OnInit {
     private router: Router,
     private productService: ProductService,
     private authService: AuthService,
-    private negotiationService: NegotiationService
+    private negotiationService: NegotiationService,
+    private userService: UserService
   ) {}
 
   ngOnInit() {
@@ -49,6 +57,23 @@ export class MainComponent implements OnInit {
       this.user = user;
       this.recuperarProductos();
     });
+
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.userService.getUserProfile(token).subscribe({
+        next: (userProfile) => {
+          this.userProfile = userProfile;
+          if (this.user && userProfile.profilePicture) {
+            this.user.profilePicture = userProfile.profilePicture;
+          }
+        },
+        error: (err) => {
+          console.error('Error al obtener el perfil del usuario:', err);
+        }
+      });
+    } else {
+      console.error('No se encontró un token en localStorage.');
+    }
   }
 
   recuperarProductos() {
@@ -103,7 +128,7 @@ export class MainComponent implements OnInit {
       return;
     }
 
-    let initialLatLng = { lat: 40.4168, lng: -3.7038 }; // Madrid por defecto
+    let initialLatLng = { lat: 40.4168, lng: -3.7038 };
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         position => {
@@ -158,8 +183,6 @@ export class MainComponent implements OnInit {
       console.error('Mapa o latLng no definidos:', { map: this.map, latLng });
       return;
     }
-
-    console.log('latLng recibido en addMarker:', latLng);
 
     let lat: number;
     let lng: number;
@@ -353,7 +376,6 @@ export class MainComponent implements OnInit {
   }
 
   startChat(productId: number) {
-    console.log('Iniciando chat para producto:', productId);
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('No hay token disponible.');
