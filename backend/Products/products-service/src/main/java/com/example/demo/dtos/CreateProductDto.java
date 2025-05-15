@@ -3,9 +3,10 @@ package com.example.demo.dtos;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
-
+@Data
 public class CreateProductDto {
 
     @NotBlank(message = "Title is required")
@@ -13,26 +14,18 @@ public class CreateProductDto {
 
     private String description;
 
-    private String imageUrl;
+    private List<String> imageUrl; // Cambiado de String a List<String>
 
-    private String imageId;
+    private List<String> imageId;  // Cambiado de String a List<String>
 
-    public String getImageId() {
-        return imageId;
-    }
+    @NotBlank(message = "Category is required")
+    private String category;
 
-    public void setImageId(String imageId) {
-        this.imageId = imageId;
-    }
+    private Map<String, String> attributes;
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+    private Double price;
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
+    // Getters y Setters
     public String getTitle() {
         return title;
     }
@@ -47,6 +40,22 @@ public class CreateProductDto {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<String> getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(List<String> imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public List<String> getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(List<String> imageId) {
+        this.imageId = imageId;
     }
 
     public String getCategory() {
@@ -72,11 +81,4 @@ public class CreateProductDto {
     public void setPrice(Double price) {
         this.price = price;
     }
-
-    @NotBlank(message = "Category is required")
-    private String category;
-
-    private Map<String, String> attributes;
-
-    private Double price;
 }

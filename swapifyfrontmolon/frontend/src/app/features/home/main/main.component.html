@@ -197,7 +197,7 @@
           <!-- Imagen del producto -->
           <div class="product-image-container">
             <img
-              [src]="product.imageUrl || '/placeholder.svg?height=200&width=200'"
+              [src]="product.imageUrl?.[0] || '/placeholder.svg?height=200&width=200'"
               alt="{{ product.title }}"
               class="product-image"
             >
@@ -234,7 +234,7 @@
           <!-- Imagen del producto -->
           <div class="product-image-container">
             <img
-              [src]="product.imageUrl || '/placeholder.svg?height=200&width=200'"
+              [src]="product.imageUrl?.[0] || '/placeholder.svg?height=200&width=200'"
               alt="{{ product.title }}"
               class="product-image"
             >
@@ -271,7 +271,7 @@
           <!-- Imagen del producto -->
           <div class="product-image-container">
             <img
-              [src]="product.imageUrl || '/placeholder.svg?height=200&width=200'"
+              [src]="product.imageUrl?.[0] || '/placeholder.svg?height=200&width=200'"
               alt="{{ product.title }}"
               class="product-image"
             >

@@ -57,8 +57,8 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(dto.getCategory());
         product.setAttributes(dto.getAttributes());
         product.setPrice(dto.getPrice());
-        product.setImageUrl(dto.getImageUrl());
-        product.setImageId(dto.getImageId());
+        product.setImageUrl(dto.getImageUrl()); // Ahora es una lista
+        product.setImageId(dto.getImageId());   // Ahora es una lista
 
         product = productRepository.save(product);
         return mapToDto(product);
@@ -97,12 +97,19 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("You are not authorized to update this product");
         }
 
+        // Actualizar solo los campos que no son null
         if (dto.getTitle() != null) product.setTitle(dto.getTitle());
         if (dto.getDescription() != null) product.setDescription(dto.getDescription());
         if (dto.getAttributes() != null) product.setAttributes(dto.getAttributes());
         if (dto.getPrice() != null) product.setPrice(dto.getPrice());
-        if (dto.getImageUrl() != null) product.setImageUrl(dto.getImageUrl());
-        if (dto.getImageId() != null) product.setImageId(dto.getImageId());
+
+        // Manejar las listas de imágenes
+        if (dto.getImageUrl() != null) {
+            product.setImageUrl(dto.getImageUrl()); // Asigna la nueva lista de URLs
+        }
+        if (dto.getImageId() != null) {
+            product.setImageId(dto.getImageId());   // Asigna la nueva lista de IDs
+        }
 
         product = productRepository.save(product);
         return mapToDto(product);

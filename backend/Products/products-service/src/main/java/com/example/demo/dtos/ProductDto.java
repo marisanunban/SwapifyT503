@@ -11,17 +11,17 @@ public class ProductDto {
     private String description;
     private String category;
     private String status;
-    private String imageUrl;
-    private String imageId;
+    private List<String> imageUrl; // Cambiado de String a List<String>
+    private List<String> imageId;  // Cambiado de String a List<String>
     private Map<String, String> attributes;
     private Double price;
     private LocalDateTime createdAt;
-    private Double latitude; // Nueva propiedad para la ubicación del producto
-    private Double longitude; // Nueva propiedad para la ubicación del producto
-    private String ownerLocation; // Nombre legible de la ubicación del vendedor
-    private String ownerUsername; // Nombre del vendedor
-    private Double ownerRating; // Valoración del vendedor
-    private Integer ownerReviewCount; // Número de valoraciones del vendedor
+    private Double latitude;
+    private Double longitude;
+    private String ownerLocation;
+    private String ownerUsername;
+    private Double ownerRating;
+    private Integer ownerReviewCount;
 
     // Getters y setters
     public String getId() {
@@ -72,19 +72,19 @@ public class ProductDto {
         this.status = status;
     }
 
-    public String getImageUrl() {
+    public List<String> getImageUrl() {
         return imageUrl;
     }
 
-    public void setImageUrl(String imageUrl) {
+    public void setImageUrl(List<String> imageUrl) {
         this.imageUrl = imageUrl;
     }
 
-    public String getImageId() {
+    public List<String> getImageId() {
         return imageId;
     }
 
-    public void setImageId(String imageId) {
+    public void setImageId(List<String> imageId) {
         this.imageId = imageId;
     }
 

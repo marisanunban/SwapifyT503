@@ -5,18 +5,7 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
-
-export interface Product {
-  id: number;
-  title: string;
-  price: number;
-  description?: string;
-  imageUrl?: string;
-  ownerId: number;
-  category?: string;
-  imageId?: string;
-  conversation?: { id: number };
-}
+import { Product } from '../../../models/product.model'; // Importar la interfaz compartida
 
 export interface User {
   id: number;
@@ -352,7 +341,7 @@ export class MainComponent implements OnInit {
   }
 
   irAMisChats() {
-    this.router.navigate(['/chat']); // Ajustado para coincidir con la ruta existente
+    this.router.navigate(['/chat']);
   }
 
   irAFavoritos() {
@@ -403,8 +392,6 @@ export class MainComponent implements OnInit {
 
   toggleFavorite(productId: number) {
     console.log(`Toggling favorite for product ID: ${productId}`);
-    // Aquí puedes implementar la lógica para añadir o quitar el producto de favoritos
-    // Por ejemplo, podrías tener un servicio FavoriteService para manejar esto
     alert('Funcionalidad de favoritos aún no implementada.');
   }
 

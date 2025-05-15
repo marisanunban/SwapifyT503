@@ -3,19 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../../services/product-service/product.service';
+import { Product } from '../../../../models/product.model'; // Importar desde el archivo compartido
 import { CloudinaryService } from '../../../../services/cloudinary-service/cloudinary.service';
-
-export interface Product {
-  id: number;
-  title: string;
-  price: number;
-  description?: string;
-  imageUrl?: string;
-  ownerId: number;
-  category?: string;
-  imageId?: string;
-  conversation?: { id: number };
-}
 
 @Component({
   selector: 'app-edit-product',
@@ -25,14 +14,19 @@ export interface Product {
   styleUrls: ['./edit-product.component.css']
 })
 export class EditProductComponent implements OnInit {
-  title: string = '';
-  category: string | undefined = '';
-  description: string | undefined = '';
-  price: number = 0;
-  imageUrl: string | undefined = '';
-  imageFile: File | null = null;
-  token: string = '';
+  product: Product = {
+    id: 0,
+    title: '',
+    price: 0,
+    description: '',
+    imageUrl: [],
+    ownerId: 0,
+    category: '',
+    imageId: []
+  };
   productId: string | null = null;
+  imageFiles: File[] = [];
+  token: string | null = localStorage.getItem('token');
 
   constructor(
     private productService: ProductService,
@@ -42,10 +36,7 @@ export class EditProductComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      this.token = storedToken;
-    } else {
+    if (!this.token) {
       console.error('No se encontró el token del usuario');
       this.router.navigate(['/login']);
       return;
@@ -54,12 +45,8 @@ export class EditProductComponent implements OnInit {
     this.productId = this.route.snapshot.paramMap.get('id');
     if (this.productId) {
       this.productService.getProductById(this.productId, this.token).subscribe({
-        next: (product) => {
-          this.title = product.title;
-          this.category = product.category; // Ahora compatible porque category es string | undefined
-          this.description = product.description; // Compatible porque description es string | undefined
-          this.price = product.price;
-          this.imageUrl = product.imageUrl; // Compatible porque imageUrl es string | undefined
+        next: (data) => {
+          this.product = { ...data };
         },
         error: (error) => {
           console.error('Error al cargar el producto:', error);
@@ -72,53 +59,53 @@ export class EditProductComponent implements OnInit {
     }
   }
 
-  onFileSelected(event: Event): void {
+  onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.imageFile = input.files[0];
+      this.imageFiles = Array.from(input.files).slice(0, 5);
+      console.log('Archivos seleccionados:', this.imageFiles);
     }
   }
 
   editProduct(): void {
-    if (!this.title || this.price <= 0) {
+    if (!this.product.title || this.product.price <= 0) {
       console.error('El título y el precio son obligatorios, y el precio debe ser mayor a 0');
       return;
     }
 
-    if (this.imageFile) {
-      this.cloudinaryService.uploadImage(this.imageFile, this.token).subscribe({
-        next: (uploadResponse) => {
-          console.log('Imagen subida exitosamente:', uploadResponse);
-          this.imageUrl = uploadResponse.imageUrl;
-          console.log('imageFile', this.imageFile);
-          console.log('imageUrl', this.imageUrl);
-          this.updateProduct();
-        },
-        error: (error) => {
-          console.error('Error al subir la imagen:', error);
-        }
-      });
+    const productData: Partial<Product> = {
+      title: this.product.title,
+      category: this.product.category,
+      description: this.product.description,
+      price: this.product.price
+    };
+
+    if (this.imageFiles.length > 0) {
+      const uploadPromises = this.imageFiles.map(file =>
+        this.cloudinaryService.uploadImage(file, this.token!).toPromise()
+      );
+
+      Promise.all(uploadPromises)
+        .then(uploadResponses => {
+          productData.imageUrl = uploadResponses.map(response => response.imageUrl);
+          productData.imageId = uploadResponses.map(response => response.publicId);
+
+          this.updateProduct(productData);
+        })
+        .catch(error => {
+          console.error('Error al subir las imágenes:', error);
+        });
     } else {
-      this.updateProduct();
+      this.updateProduct(productData);
     }
   }
 
-  private updateProduct(): void {
-    const productData: Partial<Product> = {
-      title: this.title,
-      category: this.category || undefined, // Manejar undefined
-      description: this.description || undefined, // Manejar undefined
-      price: this.price,
-      imageUrl: this.imageUrl || undefined // Manejar undefined
-    };
-
-    console.log('Datos del producto a actualizar:', productData);
-
+  private updateProduct(productData: Partial<Product>): void {
     if (this.productId) {
-      this.productService.updateProduct(this.productId, productData, this.token).subscribe({
+      this.productService.updateProduct(this.productId, productData, this.token!).subscribe({
         next: (response) => {
           console.log('Producto actualizado exitosamente:', response);
-          this.router.navigate(['/home']);
+          this.router.navigate(['/profile']);
         },
         error: (error) => {
           console.error('Error al actualizar el producto:', error);

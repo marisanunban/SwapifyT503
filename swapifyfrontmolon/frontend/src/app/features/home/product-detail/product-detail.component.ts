@@ -2,33 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../services/product-service/product.service';
-import { AuthService } from '../../../services/auth-service/auth.service';
-import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
-
-export interface Product {
-  id: number;
-  title: string;
-  price: number;
-  description?: string;
-  imageUrl?: string;
-  ownerId: number;
-  category?: string;
-  imageId?: string;
-  conversation?: { id: number };
-  latitude?: number;
-  longitude?: number;
-  ownerLocation?: string;
-  ownerUsername?: string;
-  ownerRating?: number;
-  ownerReviewCount?: number;
-}
-
-export interface User {
-  id: number;
-  username: string;
-  credits: number;
-  profilePicture?: string;
-}
+import { Product } from '../../../models/product.model'; // Importar desde el archivo compartido
 
 @Component({
   selector: 'app-product-detail',
@@ -39,104 +13,40 @@ export interface User {
 })
 export class ProductDetailComponent implements OnInit {
   product: Product | null = null;
-  user: User | null = null;
-  isLoading: boolean = false;
+  productId: string | null = null;
+  token: string | null = localStorage.getItem('token');
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router,
     private productService: ProductService,
-    private authService: AuthService,
-    private negotiationService: NegotiationService
+    private router: Router
   ) {}
 
-  ngOnInit() {
-    this.authService.user$.subscribe(user => {
-      this.user = user;
-    });
-
-    const productId = this.route.snapshot.paramMap.get('id');
-    if (productId) {
-      this.loadProduct(productId);
-    } else {
-      console.error('No se proporcionó un ID de producto');
-      this.router.navigate(['/main']);
-    }
-  }
-
-  loadProduct(productId: string) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No hay token disponible');
-      alert('Por favor, inicia sesión para ver los detalles del producto.');
+  ngOnInit(): void {
+    if (!this.token) {
+      console.error('No se encontró el token del usuario');
       this.router.navigate(['/login']);
       return;
     }
 
-    this.isLoading = true;
-    this.productService.getProductById(productId, token).subscribe({
-      next: (product: Product) => {
-        this.product = product;
-        this.fetchConversation();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error al cargar el producto:', error);
-        this.isLoading = false;
-        alert('No se pudo cargar el producto. Inténtalo de nuevo.');
-        this.router.navigate(['/main']);
-      }
-    });
-  }
-
-  fetchConversation() {
-    const token = localStorage.getItem('token');
-    if (token && this.user?.id && this.product?.id) {
-      this.negotiationService.getUserConversations().subscribe({
-        next: (conversations) => {
-          const conversation = conversations.find(conv => conv.productId === this.product?.id.toString() && conv.status === 'ACTIVE');
-          if (this.product && conversation) {
-            this.product = { ...this.product, conversation: { id: conversation.id } };
-          }
+    this.productId = this.route.snapshot.paramMap.get('id');
+    if (this.productId) {
+      this.productService.getProductById(this.productId, this.token).subscribe({
+        next: (product) => {
+          this.product = product;
         },
         error: (error) => {
-          console.error('Error al obtener conversaciones:', error);
+          console.error('Error al cargar los detalles del producto:', error);
+          this.router.navigate(['/home']);
         }
       });
+    } else {
+      console.error('No se encontró el ID del producto en la URL');
+      this.router.navigate(['/home']);
     }
   }
 
-  startChat(productId: number) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No hay token disponible.');
-      alert('Por favor, inicia sesión para iniciar un chat.');
-      return;
-    }
-
-    this.isLoading = true;
-    this.negotiationService.startNegotiation(productId.toString()).subscribe({
-      next: (conversation) => {
-        const conversationId = conversation.id;
-        this.router.navigate(['/chat'], { state: { conversationId } });
-        this.isLoading = false;
-        if (this.product) {
-          this.product = { ...this.product, conversation: { id: conversationId } };
-        }
-      },
-      error: (error) => {
-        console.error('Error al iniciar el chat:', error);
-        alert('No se pudo iniciar el chat. Inténtalo de nuevo.');
-        this.isLoading = false;
-      }
-    });
-  }
-
-  goToChat(conversationId: number) {
-    this.router.navigate(['/chat'], { state: { conversationId } });
-  }
-
-  goBack() {
-    this.router.navigate(['/main']);
+  goToHome(): void {
+    this.router.navigate(['/home']);
   }
 }

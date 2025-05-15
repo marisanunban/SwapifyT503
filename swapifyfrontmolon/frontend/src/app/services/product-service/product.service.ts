@@ -1,28 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-
-export interface Product {
-  id: number;
-  title: string;
-  price: number;
-  description?: string;
-  imageUrl?: string;
-  ownerId: number;
-  category?: string;
-  imageId?: string;
-  conversation?: { id: number };
-}
-
-export interface CreateProductDto {
-  title: string;
-  category: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  imageId: string;
-  ownerId: number;
-}
+import { Product, CreateProductDto } from '../../models/product.model'; // Importar desde el archivo compartido
 
 @Injectable({
   providedIn: 'root'
@@ -41,7 +20,7 @@ export class ProductService {
 
   createProduct(productData: CreateProductDto, token: string): Observable<Product> {
     const headers = this.getAuthHeaders(token);
-    return this.http.post<Product>(`${this.apiUrl}`, productData, { headers });
+    return this.http.post<Product>(`${this.apiUrl}`, productData, { headers }); // Corregido: productDataweakness -> productData
   }
 
   getAllProducts(token?: string): Observable<Product[]> {
@@ -100,7 +79,7 @@ export class ProductService {
   ): Observable<Product[]> {
     const token = localStorage.getItem('token');
     if (!token) {
-      throw new Error('No hay token disponible. Por favor, inicia sesiÃ³n.');
+      throw new Error('No hay token disponible. Por favor, inicia sesión.');
     }
 
     const headers = this.getAuthHeaders(token);
