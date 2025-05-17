@@ -37,6 +37,15 @@ interface Conversation {
   messages: Message[];
 }
 
+interface ConversationSummary {
+  id: number;
+  productId: string;
+  productTitle: string;
+  otherUser: User;
+  lastMessage: Message | null;
+  unreadCount: number;
+}
+
 @Component({
   selector: 'app-chat',
   standalone: true,
@@ -48,6 +57,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   newMessage = '';
   currentUser: User | null = null;
   conversation: Conversation | null = null;
+  conversations: ConversationSummary[] = [];
+  selectedConversationId: number | null = null;
   users: User[] = [];
   messages: Message[] = [];
   selectedChat = {
@@ -69,7 +80,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private routerSubscription: Subscription | null = null;
   private isWebSocketConnected = false;
   private subscribedConversationId: number | null = null;
-  private lastTransactionMessage: { [key: number]: Message } = {}; // Para rastrear el último mensaje por transacción
+  private lastTransactionMessage: { [key: number]: Message } = {};
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
 
@@ -109,6 +120,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (user) {
           this.loadUserProducts();
           this.subscribeToUserNotifications(user.id);
+          this.loadUserConversations();
         }
       },
       error: (error) => {
@@ -120,24 +132,49 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.routerSubscription = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe(() => {
-        const newConversationId = history.state?.conversationId;
-        if (!newConversationId) {
-          this.router.navigate(['/main']);
+        let conversationId: number | undefined;
+
+        const stateId = history.state?.conversationId;
+        if (stateId) {
+          conversationId = stateId;
+          console.log('conversationId obtenido desde state:', conversationId);
+        } else {
+          const paramId = this.route.snapshot.paramMap.get('id');
+          if (paramId) {
+            conversationId = +paramId;
+            console.log('conversationId obtenido desde URL:', conversationId);
+          }
+        }
+
+        if (!conversationId) {
+          console.error('No se proporcionó un conversationId válido');
+          this.toastr.error('No se proporcionó un ID de conversación válido');
+          this.router.navigate(['/chats']);
           return;
         }
 
-        if (!this.conversation || this.conversation.id !== newConversationId) {
-          this.loadConversation(newConversationId);
-          this.subscribeToMessages(newConversationId);
-        }
+        this.selectConversation(conversationId);
       });
 
-    const initialId = history.state?.conversationId;
-    if (initialId) {
-      this.loadConversation(initialId);
-      this.subscribeToMessages(initialId);
+    let initialId: number | undefined;
+    const stateId = history.state?.conversationId;
+    if (stateId) {
+      initialId = stateId;
+      console.log('conversationId inicial desde state:', initialId);
     } else {
-      this.router.navigate(['/main']);
+      const paramId = this.route.snapshot.paramMap.get('id');
+      if (paramId) {
+        initialId = +paramId;
+        console.log('conversationId inicial desde URL:', initialId);
+      }
+    }
+
+    if (initialId) {
+      this.selectConversation(initialId);
+    } else {
+      console.error('No se proporcionó un conversationId inicial');
+      this.toastr.error('No se proporcionó un ID de conversación inicial');
+      this.router.navigate(['/chats']);
     }
   }
 
@@ -155,6 +192,111 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.toastr.error('Error al cargar los productos: ' + error.message);
       },
     });
+  }
+
+  loadUserConversations() {
+    if (!this.currentUser) return;
+
+    this.negotiationService.getUserConversations().subscribe({
+      next: (conversations: any[]) => {
+        this.conversations = conversations.map((conv) => {
+          const otherUserId = this.currentUser!.id === conv.buyerId ? conv.sellerId : conv.buyerId;
+          const lastMessage = conv.messages.length > 0 ? {
+            id: conv.messages[0].id,
+            conversationId: conv.messages[0].conversationId,
+            senderId: conv.messages[0].senderId,
+            text: conv.messages[0].content,
+            time: new Date(conv.messages[0].timestamp).toLocaleTimeString(),
+            type: conv.messages[0].type,
+            productId: conv.messages[0].productId,
+            creditsOffered: conv.messages[0].creditsOffered,
+            isSystem: conv.messages[0].type === 'SYSTEM',
+          } : null;
+
+          return {
+            id: conv.id,
+            productId: conv.productId,
+            productTitle: `Producto ${conv.productId}`,
+            otherUser: {
+              id: otherUserId,
+              name: `Usuario ${otherUserId}`,
+              avatar: 'assets/placeholder.svg',
+              status: 'Desconocido',
+              online: false,
+            },
+            lastMessage,
+            unreadCount: 0,
+          };
+        });
+
+        this.enrichConversations();
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        this.toastr.error('Error al cargar las conversaciones: ' + error.message);
+      },
+    });
+  }
+
+  enrichConversations() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    this.conversations.forEach((conv) => {
+      this.userService.getUserById(conv.otherUser.id, token).subscribe({
+        next: (user: any) => {
+          conv.otherUser = {
+            id: user.id,
+            name: user.username,
+            avatar: 'assets/placeholder.svg',
+            status: 'Online',
+            online: true,
+          };
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          conv.otherUser.name = `Usuario ${conv.otherUser.id}`;
+        },
+      });
+
+      this.productService.getProductById(conv.productId, token).subscribe({
+        next: (product: any) => {
+          conv.productTitle = product.title || `Producto ${conv.productId}`;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          conv.productTitle = `Producto ${conv.productId}`;
+        },
+      });
+    });
+  }
+
+  selectConversation(conversationId: number) {
+    if (this.selectedConversationId === conversationId) {
+      console.log('Conversación ya seleccionada:', conversationId);
+      return;
+    }
+
+    this.selectedConversationId = conversationId;
+    this.loadConversation(conversationId);
+    this.subscribeToMessages(conversationId);
+    this.router.navigate(['/chat', conversationId], { replaceUrl: true });
+  }
+
+  goToProfile() {
+    if (this.wsSubscription) {
+      this.wsSubscription.unsubscribe();
+      this.wsSubscription = null;
+      console.log('[goToProfile] Suscripción al canal WebSocket cancelada');
+    }
+    if (this.wsNotificationSubscription) {
+      this.wsNotificationSubscription.unsubscribe();
+      this.wsNotificationSubscription = null;
+      console.log('[goToProfile] Suscripción a notificaciones WebSocket cancelada');
+    }
+    this.isWebSocketConnected = false;
+    this.subscribedConversationId = null;
+    this.router.navigate(['/profile']);
   }
 
   loadConversation(conversationId: number) {
@@ -185,12 +327,27 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           })),
         };
 
-        this.selectedChat = {
-          name: `Negociación por producto ${conversation.productId}`,
-          description: 'Chat entre comprador y vendedor',
-          avatar: 'assets/placeholder.svg',
-          participants: 2,
-        };
+        // Obtener el título del producto
+        this.productService.getProductById(conversation.productId, token).subscribe({
+          next: (product: any) => {
+            this.selectedChat = {
+              name: `Negociación por ${product.title || 'Producto ' + conversation.productId}`,
+              description: 'Chat entre comprador y vendedor',
+              avatar: 'assets/placeholder.svg',
+              participants: 2,
+            };
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.selectedChat = {
+              name: `Negociación por Producto ${conversation.productId}`,
+              description: 'Chat entre comprador y vendedor',
+              avatar: 'assets/placeholder.svg',
+              participants: 2,
+            };
+            this.cdr.detectChanges();
+          },
+        });
 
         this.userService.getUserById(conversation.buyerId, token).subscribe({
           next: (buyer: any) => {
@@ -201,6 +358,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
               status: 'Online',
               online: true,
             });
+            this.cdr.detectChanges();
           },
           error: () =>
             this.users.push({
@@ -221,6 +379,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
               status: 'Online',
               online: true,
             });
+            this.cdr.detectChanges();
           },
           error: () =>
             this.users.push({
@@ -236,12 +395,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.loadTransactionsFromMessages();
         this.scrollToBottom();
         this.cdr.detectChanges();
+
+        this.updateConversationSummary(conversationId);
       },
       error: () => {
         this.toastr.error('Error al cargar la conversación');
-        this.router.navigate(['/main']);
+        this.router.navigate(['/chats']);
       },
     });
+  }
+
+  updateConversationSummary(conversationId: number) {
+    const convSummary = this.conversations.find((c) => c.id === conversationId);
+    if (convSummary && this.conversation) {
+      convSummary.lastMessage = this.conversation.messages.length > 0
+        ? this.conversation.messages[this.conversation.messages.length - 1]
+        : null;
+      convSummary.unreadCount = 0;
+      this.cdr.detectChanges();
+    }
   }
 
   subscribeToMessages(conversationId: number) {
@@ -292,62 +464,30 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             console.error('[WebSocket] Mensaje recibido es undefined o null');
             return;
           }
-          const content = message.content || 'Mensaje sin contenido';
-          const newMessage = {
-            id: message.id || Date.now(),
-            conversationId: message.conversationId || conversationId,
-            senderId: message.senderId || 0,
-            text: content,
-            time: message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
-            type: message.type || 'TEXT',
-            productId: message.productId || undefined,
-            creditsOffered: message.creditsOffered || 0,
-            isSystem: message.type === 'SYSTEM',
-          };
+          let content = message.content || 'Mensaje sin contenido';
+          const token = localStorage.getItem('token');
 
-          const messageExists = this.messages.some(
-            (msg) =>
-              msg.id === newMessage.id ||
-              (msg.senderId === newMessage.senderId &&
-               msg.text === newMessage.text &&
-               msg.time === newMessage.time &&
-               msg.type === newMessage.type)
-          );
-
-          if (!messageExists) {
-            if (newMessage.isSystem) {
-              const transactionId = this.getTransactionId(content);
-              if (transactionId) {
-                // Mostrar solo mensajes de creación, aceptación o rechazo
-                if (content.includes('creada con') || content.includes('ha aceptado') || content.includes('ha rechazado')) {
-                  this.lastTransactionMessage[transactionId] = newMessage;
-                  newMessage.text = this.cleanSystemMessage(content);
-                  const existingIndex = this.messages.findIndex(
-                    (msg) => msg.isSystem && this.getTransactionId(msg.text) === transactionId
-                  );
-                  if (existingIndex !== -1) {
-                    this.messages[existingIndex] = newMessage;
-                  } else {
-                    this.messages.push(newMessage);
-                  }
-                  this.messages = [...this.messages];
-                  console.log(`[WebSocket] Mensaje del sistema actualizado/añadido para transacción ${transactionId}:`, newMessage);
-                } else {
-                  console.log(`[WebSocket] Ignorando mensaje del sistema no relevante para transacción ${transactionId}:`, content);
-                }
-                this.loadTransactionState(transactionId);
-              }
-            } else {
-              this.messages.push(newMessage);
-              this.messages = [...this.messages];
-              console.log('[WebSocket] Mensaje no del sistema añadido:', newMessage);
+          // Procesar mensajes del sistema para reemplazar ID de usuario por nombre
+          if (message.type === 'SYSTEM' && token) {
+            const userIdMatch = content.match(/Usuario (\d+)/i);
+            if (userIdMatch) {
+              const userId = parseInt(userIdMatch[1], 10);
+              this.userService.getUserById(userId, token).subscribe({
+                next: (user: any) => {
+                  content = content.replace(`Usuario ${userId}`, user.username || `Usuario ${userId}`);
+                  this.addOrUpdateMessage(message, content, conversationId);
+                  this.cdr.detectChanges();
+                },
+                error: () => {
+                  this.addOrUpdateMessage(message, content, conversationId);
+                },
+              });
+              return; // Evitar procesar el mensaje hasta que se resuelva el nombre
             }
-          } else {
-            console.log('[WebSocket] Mensaje duplicado detectado y omitido:', newMessage);
           }
 
-          this.scrollToBottom();
-          this.cdr.detectChanges();
+          // Procesar mensaje si no requiere reemplazo de usuario
+          this.addOrUpdateMessage(message, content, conversationId);
         },
         error: (error) => {
           console.error('[WebSocket] Error en la suscripción:', error);
@@ -357,6 +497,73 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
           this.subscribeToMessages(conversationId);
         },
       });
+  }
+
+  private addOrUpdateMessage(message: any, content: string, conversationId: number) {
+    const newMessage = {
+      id: message.id || Date.now(),
+      conversationId: message.conversationId || conversationId,
+      senderId: message.senderId || 0,
+      text: content,
+      time: message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString(),
+      type: message.type || 'TEXT',
+      productId: message.productId || undefined,
+      creditsOffered: message.creditsOffered || 0,
+      isSystem: message.type === 'SYSTEM',
+    };
+
+    const messageExists = this.messages.some(
+      (msg) =>
+        msg.id === newMessage.id ||
+        (msg.senderId === newMessage.senderId &&
+         msg.text === newMessage.text &&
+         msg.time === newMessage.time &&
+         msg.type === newMessage.type)
+    );
+
+    if (!messageExists) {
+      if (newMessage.isSystem) {
+        const transactionId = this.getTransactionId(content);
+        if (transactionId) {
+          if (content.includes('creada con') || content.includes('ha aceptado') || content.includes('ha rechazado')) {
+            this.lastTransactionMessage[transactionId] = newMessage;
+            newMessage.text = this.cleanSystemMessage(content);
+            const existingIndex = this.messages.findIndex(
+              (msg) => msg.isSystem && this.getTransactionId(msg.text) === transactionId
+            );
+            if (existingIndex !== -1) {
+              this.messages[existingIndex] = newMessage;
+            } else {
+              this.messages.push(newMessage);
+            }
+            this.messages = [...this.messages];
+            console.log(`[WebSocket] Mensaje del sistema actualizado/añadido para transacción ${transactionId}:`, newMessage);
+          } else {
+            console.log(`[WebSocket] Ignorando mensaje del sistema no relevante para transacción ${transactionId}:`, content);
+            return;
+          }
+          this.loadTransactionState(transactionId);
+        }
+      } else {
+        this.messages.push(newMessage);
+        this.messages = [...this.messages];
+        console.log('[WebSocket] Mensaje no del sistema añadido:', newMessage);
+      }
+
+      const convSummary = this.conversations.find((c) => c.id === conversationId);
+      if (convSummary) {
+        convSummary.lastMessage = newMessage;
+        if (this.selectedConversationId !== conversationId) {
+          convSummary.unreadCount += 1;
+        }
+        this.cdr.detectChanges();
+      }
+    } else {
+      console.log('[WebSocket] Mensaje duplicado detectado y omitido:', newMessage);
+    }
+
+    this.scrollToBottom();
+    this.cdr.detectChanges();
   }
 
   private cleanSystemMessage(text: string): string {
@@ -454,6 +661,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.messages[index] = updatedMessage;
             this.messages = [...this.messages];
             console.log('[sendMessage] Mensaje actualizado con ID del backend:', updatedMessage);
+
+            const convSummary = this.conversations.find((c) => c.id === this.conversation!.id);
+            if (convSummary) {
+              convSummary.lastMessage = updatedMessage;
+              this.cdr.detectChanges();
+            }
           } else {
             console.warn('[sendMessage] No se encontró el mensaje temporal para actualizar:', tempId);
           }
@@ -533,6 +746,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.messages.push(newMessage);
             this.messages = [...this.messages];
             console.log('[submitProposal] Mensaje añadido:', newMessage);
+
+            const convSummary = this.conversations.find((c) => c.id === this.conversation!.id);
+            if (convSummary) {
+              convSummary.lastMessage = newMessage;
+              this.cdr.detectChanges();
+            }
           } else {
             console.log('[submitProposal] Mensaje duplicado detectado y omitido:', newMessage);
           }
@@ -549,9 +768,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
             this.negotiationService.createTransaction(this.conversation!.id).subscribe({
               next: (transaction) => {
                 this.toastr.success(`Transacción creada con ID: ${transaction.id}`);
-                // Forzar la carga inmediata de la transacción
                 this.loadTransactionState(transaction.id);
-                // Añadir la transacción manualmente para asegurar que se muestre
                 this.transactions[transaction.id] = { ...transaction, status: 'PENDING', buyerAccepted: false, sellerAccepted: false };
                 this.cdr.detectChanges();
               },
@@ -592,7 +809,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
         if (transaction.status === 'COMPLETED') {
           console.log(`[loadTransactionState] Transacción ${transactionId} completada, actualizando lista de productos...`);
-          
           const proposalMessage = this.messages.find((m) => m.type === 'PROPOSAL' && this.getTransactionId(m.text) === transactionId);
           const responseMessage = this.messages.find((m) => m.type === 'PROPOSAL_RESPONSE' && this.getTransactionId(m.text) === transactionId);
 
