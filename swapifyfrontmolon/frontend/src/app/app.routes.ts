@@ -23,6 +23,7 @@ export const routes: Routes = [
   { path: 'create', component: CreateProductComponent },
   { path: 'edit/:id', component: EditProductComponent },
   { path: 'contact', component: ContactComponent },
+  { path: 'chat/:id', component: ChatComponent }, // Ruta corregida para aceptar :id
   { path: 'chat', component: ChatComponent },
   { path: 'resetPassword', component: ResetPasswordComponent },
   { path: 'product/:id', component: ProductDetailComponent },

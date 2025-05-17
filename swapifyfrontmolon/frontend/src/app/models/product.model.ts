@@ -1,3 +1,15 @@
+export interface Conversation {
+  id: number;
+  productId: string;
+  buyerId: number;
+  sellerId: number;
+  messages: any[];
+  status: string;
+  proposalProductIds?: string;
+  proposalCreditsOffered?: number;
+  createdAt: string;
+}
+
 export interface Product {
   id: number;
   title: string;
@@ -7,7 +19,7 @@ export interface Product {
   ownerId: number;
   category?: string;
   imageId?: string[];
-  conversation?: { id: number };
+  conversation?: Conversation; // Usar el tipo completo Conversation
 }
 
 export interface CreateProductDto {

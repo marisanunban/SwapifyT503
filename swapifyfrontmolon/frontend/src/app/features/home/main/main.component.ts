@@ -243,7 +243,7 @@ export class MainComponent implements OnInit {
     if (product) {
       this.addToRecentlyViewed(product);
     }
-    this.router.navigate([`/product/${productId}`]); // Cambiado a '/product/:id'
+    this.router.navigate([`/product/${productId}`]);
   }
 
   // Iniciar una negociación
@@ -252,8 +252,15 @@ export class MainComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    console.log('Iniciando negociación para el producto:', productId);
     this.negotiationService.startNegotiation(productId.toString()).subscribe({
       next: (conversation) => {
+        console.log('Conversación creada:', conversation);
+        if (!conversation || !conversation.id) {
+          console.error('No se recibió un ID de conversación válido:', conversation);
+          alert('No se pudo iniciar la conversación. Inténtalo de nuevo.');
+          return;
+        }
         // Actualizar el producto con la nueva conversación
         this.products = this.products.map(p =>
           p.id === productId ? { ...p, conversation } : p
@@ -264,17 +271,34 @@ export class MainComponent implements OnInit {
         this.similarProducts = this.similarProducts.map(p =>
           p.id === productId ? { ...p, conversation } : p
         );
-        this.router.navigate([`/chat/${conversation.id}`]);
+        // Navegar al chat usando el objeto state
+        this.router.navigate(['/chat'], { state: { conversationId: conversation.id } }).then(success => {
+          if (!success) {
+            console.error('La navegación al chat falló');
+            alert('No se pudo navegar al chat. Verifica la configuración de las rutas.');
+          } else {
+            console.log('Navegación exitosa a /chat con conversationId:', conversation.id);
+          }
+        });
       },
       error: (error) => {
         console.error('Error al iniciar negociación:', error);
+        alert('Error al iniciar la conversación. Por favor, intenta de nuevo.');
       }
     });
   }
 
   // Ir a un chat existente
   goToChat(conversationId: number): void {
-    this.router.navigate([`/chat/${conversationId}`]);
+    console.log('Intentando navegar a /chat con conversationId:', conversationId);
+    this.router.navigate(['/chat'], { state: { conversationId } }).then(success => {
+      if (!success) {
+        console.error('La navegación al chat falló para conversationId:', conversationId);
+        alert('No se pudo navegar al chat. Verifica la configuración de las rutas.');
+      } else {
+        console.log('Navegación exitosa a /chat con conversationId:', conversationId);
+      }
+    });
   }
 
   // Abrir el modal de ubicación
