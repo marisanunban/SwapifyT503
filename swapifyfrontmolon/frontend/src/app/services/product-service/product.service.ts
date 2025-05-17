@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Product, CreateProductDto } from '../../models/product.model'; // Importar desde el archivo compartido
+import { Product, CreateProductDto } from '../../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -20,7 +20,7 @@ export class ProductService {
 
   createProduct(productData: CreateProductDto, token: string): Observable<Product> {
     const headers = this.getAuthHeaders(token);
-    return this.http.post<Product>(`${this.apiUrl}`, productData, { headers }); // Corregido: productDataweakness -> productData
+    return this.http.post<Product>(`${this.apiUrl}`, productData, { headers });
   }
 
   getAllProducts(token?: string): Observable<Product[]> {

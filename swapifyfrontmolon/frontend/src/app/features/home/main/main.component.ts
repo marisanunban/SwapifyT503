@@ -1,26 +1,20 @@
-// src/app/features/main/main.component.ts
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../../../services/product-service/product.service';
 import { AuthService } from '../../../services/auth-service/auth.service';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Product, Conversation } from '../../../models/product.model';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { UserService } from '../../../services/user-service/user.service';
-import { Product } from '../../../models/product.model';
 
-export interface User {
+// Define an interface for the user profile
+interface UserProfile {
   id: number;
   username: string;
   credits: number;
   profilePicture?: string;
 }
-
-export interface UserProfile {
-  profilePicture: string;
-}
-
-declare var google: any;
 
 @Component({
   selector: 'app-main',
@@ -30,399 +24,337 @@ declare var google: any;
   styleUrls: ['./main.component.css']
 })
 export class MainComponent implements OnInit {
-  user: User | null = null;
-  userProfile: UserProfile | null = null;
-  products: Product[] = [];
   searchKeyword: string = '';
   selectedCategory: string = '';
-  isLocationModalOpen: boolean = false;
-  tempSelectedLatLng: { lat: number; lng: number } | null = null;
-  radius: number = 10;
   search: boolean = false;
   searchCategory: boolean = false;
-  isProfileMenuOpen: boolean = false;
-  map: any;
   isLoading: boolean = false;
+  products: Product[] = [];
+  user: UserProfile | null = null;
+  isProfileMenuOpen: boolean = false;
+  isLocationModalOpen: boolean = false;
+  radius: number = 10;
+  latitude: number | undefined;
+  longitude: number | undefined;
+
+  // Nuevas propiedades para las secciones
+  recentlyViewed: Product[] = [];
+  similarProducts: Product[] = [];
 
   constructor(
-    private router: Router,
     private productService: ProductService,
     private authService: AuthService,
     private negotiationService: NegotiationService,
-    private userService: UserService
+    private userService: UserService,
+    private router: Router
   ) {}
 
-  ngOnInit() {
+  ngOnInit(): void {
+    // Cargar usuario
     this.authService.user$.subscribe(user => {
-      this.user = user;
-      this.recuperarProductos();
+      this.user = user as UserProfile | null;
+      if (!this.user) {
+        this.router.navigate(['/login']);
+      } else {
+        // Cargar perfil completo del usuario para obtener profilePicture
+        const token = localStorage.getItem('token') ?? undefined;
+        if (token) {
+          this.userService.getUserProfile(token).subscribe({
+            next: (profile: UserProfile) => {
+              if (this.user) {
+                this.user = { ...this.user, profilePicture: profile.profilePicture };
+              }
+            },
+            error: (error) => {
+              console.error('Error al cargar el perfil del usuario:', error);
+            }
+          });
+        }
+      }
     });
 
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.userService.getUserProfile(token).subscribe({
-        next: (userProfile) => {
-          this.userProfile = userProfile;
-          if (this.user && userProfile.profilePicture) {
-            this.user.profilePicture = userProfile.profilePicture;
-          }
-        },
-        error: (err) => {
-          console.error('Error al obtener el perfil del usuario:', err);
-        }
-      });
-    } else {
-      console.error('No se encontró un token en localStorage.');
-    }
+    // Cargar productos iniciales
+    this.loadProducts();
+
+    // Cargar productos vistos recientemente
+    this.loadRecentlyViewed();
+
+    // Cargar productos similares (simulación o backend)
+    this.loadSimilarProducts();
+
+    // Cargar conversaciones del usuario para asociarlas a los productos
+    this.loadUserConversations();
   }
 
-  recuperarProductos() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No hay token disponible. No se pueden recuperar productos.');
-      this.products = [];
-      return;
-    }
-
+  // Cargar todos los productos
+  loadProducts(): void {
     this.isLoading = true;
+    const token = localStorage.getItem('token') ?? undefined;
     this.productService.getAllProducts(token).subscribe({
-      next: (products: Product[]) => {
+      next: (products) => {
         this.products = products;
-        this.fetchConversations();
         this.isLoading = false;
+        // Actualizar conversaciones para los productos
+        this.updateProductConversations();
       },
       error: (error) => {
-        console.error('Error al recuperar productos:', error);
-        this.products = [];
+        console.error('Error al cargar productos:', error);
         this.isLoading = false;
-        alert('No se pudieron cargar los productos. Por favor, inicia sesión o intenta de nuevo.');
       }
     });
   }
 
-  fetchConversations() {
-    const token = localStorage.getItem('token');
-    if (token && this.user?.id) {
-      this.negotiationService.getUserConversations().subscribe({
-        next: (conversations) => {
-          this.products = this.products.map(product => ({
-            ...product,
-            conversation: conversations.find(conv => conv.productId === product.id.toString() && conv.status === 'ACTIVE')
-          }));
-        },
-        error: (error) => {
-          console.error('Error al obtener conversaciones:', error);
-        }
-      });
-    }
-  }
-
-  initializeMap() {
-    const mapElement = document.getElementById('map');
-    if (!mapElement) {
-      console.error('No se encontró el elemento del mapa (#map)');
+  // Buscar productos por palabra clave
+  buscarProductos(): void {
+    if (!this.searchKeyword.trim()) {
+      this.search = false;
+      this.loadProducts();
       return;
     }
-    if (!google || !google.maps) {
-      console.error('La API de Google Maps no está cargada');
-      return;
-    }
-
-    let initialLatLng = { lat: 40.4168, lng: -3.7038 };
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          initialLatLng = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          this.renderMap(mapElement, initialLatLng);
-        },
-        error => {
-          console.error('Error al obtener la ubicación:', error);
-          this.renderMap(mapElement, initialLatLng);
-        }
-      );
-    } else {
-      this.renderMap(mapElement, initialLatLng);
-    }
-  }
-
-  renderMap(mapElement: HTMLElement, center: { lat: number; lng: number }) {
-    this.map = new google.maps.Map(mapElement, {
-      center: new google.maps.LatLng(center.lat, center.lng),
-      zoom: 12,
-    });
-    this.addAutocomplete();
-    this.addMarker(center);
-    this.addClickListener();
-    this.drawCircle();
-  }
-
-  addAutocomplete() {
-    const input = document.getElementById('locationInput') as HTMLInputElement;
-    if (!input) {
-      console.error('No se encontró el input de ubicación (#locationInput)');
-      return;
-    }
-    const autocomplete = new google.maps.places.Autocomplete(input, {
-      types: ['geocode'],
-    });
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-      if (place.geometry && place.geometry.location) {
-        const latLng = place.geometry.location;
-        this.map.setCenter(latLng);
-        this.addMarker(latLng);
-      }
-    });
-  }
-
-  addMarker(latLng: any) {
-    if (!this.map || !latLng) {
-      console.error('Mapa o latLng no definidos:', { map: this.map, latLng });
-      return;
-    }
-
-    let lat: number;
-    let lng: number;
-
-    if (latLng instanceof google.maps.LatLng) {
-      lat = latLng.lat();
-      lng = latLng.lng();
-    } else if (typeof latLng.lat === 'number' && typeof latLng.lng === 'number') {
-      lat = latLng.lat;
-      lng = latLng.lng;
-    } else if (typeof latLng.lat === 'function' && typeof latLng.lng === 'function') {
-      lat = latLng.lat();
-      lng = latLng.lng();
-    } else {
-      console.error('Formato de latLng no soportado:', latLng);
-      return;
-    }
-
-    new google.maps.Marker({
-      position: new google.maps.LatLng(lat, lng),
-      map: this.map,
-    });
-
-    this.tempSelectedLatLng = { lat, lng };
-    this.drawCircle();
-  }
-
-  drawCircle() {
-    if (this.map && this.tempSelectedLatLng) {
-      if (this.map.circle) {
-        this.map.circle.setMap(null);
-      }
-      this.map.circle = new google.maps.Circle({
-        strokeColor: '#FF0000',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: '#FF0000',
-        fillOpacity: 0.35,
-        map: this.map,
-        center: new google.maps.LatLng(this.tempSelectedLatLng.lat, this.tempSelectedLatLng.lng),
-        radius: this.radius * 1000,
-      });
-      this.map.fitBounds(this.map.circle.getBounds());
-    }
-  }
-
-  addClickListener() {
-    if (this.map) {
-      this.map.addListener('click', (event: google.maps.MapMouseEvent) => {
-        const latLng = event.latLng;
-        this.addMarker(latLng);
-        this.buscarProductos();
-      });
-    }
-  }
-
-  centerMapOnLocation() {
-    if (this.tempSelectedLatLng) {
-      this.map.setCenter(new google.maps.LatLng(this.tempSelectedLatLng.lat, this.tempSelectedLatLng.lng));
-      this.drawCircle();
-    }
-  }
-
-  updateRadius() {
-    this.drawCircle();
-  }
-
-  openLocationModal() {
-    this.isLocationModalOpen = true;
-    setTimeout(() => {
-      if (!google || !google.maps) {
-        console.error('La API de Google Maps no está disponible. Asegúrate de que el script esté cargado.');
-        alert('No se pudo cargar el mapa. Por favor, intenta de nuevo más tarde.');
-        return;
-      }
-      this.initializeMap();
-    }, 0);
-  }
-
-  closeLocationModal() {
-    this.isLocationModalOpen = false;
-  }
-
-  applyFilterAndSearch() {
-    if (this.tempSelectedLatLng) {
-      this.buscarProductos();
-    }
-    this.closeLocationModal();
-  }
-
-  buscarProductos() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No hay token disponible.');
-      alert('Por favor, inicia sesión para buscar productos.');
-      return;
-    }
-
     this.isLoading = true;
-    if (this.tempSelectedLatLng) {
-      this.productService.searchProductsByCoordinates(
-        this.tempSelectedLatLng.lat,
-        this.tempSelectedLatLng.lng,
-        this.radius,
-        this.selectedCategory,
-        this.searchKeyword
-      ).subscribe({
-        next: (response: Product[]) => {
-          console.log('Respuesta del backend:', response);
-          this.products = response;
-          this.search = !!this.searchKeyword || !!this.tempSelectedLatLng;
-          this.searchCategory = !!this.selectedCategory && !this.searchKeyword && !this.tempSelectedLatLng;
+    this.search = true;
+    this.searchCategory = false;
+    this.productService
+      .searchProducts(this.searchKeyword, this.latitude, this.longitude, this.radius, this.selectedCategory)
+      .subscribe({
+        next: (products) => {
+          this.products = products;
           this.isLoading = false;
+          this.updateProductConversations();
         },
         error: (error) => {
           console.error('Error al buscar productos:', error);
-          this.products = [];
           this.isLoading = false;
-          alert('Hubo un error al buscar productos. Por favor, intenta de nuevo más tarde.');
         }
       });
-    } else {
-      const effectiveKeyword = this.searchKeyword.trim() || undefined;
-      if (this.selectedCategory || effectiveKeyword) {
-        this.productService.getAllProducts(token).subscribe({
-          next: (response: Product[]) => {
-            this.products = response.filter(product => {
-              const matchesCategory = !this.selectedCategory || product.category === this.selectedCategory;
-              const matchesKeyword = !effectiveKeyword || (product.title?.toLowerCase().includes(effectiveKeyword.toLowerCase()) || false);
-              return matchesCategory && matchesKeyword;
-            });
-            this.search = !!effectiveKeyword;
-            this.searchCategory = !!this.selectedCategory && !effectiveKeyword;
-            this.isLoading = false;
-          },
-          error: (error) => {
-            console.error('Error al recuperar productos:', error);
-            this.products = [];
-            this.isLoading = false;
-            alert('No se pudieron cargar los productos. Inténtalo de nuevo.');
-          }
-        });
-      } else {
-        this.productService.getAllProducts(token).subscribe({
-          next: (response: Product[]) => {
-            this.products = response;
-            this.search = false;
-            this.searchCategory = false;
-            this.isLoading = false;
-          },
-          error: (error) => {
-            console.error('Error al recuperar productos:', error);
-            this.products = [];
-            this.isLoading = false;
-            alert('No se pudieron cargar los productos. Por favor, inicia sesión o intenta de nuevo.');
-          }
-        });
-      }
-    }
   }
 
-  filtrarPorCategoria(category: string) {
-    this.selectedCategory = category;
+  // Filtrar productos por categoría
+  filtrarPorCategoria(category: string): void {
     this.searchCategory = true;
     this.search = false;
-    this.buscarProductos();
-  }
-
-  irACrear() {
-    this.router.navigate(['/create']);
-  }
-
-  irALogin() {
-    this.router.navigate(['/login']);
-  }
-
-  irAProfile() {
-    this.router.navigate(['/profile']);
-  }
-
-  irAMisChats() {
-    this.router.navigate(['/chat']);
-  }
-
-  irAFavoritos() {
-    this.router.navigate(['/favorites']);
-  }
-
-  irAContacta() {
-    this.router.navigate(['/contact']);
-  }
-
-  startChat(productId: number) {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No hay token disponible.');
-      alert('Por favor, inicia sesión para iniciar un chat.');
-      return;
-    }
-
     this.isLoading = true;
-    this.negotiationService.startNegotiation(productId.toString()).subscribe({
-      next: (conversation) => {
-        const conversationId = conversation.id;
-        this.router.navigate(['/chat'], { state: { conversationId } });
+    this.productService.getProductsByCategory(category).subscribe({
+      next: (products) => {
+        this.products = products;
         this.isLoading = false;
-        this.products = this.products.map(product => {
-          if (product.id === productId) {
-            return { ...product, conversation: { id: conversationId } };
-          }
-          return product;
-        });
+        this.updateProductConversations();
       },
       error: (error) => {
-        console.error('Error al iniciar el chat:', error);
-        alert('No se pudo iniciar el chat. Inténtalo de nuevo.');
+        console.error('Error al filtrar por categoría:', error);
         this.isLoading = false;
       }
     });
   }
 
-  goToChat(conversationId: number) {
-    this.router.navigate(['/chat'], { state: { conversationId } });
+  // Cargar conversaciones del usuario y asociarlas a los productos
+  loadUserConversations(): void {
+    if (!this.user) return;
+    this.negotiationService.getUserConversations().subscribe({
+      next: (conversations) => {
+        this.updateProductConversations(conversations);
+      },
+      error: (error) => {
+        console.error('Error al cargar conversaciones:', error);
+      }
+    });
   }
 
-  goToProductDetail(productId: number) {
-    this.router.navigate(['/product', productId]);
+  // Actualizar las conversaciones asociadas a los productos
+  updateProductConversations(conversations?: Conversation[]): void {
+    if (!conversations) {
+      this.negotiationService.getUserConversations().subscribe({
+        next: (conv) => {
+          this.applyConversationsToProducts(conv);
+        },
+        error: (error) => {
+          console.error('Error al actualizar conversaciones:', error);
+        }
+      });
+    } else {
+      this.applyConversationsToProducts(conversations);
+    }
   }
 
-  toggleFavorite(productId: number) {
-    console.log(`Toggling favorite for product ID: ${productId}`);
-    alert('Funcionalidad de favoritos aún no implementada.');
+  // Asignar conversaciones a los productos
+  applyConversationsToProducts(conversations: Conversation[]): void {
+    this.products = this.products.map(product => {
+      const conversation = conversations.find(conv => conv.productId === product.id.toString());
+      return conversation ? { ...product, conversation } : product;
+    });
+    this.recentlyViewed = this.recentlyViewed.map(product => {
+      const conversation = conversations.find(conv => conv.productId === product.id.toString());
+      return conversation ? { ...product, conversation } : product;
+    });
+    this.similarProducts = this.similarProducts.map(product => {
+      const conversation = conversations.find(conv => conv.productId === product.id.toString());
+      return conversation ? { ...product, conversation } : product;
+    });
   }
 
-  toggleProfileMenu() {
+  // Navegar a la página de creación de producto
+  irACrear(): void {
+    this.router.navigate(['/create-product']);
+  }
+
+  // Navegar a la página de login
+  irALogin(): void {
+    this.router.navigate(['/login']);
+  }
+
+  // Navegar al perfil del usuario
+  irAProfile(): void {
+    this.isProfileMenuOpen = false;
+    this.router.navigate(['/profile']);
+  }
+
+  // Navegar a los chats del usuario
+  irAMisChats(): void {
+    this.isProfileMenuOpen = false;
+    this.router.navigate(['/chats']);
+  }
+
+  // Navegar a los favoritos del usuario (aún sin implementar)
+  irAFavoritos(): void {
+    this.isProfileMenuOpen = false;
+    this.router.navigate(['/favorites']);
+  }
+
+  // Navegar a la página de contacto
+  irAContacta(): void {
+    this.router.navigate(['/contact']);
+  }
+
+  // Cerrar sesión
+  logout(): void {
+    this.authService.logout();
+    this.isProfileMenuOpen = false;
+    this.router.navigate(['/login']);
+  }
+
+  // Alternar el menú de perfil
+  toggleProfileMenu(): void {
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
   }
 
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/main']);
+  // Navegar al detalle de un producto
+  goToProductDetail(productId: number): void {
+    const product = this.products.find(p => p.id === productId);
+    if (product) {
+      this.addToRecentlyViewed(product);
+    }
+    this.router.navigate([`/product/${productId}`]); // Cambiado a '/product/:id'
+  }
+
+  // Iniciar una negociación
+  startNegotiation(productId: number): void {
+    if (!this.user) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.negotiationService.startNegotiation(productId.toString()).subscribe({
+      next: (conversation) => {
+        // Actualizar el producto con la nueva conversación
+        this.products = this.products.map(p =>
+          p.id === productId ? { ...p, conversation } : p
+        );
+        this.recentlyViewed = this.recentlyViewed.map(p =>
+          p.id === productId ? { ...p, conversation } : p
+        );
+        this.similarProducts = this.similarProducts.map(p =>
+          p.id === productId ? { ...p, conversation } : p
+        );
+        this.router.navigate([`/chat/${conversation.id}`]);
+      },
+      error: (error) => {
+        console.error('Error al iniciar negociación:', error);
+      }
+    });
+  }
+
+  // Ir a un chat existente
+  goToChat(conversationId: number): void {
+    this.router.navigate([`/chat/${conversationId}`]);
+  }
+
+  // Abrir el modal de ubicación
+  openLocationModal(): void {
+    this.isLocationModalOpen = true;
+  }
+
+  // Cerrar el modal de ubicación
+  closeLocationModal(): void {
+    this.isLocationModalOpen = false;
+  }
+
+  // Centrar el mapa en la ubicación
+  centerMapOnLocation(): void {
+    const locationInput = (document.getElementById('locationInput') as HTMLInputElement).value;
+    // Aquí deberías integrar una API de geocodificación (como Google Maps Geocoding API)
+    // Por ahora, simularemos las coordenadas (Madrid como ejemplo)
+    if (locationInput.toLowerCase().includes('madrid')) {
+      this.latitude = 40.416775;
+      this.longitude = -3.703790;
+    } else {
+      this.latitude = undefined;
+      this.longitude = undefined;
+    }
+    console.log('Centrando mapa en:', locationInput, { lat: this.latitude, lng: this.longitude });
+  }
+
+  // Actualizar el radio del mapa
+  updateRadius(): void {
+    console.log('Radio actualizado a:', this.radius);
+  }
+
+  // Aplicar filtro de ubicación y buscar
+  applyFilterAndSearch(): void {
+    this.isLoading = true;
+    this.isLocationModalOpen = false;
+    this.search = true;
+    this.searchCategory = false;
+    this.productService
+      .searchProductsByCoordinates(this.latitude, this.longitude, this.radius, this.selectedCategory, this.searchKeyword)
+      .subscribe({
+        next: (products) => {
+          this.products = products;
+          this.isLoading = false;
+          this.updateProductConversations();
+        },
+        error: (error) => {
+          console.error('Error al buscar por coordenadas:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  // Añadir un producto a "Vistos Recientemente"
+  addToRecentlyViewed(product: Product): void {
+    const index = this.recentlyViewed.findIndex(p => p.id === product.id);
+    if (index === -1) {
+      this.recentlyViewed.unshift(product);
+      if (this.recentlyViewed.length > 5) {
+        this.recentlyViewed.pop();
+      }
+      localStorage.setItem('recentlyViewed', JSON.stringify(this.recentlyViewed));
+    }
+  }
+
+  // Cargar "Vistos Recientemente" desde localStorage
+  loadRecentlyViewed(): void {
+    const saved = localStorage.getItem('recentlyViewed');
+    if (saved) {
+      this.recentlyViewed = JSON.parse(saved);
+      // Asegurarnos de que los productos tengan las conversaciones actualizadas
+      this.updateProductConversations();
+    }
+  }
+
+  // Cargar "Más como estos" (simulación)
+  loadSimilarProducts(): void {
+    // Simulación: Tomar algunos productos aleatorios de la lista
+    this.similarProducts = this.products.slice(0, 4);
+    // Para una integración real, podrías usar un endpoint del backend:
+    // this.productService.getSimilarProducts().subscribe(products => this.similarProducts = products);
   }
 }
