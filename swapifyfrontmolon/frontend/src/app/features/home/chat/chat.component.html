@@ -25,18 +25,15 @@
         <div class="conversation-content">
           <div class="avatar-container">
             <img
-              [src]="conversation.otherUser.avatar"
+              [src]="conversation.otherUser.profilePictureUrl || 'assets/placeholder.svg'"
               alt="Profile"
               class="avatar-img"
             />
-            <div
-              *ngIf="conversation.otherUser.online"
-              class="online-indicator"
-            ></div>
+            <!-- Indicador de online eliminado porque User no tiene online -->
           </div>
           <div class="conversation-details">
             <div class="conversation-header">
-              <span class="user-name">{{ conversation.otherUser.name }}</span>
+              <span class="user-name">{{ conversation.otherUser.nickname }}</span>
               <span class="message-time">{{ conversation.lastMessage?.time || '' }}</span>
             </div>
             <div class="conversation-footer">
@@ -81,7 +78,7 @@
 
         <div *ngFor="let message of messages; let i = index" class="message-row" [ngClass]="{'justify-content-end': isCurrentUser(message.senderId)}">
           <div class="d-flex" [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}">
-            <img *ngIf="!isCurrentUser(message.senderId)" [src]="getMessageSender(message.senderId)?.avatar" alt="Avatar" class="message-avatar" />
+            <img *ngIf="!isCurrentUser(message.senderId)" [src]="getMessageSender(message.senderId)?.profilePictureUrl || 'assets/placeholder.svg'" alt="Avatar" class="message-avatar" />
             <div class="message-wrapper" [ngClass]="{'ms-2': !isCurrentUser(message.senderId), 'me-2': isCurrentUser(message.senderId)}">
               <div *ngIf="message.isSystem; else regularMessage" class="system-message mx-auto">
                 <div class="system-message-content">

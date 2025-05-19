@@ -21,4 +21,5 @@ public interface UserService {
     List<User> getUsersByLocation(String locationName);
     List<User> getAllUsersWithLocation();
     void addReview(Long userId, Double newRating); // Nuevo método
+    UserProfileDto getUserByUsername(String username); // Nuevo mét
 }

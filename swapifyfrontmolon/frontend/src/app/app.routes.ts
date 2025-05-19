@@ -9,8 +9,6 @@ import { EditProductComponent } from './features/home/products/edit-product/edit
 import { ChatComponent } from './features/home/chat/chat.component';
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { ProductDetailComponent } from './features/home/product-detail/product-detail.component';
-import { NavigationProfileComponent } from './features/home/navigation-profile/navigation-profile.component';
-import { NavbarComponent } from './features/shared/navbar/navbar.component';
 import { CreateReviewComponent } from './features/home/create-review/create-review.component';
 
 export const routes: Routes = [
@@ -20,13 +18,15 @@ export const routes: Routes = [
   { path: '', redirectTo: '/main', pathMatch: 'full' },
   { path: 'home', redirectTo: '/main', pathMatch: 'full' },
   { path: 'profile', component: ProfileComponent },
+  { path: 'profile/:userId', component: ProfileComponent },
+  { path: 'viewOtherUser/:nickname', component: ProfileComponent }, // Usar nickname como parámetro
   { path: 'create', component: CreateProductComponent },
   { path: 'edit/:id', component: EditProductComponent },
   { path: 'contact', component: ContactComponent },
-  { path: 'chat/:id', component: ChatComponent }, // Ruta corregida para aceptar :id
+  { path: 'chat/:id', component: ChatComponent },
   { path: 'chat', component: ChatComponent },
   { path: 'resetPassword', component: ResetPasswordComponent },
   { path: 'product/:id', component: ProductDetailComponent },
-  {path: 'viewOtherUser/:userEmail', component: NavigationProfileComponent},
-  {path: 'createReview/:productId', component: CreateReviewComponent}
+  { path: 'createReview/:productId', component: CreateReviewComponent },
+  { path: '**', redirectTo: '/main' }
 ];

@@ -5,7 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ProductService } from '../../../services/product-service/product.service';
 import { Product } from '../../../models/product.model';
 import { UserService } from '../../../services/user-service/user.service';
-import { UserProfile } from '../../../models/user.model'; // Importamos desde models
+import { UserProfile } from '../../../models/user.model';
 
 @Component({
   selector: 'app-product-detail',
@@ -38,20 +38,27 @@ export class ProductDetailComponent implements OnInit {
     if (this.productId) {
       this.productService.getProductById(this.productId, this.token).subscribe({
         next: (product) => {
+          console.log('Producto cargado:', product);
           this.product = product;
           if (product.ownerId) {
+            console.log('Solicitando perfil del propietario con ownerId:', product.ownerId);
             this.userService.getUserById(product.ownerId, this.token!).subscribe({
               next: (owner: UserProfile) => {
+                console.log('Propietario cargado:', owner);
                 this.owner = owner;
+                console.log('Nickname del propietario:', owner.nickname);
               },
               error: (error: HttpErrorResponse) => {
-                console.error('Error al cargar el perfil del propietario:', error);
+                console.error('Error al cargar el perfil del propietario:', error.message, error.status, error.error);
+                this.owner = null;
               }
             });
+          } else {
+            console.error('El producto no tiene ownerId:', product);
           }
         },
         error: (error: HttpErrorResponse) => {
-          console.error('Error al cargar los detalles del producto:', error);
+          console.error('Error al cargar los detalles del producto:', error.message, error.status, error.error);
           this.router.navigate(['/home']);
         }
       });
@@ -66,10 +73,11 @@ export class ProductDetailComponent implements OnInit {
   }
 
   goToOwnerProfile(): void {
-    if (this.owner && this.owner.username) {
-      this.router.navigate([`/viewOtherUser/${this.owner.username}`]);
+    if (this.owner && this.owner.nickname && this.owner.nickname.trim()) {
+      console.log('Navegando al perfil del propietario:', this.owner.nickname);
+      this.router.navigate([`/viewOtherUser/${this.owner.nickname}`]);
     } else {
-      console.error('No se pudo encontrar el nombre de usuario del propietario');
+      console.error('No se pudo encontrar un nickname válido del propietario:', this.owner);
       alert('No se puede acceder al perfil del propietario en este momento.');
     }
   }

@@ -7,14 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { UserService } from '../../../services/user-service/user.service';
 import { Product } from '../../../models/product.model';
-import { UserProfile } from '../../../models/user.model'; // Importamos desde models
-
-export interface User {
-  id: number;
-  username: string;
-  credits: number;
-  profilePicture?: string;
-}
+import { UserDto, UserProfile } from '../../../models/user.model'; // Importamos UserDto
 
 declare var google: any;
 
@@ -26,7 +19,7 @@ declare var google: any;
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent implements OnInit {
-  user: User | null = null;
+  user: UserDto | null = null;
   userProfile: UserProfile | null = null;
   products: Product[] = [];
   searchKeyword: string = '';

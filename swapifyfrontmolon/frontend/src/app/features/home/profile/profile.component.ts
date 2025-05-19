@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { CloudinaryService } from '../../../services/cloudinary-service/cloudina
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { TransactionService } from '../../../services/transaction-service/transaction.service';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
-import { UserProfile } from '../../../models/user.model'; // Importamos desde models
+import { UserProfile, UserDto } from '../../../models/user.model';
 
 export interface Transaction {
   id: number;
@@ -40,7 +40,9 @@ export interface Transaction {
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
-  user: UserProfile | null = null;
+  user: UserDto | null = null; // Authenticated user
+  profile: UserProfile | null = null; // Displayed profile (own or other user)
+  isOwnProfile: boolean = true; // Indicates if it's the authenticated user's profile
   nickname: string = '';
   aboutMe: string = '';
   profileImageUrl: string = '';
@@ -65,6 +67,7 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private userService: UserService,
     private authService: AuthService,
     private productService: ProductService,
@@ -75,38 +78,59 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    // Subscribe to user$ to get authenticated user's UserDto
     this.authService.user$.subscribe(user => {
       this.user = user || null;
     });
 
+    // Check for userId in route
+    const userId = this.route.snapshot.paramMap.get('userId');
     const token = localStorage.getItem('token');
-    if (token) {
+
+    if (userId && token) {
+      // Load other user's profile
+      this.isOwnProfile = this.user?.id === +userId;
+      this.userService.getUserById(+userId, token).subscribe({
+        next: response => {
+          this.profile = response;
+          this.nickname = response.nickname || '';
+          this.aboutMe = response.aboutMe || '';
+          this.profileImageUrl = response.profilePictureUrl || '';
+          this.recuperarProductosPropietario(+userId);
+          if (this.isOwnProfile) {
+            this.loadReviewableProducts();
+          }
+        },
+        error: error => {
+          console.error('Error fetching other user profile:', error);
+          this.router.navigate(['/home']);
+        }
+      });
+    } else if (token) {
+      // Load authenticated user's profile
+      this.isOwnProfile = true;
       this.userService.getUserProfile(token).subscribe({
         next: response => {
-          this.user = {
-            id: response.id,
-            username: response.username,
-            credits: response.credits,
-            locationName: response.locationName || '',
-            nickname: response.nickname || '',
-            aboutMe: response.aboutMe || '',
-            profilePicture: response.profilePicture || ''
-          };
-          this.nickname = this.user.nickname || '';
-          this.aboutMe = this.user.aboutMe || '';
-          this.profileImageUrl = this.user.profilePicture || '';
+          this.profile = response;
+          this.nickname = response.nickname || '';
+          this.aboutMe = response.aboutMe || '';
+          this.profileImageUrl = response.profilePictureUrl || '';
           this.recuperarProductosPropietario();
           this.loadReviewableProducts();
         },
         error: error => {
-          console.error('Error al obtener perfil:', error);
+          console.error('Error fetching profile:', error);
+          this.router.navigate(['/login']);
         }
       });
     } else {
-      console.error('No hay token disponible.');
+      console.error('No token available.');
+      this.router.navigate(['/login']);
     }
 
-    this.obtenerUbicacion();
+    if (this.isOwnProfile) {
+      this.obtenerUbicacion();
+    }
   }
 
   get paginatedProducts() {
@@ -120,58 +144,66 @@ export class ProfileComponent implements OnInit {
   }
 
   toggleReviewModal() {
-    this.showReviewModal = !this.showReviewModal;
+    if (this.isOwnProfile) {
+      this.showReviewModal = !this.showReviewModal;
+    }
   }
-  
+
   writeReview(productId: number) {
-    this.router.navigate(['/createReview/', productId]);
-    console.log('Writing review for product ID:', productId);
+    if (this.isOwnProfile) {
+      this.router.navigate(['/createReview/', productId]);
+      console.log('Writing review for product ID:', productId);
+    }
   }
 
   openReviewModal() {
-    this.showReviewModal = true;
+    if (this.isOwnProfile) {
+      this.showReviewModal = true;
+    }
   }
 
   mostrarProductos(): void {
     this.mostrarSeccionProductos = true;
-    this.recuperarProductosPropietario();
+    this.recuperarProductosPropietario(this.profile?.id);
   }
 
   mostrarConversaciones(): void {
-    this.mostrarSeccionProductos = false;
-    this.recuperarConversaciones();
+    if (this.isOwnProfile) {
+      this.mostrarSeccionProductos = false;
+      this.recuperarConversaciones();
+    }
   }
 
   recuperarConversaciones() {
     const token = localStorage.getItem('token');
-    if (token && this.user?.id) {
+    if (token && this.user?.id && this.isOwnProfile) {
       this.negotiationService.getUserConversations().subscribe({
         next: (response) => {
           this.conversations = response;
-          console.log('Conversaciones del usuario:', this.conversations);
+          console.log('User conversations:', this.conversations);
           this.products = this.products.map(product => ({
             ...product,
             conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
           }));
         },
         error: (error) => {
-          console.error('Error al obtener conversaciones:', error);
+          console.error('Error fetching conversations:', error);
         }
       });
-    } else {
-      console.error('No hay token o ID de usuario disponible.');
     }
   }
 
   goToChat(conversationId: number) {
-    this.router.navigate([`/chat/${conversationId}`]);
+    if (this.isOwnProfile) {
+      this.router.navigate([`/chat/${conversationId}`]);
+    }
   }
 
   deleteConversation(conversationId: number) {
-    if (confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
+    if (this.isOwnProfile && confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
       this.negotiationService.deleteConversation(conversationId).subscribe({
         next: () => {
-          console.log('Conversación eliminada:', conversationId);
+          console.log('Conversation deleted:', conversationId);
           this.conversations = this.conversations.filter(conv => conv.id !== conversationId);
           delete this.otherUserNames[conversationId];
           this.products = this.products.map(product => {
@@ -183,7 +215,7 @@ export class ProfileComponent implements OnInit {
           });
         },
         error: (error) => {
-          console.error('Error al eliminar la conversación:', error);
+          console.error('Error deleting conversation:', error);
           alert('No se pudo eliminar la conversación. Inténtalo de nuevo.');
         }
       });
@@ -191,7 +223,7 @@ export class ProfileComponent implements OnInit {
   }
 
   obtenerUbicacion(): void {
-    if (navigator.geolocation) {
+    if (this.isOwnProfile && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           this.latitude = position.coords.latitude;
@@ -199,16 +231,14 @@ export class ProfileComponent implements OnInit {
           this.obtenerMunicipio();
         },
         (error) => {
-          console.error('Error al obtener la ubicación:', error);
+          console.error('Error obtaining location:', error);
         }
       );
-    } else {
-      console.error('La geolocalización no es compatible con este navegador.');
     }
   }
 
   obtenerMunicipio(): void {
-    if (this.latitude && this.longitude) {
+    if (this.isOwnProfile && this.latitude && this.longitude) {
       const url = `https://nominatim.openstreetmap.org/reverse?lat=${this.latitude}&lon=${this.longitude}&format=json`;
       this.http.get<any>(url).subscribe({
         next: (response) => {
@@ -216,7 +246,7 @@ export class ProfileComponent implements OnInit {
           this.pais = response.address.country || 'País no encontrado';
         },
         error: (error) => {
-          console.error('Error al obtener el municipio y el país:', error);
+          console.error('Error obtaining municipality and country:', error);
         }
       });
     }
@@ -224,8 +254,8 @@ export class ProfileComponent implements OnInit {
 
   updateLocation(): void {
     const token = localStorage.getItem('token');
-    if (!token || !this.user?.id) {
-      console.error('No hay token o ID de usuario disponible.');
+    if (!this.isOwnProfile || !token || !this.user?.id) {
+      console.error('Cannot update location: not own profile or no token/ID.');
       return;
     }
 
@@ -233,42 +263,50 @@ export class ProfileComponent implements OnInit {
       const payload = { latitude: this.latitude, longitude: this.longitude, locationName: this.municipio };
       this.userService.updateUserLocation(this.user.id, payload, token).subscribe({
         next: (response) => {
-          console.log('Ubicación actualizada:', response);
-          if (this.user) {
-            this.user = { ...this.user, locationName: this.municipio } as UserProfile;
+          console.log('Location updated:', response);
+          if (this.profile) {
+            this.profile = { ...this.profile, locationName: this.municipio };
           }
           alert('Ubicación actualizada correctamente.');
         },
         error: (error) => {
-          console.error('Error al actualizar la ubicación:', error);
+          console.error('Error updating location:', error);
           alert('No se pudo actualizar la ubicación. Inténtalo de nuevo.');
         }
       });
     } else {
-      console.error('No se pudo obtener la ubicación completa.');
+      console.error('Could not obtain complete location.');
       alert('No se pudo obtener la ubicación completa. Por favor, inténtalo de nuevo.');
     }
   }
 
   enableEditing() {
-    this.isEditing = true;
+    if (this.isOwnProfile) {
+      this.isEditing = true;
+    }
   }
 
   enableEditingMe() {
-    this.isEditingMe = true;
+    if (this.isOwnProfile) {
+      this.isEditingMe = true;
+    }
   }
 
   onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.imageFile = input.files[0];
+    if (this.isOwnProfile) {
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files.length > 0) {
+        this.imageFile = input.files[0];
+      }
     }
   }
 
   saveProfile() {
+    if (!this.isOwnProfile) return;
+
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No hay token disponible.');
+      console.error('No token available.');
       return;
     }
 
@@ -279,8 +317,8 @@ export class ProfileComponent implements OnInit {
           this.updateProfile(token);
         },
         error: (error) => {
-          console.error('Error al subir la imagen:', error);
-          if (error.status == 403) {
+          console.error('Error uploading image:', error);
+          if (error.status === 403) {
             alert('Error 403: ' + error.error.error);
           }
         }
@@ -297,13 +335,20 @@ export class ProfileComponent implements OnInit {
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
-        console.log('Perfil actualizado:', response);
+        console.log('Profile updated:', response);
+        if (this.profile) {
+          this.profile = { ...this.profile, profilePictureUrl: this.profileImageUrl };
+        }
+        if (this.user) {
+          this.user = { ...this.user, profilePictureUrl: this.profileImageUrl };
+          this.authService.updateUser(this.user);
+        }
         setTimeout(() => {
           this.isEditing = false;
         }, 0);
       },
       error: error => {
-        console.error('Error al actualizar perfil:', error);
+        console.error('Error updating profile:', error);
         setTimeout(() => {
           this.isEditing = false;
         }, 0);
@@ -312,9 +357,11 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfileAbout() {
+    if (!this.isOwnProfile) return;
+
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No hay token disponible.');
+      console.error('No token available.');
       return;
     }
 
@@ -325,13 +372,16 @@ export class ProfileComponent implements OnInit {
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
-        console.log('Perfil actualizado:', response);
+        console.log('Profile updated:', response);
+        if (this.profile) {
+          this.profile = { ...this.profile, aboutMe: this.aboutMe };
+        }
         setTimeout(() => {
           this.isEditingMe = false;
         }, 0);
       },
       error: error => {
-        console.error('Error al actualizar perfil:', error);
+        console.error('Error updating profile:', error);
         setTimeout(() => {
           this.isEditingMe = false;
         }, 0);
@@ -347,35 +397,40 @@ export class ProfileComponent implements OnInit {
           this.products = response;
         },
         error: error => {
-          console.error('Error al obtener productos:', error);
+          console.error('Error fetching products:', error);
         }
       });
     }
   }
 
-  recuperarProductosPropietario() {
+  recuperarProductosPropietario(userId?: number) {
     const token = localStorage.getItem('token');
-    if (token && this.user?.id) {
-      this.productService.getProductsByOwner(this.user.id, token).subscribe({
+    const id = userId || this.user?.id;
+    if (token && id) {
+      this.productService.getProductsByOwner(id, token).subscribe({
         next: (response) => {
           this.products = response.map((product: any) => ({
             ...product,
             imageUrl: product.imageUrl,
             imageId: product.imageId
           }));
-          this.recuperarConversaciones();
+          if (this.isOwnProfile) {
+            this.recuperarConversaciones();
+          }
         },
         error: (error) => {
-          console.error('Error al obtener productos del propietario:', error);
+          console.error('Error fetching owner products:', error);
         }
       });
     }
   }
 
   eliminarProducto(productId: string, imageId: string) {
+    if (!this.isOwnProfile) return;
+
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No hay token disponible.');
+      console.error('No token available.');
       return;
     }
 
@@ -386,49 +441,62 @@ export class ProfileComponent implements OnInit {
             this.recuperarProductosPropietario();
           },
           error: error => {
-            console.error('Error al eliminar el producto:', error);
+            console.error('Error deleting product:', error);
           }
         });
       },
       error: error => {
-        console.error('Error al eliminar la imagen de Cloudinary:', error);
+        console.error('Error deleting Cloudinary image:', error);
       }
     });
   }
 
   toggleEditUsername() {
-    this.isEditingUsername = true;
+    if (this.isOwnProfile) {
+      this.isEditingUsername = true;
+    }
   }
 
   updateUsername() {
+    if (!this.isOwnProfile) return;
+
     if (!this.nickname.trim()) {
-      console.warn('El nombre de usuario no puede estar vacío.');
+      console.warn('Username cannot be empty.');
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No se encontró el token de autenticación.');
+      console.error('No authentication token found.');
       return;
     }
 
     const profileData = { nickname: this.nickname };
-    console.log('Datos del perfil a actualizar:', profileData);
+    console.log('Profile data to update:', profileData);
 
     this.userService.updateUserProfile(token, profileData).subscribe({
       next: (response) => {
-        console.log('Nombre de usuario actualizado:', response);
+        console.log('Username updated:', response);
+        if (this.profile) {
+          this.profile = { ...this.profile, nickname: this.nickname };
+        }
+        if (this.user && this.isOwnProfile) {
+          this.user = { ...this.user, nickname: this.nickname };
+          this.authService.updateUser(this.user);
+        }
         this.isEditingUsername = false;
       },
       error: (error) => {
-        console.error('Error al actualizar el nombre de usuario:', error);
+        console.error('Error updating username:', error);
       }
     });
   }
 
   logout() {
-    this.authService.logout();
-    this.router.navigate(['/main']);
+    if (this.isOwnProfile) {
+      this.authService.logout();
+      this.router.navigate(['/main']);
+    }
   }
 
   irARegistro() {
@@ -448,28 +516,32 @@ export class ProfileComponent implements OnInit {
   }
 
   irACrear() {
-    this.router.navigate(['/create']);
+    if (this.isOwnProfile) {
+      this.router.navigate(['/create']);
+    }
   }
 
   irAEditar(productId: string): void {
-    this.router.navigate(['/edit', productId]);
+    if (this.isOwnProfile) {
+      this.router.navigate(['/edit', productId]);
+    }
   }
 
   loadReviewableProducts() {
-    if (!this.user || !this.user.id) {
-      console.error('El usuario no está definido o no tiene un ID.');
+    if (!this.isOwnProfile || !this.user || !this.user.id) {
+      console.error('Cannot load reviewable products: not own profile or no user.');
       return;
     }
-  
+
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No hay token disponible.');
+      console.error('No token available.');
       return;
     }
-  
+
     const userId = this.user.id;
     const productIdsToReview: string[] = [];
-  
+
     this.productService.getAllProducts(token).subscribe({
       next: (products) => {
         const completedTransactionsObservables = products.map((product: any) =>
@@ -486,24 +558,24 @@ export class ProfileComponent implements OnInit {
               return shouldReview ? product : null;
             }),
             catchError((error) => {
-              console.error(`Error al obtener transacciones para el producto ${product.id}:`, error);
+              console.error(`Error fetching transactions for product ${product.id}:`, error);
               return of(null);
             })
           )
         );
-  
+
         forkJoin(completedTransactionsObservables).subscribe({
           next: (results) => {
             this.reviewableProducts = results.filter((product) => product !== null);
-            console.log('Productos que puedes reseñar:', this.reviewableProducts);
+            console.log('Reviewable products:', this.reviewableProducts);
           },
           error: (error) => {
-            console.error('Error al verificar transacciones completadas:', error);
+            console.error('Error checking completed transactions:', error);
           },
         });
       },
       error: (error) => {
-        console.error('Error al cargar productos:', error);
+        console.error('Error loading products:', error);
       },
     });
   }

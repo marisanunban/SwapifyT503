@@ -7,14 +7,7 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { Product, Conversation } from '../../../models/product.model';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { UserService } from '../../../services/user-service/user.service';
-
-// Define an interface for the user profile
-interface UserProfile {
-  id: number;
-  username: string;
-  credits: number;
-  profilePicture?: string;
-}
+import { UserProfile, UserDto } from '../../../models/user.model'; // Import UserProfile and UserDto
 
 @Component({
   selector: 'app-main',
@@ -30,7 +23,7 @@ export class MainComponent implements OnInit {
   searchCategory: boolean = false;
   isLoading: boolean = false;
   products: Product[] = [];
-  user: UserProfile | null = null;
+  user: UserDto | null = null; // Changed to UserDto
   isProfileMenuOpen: boolean = false;
   isLocationModalOpen: boolean = false;
   radius: number = 10;
@@ -52,17 +45,17 @@ export class MainComponent implements OnInit {
   ngOnInit(): void {
     // Cargar usuario
     this.authService.user$.subscribe(user => {
-      this.user = user as UserProfile | null;
+      this.user = user as UserDto | null; // Changed to UserDto
       if (!this.user) {
         this.router.navigate(['/login']);
       } else {
-        // Cargar perfil completo del usuario para obtener profilePicture
+        // Cargar perfil completo del usuario para obtener profilePictureUrl
         const token = localStorage.getItem('token') ?? undefined;
         if (token) {
           this.userService.getUserProfile(token).subscribe({
             next: (profile: UserProfile) => {
               if (this.user) {
-                this.user = { ...this.user, profilePicture: profile.profilePicture };
+                this.user = { ...this.user, profilePictureUrl: profile.profilePictureUrl }; // Changed to profilePictureUrl
               }
             },
             error: (error) => {

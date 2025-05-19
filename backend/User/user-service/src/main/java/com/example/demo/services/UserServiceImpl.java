@@ -91,6 +91,7 @@ public class UserServiceImpl implements UserService {
 
         return new UserDto(user.getId(), user.getUsermail(), user.getNickname(), user.getCredits());
     }
+
     @Override
     public void updateUserProfile(Long id, UpdateUserProfileDto dto) {
         User user = userRepository.findById(id)
@@ -219,5 +220,25 @@ public class UserServiceImpl implements UserService {
         user.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+    }
+
+    @Override
+    public UserProfileDto getUserByUsername(String username) {
+        User user = userRepository.findByNickname(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
+        UserProfileDto dto = new UserProfileDto(
+                user.getId(),
+                user.getUsermail(),
+                user.getAboutMe() != null ? user.getAboutMe() : "",
+                user.getLocationName() != null ? user.getLocationName() : "",
+                user.getLatitude(),
+                user.getLongitude(),
+                user.getNickname(),
+                user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : "",
+                user.getProfilePictureId() != null ? user.getProfilePictureId() : ""
+        );
+        dto.setRating(user.getRating() != null ? user.getRating() : 0.0);
+        dto.setReviewCount(user.getReviewCount() != null ? user.getReviewCount() : 0);
+        return dto;
     }
 }
