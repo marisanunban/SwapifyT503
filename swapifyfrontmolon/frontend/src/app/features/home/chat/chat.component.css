@@ -65,6 +65,11 @@
   background-color: #f8f9fa;
 }
 
+.conversation-item.active {
+  background-color: #e6f3ff;
+  border-left: 4px solid rgb(132, 218, 160);
+}
+
 .conversation-content {
   display: flex;
   align-items: center;
@@ -145,6 +150,21 @@
   justify-content: center;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+/* Estilo para el botón de volver */
+.back-button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.15s ease;
+}
+
+.back-button:hover {
+  color: rgb(132, 218, 160);
 }
 
 /* Área principal del chat */
@@ -313,7 +333,7 @@
 }
 
 .message-outgoing {
-  background-color:rgb(46, 88, 60);
+  background-color: rgb(46, 88, 60);
   color: white;
 }
 
@@ -380,12 +400,6 @@
   margin-bottom: 0.25rem;
 }
 
-.form-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #495057;
-}
-
 /* Input de mensaje */
 .message-input-container {
   padding: 1rem;
@@ -429,8 +443,8 @@
 }
 
 .btn-primary:hover {
-  background-color: rgb(132, 218, 160);
-  border-color: rgb(132, 218, 160);
+  background-color: rgb(88, 148, 108);
+  border-color: rgb(88, 148, 108);
 }
 
 .btn-outline-danger {
@@ -446,6 +460,7 @@
 .text-primary {
   color: rgb(132, 218, 160) !important;
 }
+
 .text-light-emphasis {
   color: #9ad3b4 !important;
 }
