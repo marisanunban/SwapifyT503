@@ -1,4 +1,3 @@
-// auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -8,8 +7,7 @@ import { tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/auth';
-  // Ajustamos el tipo para que coincida con los datos de /api/users/create
+  private apiUrl = 'http://localhost:8081/auth'; // Ensure this matches your backend
   private userSubject = new BehaviorSubject<{ id: number; username: string; credits: number } | null>(null);
   public user$ = this.userSubject.asObservable();
 
@@ -17,15 +15,18 @@ export class AuthService {
     this.loadUser();
   }
 
-  register(registerData: { useremail: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/register`, registerData);
+  register(registerData: { username: string; useremail: string; password: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/register`, registerData).pipe(
+      tap(response => console.log('Respuesta de registro:', response))
+    );
   }
 
-  login(loginData: { useremail: string; password: string }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, loginData);
+  login(loginData: { username: string; password: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/login`, loginData).pipe(
+      tap(response => console.log('Respuesta de login:', response))
+    );
   }
 
-  // Nuevo método para actualizar el usuario después de /api/users/create
   updateUser(userData: { id: number; username: string; credits: number }) {
     this.userSubject.next(userData);
     localStorage.setItem('user', JSON.stringify(userData));

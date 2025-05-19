@@ -1,8 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ProductService } from '../../../services/product-service/product.service';
-import { Product } from '../../../models/product.model'; // Importar desde el archivo compartido
+import { Product } from '../../../models/product.model';
+import { UserService } from '../../../services/user-service/user.service';
+import { UserProfile } from '../../../models/user.model'; // Importamos desde models
 
 @Component({
   selector: 'app-product-detail',
@@ -15,10 +18,12 @@ export class ProductDetailComponent implements OnInit {
   product: Product | null = null;
   productId: string | null = null;
   token: string | null = localStorage.getItem('token');
+  owner: UserProfile | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
+    private userService: UserService,
     private router: Router
   ) {}
 
@@ -34,8 +39,18 @@ export class ProductDetailComponent implements OnInit {
       this.productService.getProductById(this.productId, this.token).subscribe({
         next: (product) => {
           this.product = product;
+          if (product.ownerId) {
+            this.userService.getUserById(product.ownerId, this.token!).subscribe({
+              next: (owner: UserProfile) => {
+                this.owner = owner;
+              },
+              error: (error: HttpErrorResponse) => {
+                console.error('Error al cargar el perfil del propietario:', error);
+              }
+            });
+          }
         },
-        error: (error) => {
+        error: (error: HttpErrorResponse) => {
           console.error('Error al cargar los detalles del producto:', error);
           this.router.navigate(['/home']);
         }
@@ -48,5 +63,14 @@ export class ProductDetailComponent implements OnInit {
 
   goToHome(): void {
     this.router.navigate(['/home']);
+  }
+
+  goToOwnerProfile(): void {
+    if (this.owner && this.owner.username) {
+      this.router.navigate([`/viewOtherUser/${this.owner.username}`]);
+    } else {
+      console.error('No se pudo encontrar el nombre de usuario del propietario');
+      alert('No se puede acceder al perfil del propietario en este momento.');
+    }
   }
 }

@@ -13,16 +13,8 @@ import { CloudinaryService } from '../../../services/cloudinary-service/cloudina
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { TransactionService } from '../../../services/transaction-service/transaction.service';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
+import { UserProfile } from '../../../models/user.model'; // Importamos desde models
 
-interface UserProfile {
-  id: number;
-  username: string;
-  credits: number;
-  locationName?: string;
-  nickname?: string;
-  aboutMe?: string;
-  profilePicture?: string;
-}
 export interface Transaction {
   id: number;
   sellerId: number;
@@ -40,15 +32,13 @@ export interface Transaction {
   conversationId: number;
 }
 
-
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, RouterLink, CommonModule,NavbarComponent],
+  imports: [FormsModule, RouterLink, CommonModule, NavbarComponent],
   templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  styleUrls: ['./profile.component.css']
 })
-
 export class ProfileComponent implements OnInit {
   user: UserProfile | null = null;
   nickname: string = '';
@@ -69,9 +59,9 @@ export class ProfileComponent implements OnInit {
   showReviewModal: boolean = false;
   purchasedProducts: any[] = [];
   isProfileMenuOpen: boolean = false;
-  reviewableProducts: any[] = []; // Productos que pueden recibir reseñas
-  currentPage: number = 1; // Página actual
-  itemsPerPage: number = 4; // Número de productos por página
+  reviewableProducts: any[] = [];
+  currentPage: number = 1;
+  itemsPerPage: number = 4;
 
   constructor(
     private router: Router,
@@ -106,7 +96,7 @@ export class ProfileComponent implements OnInit {
           this.aboutMe = this.user.aboutMe || '';
           this.profileImageUrl = this.user.profilePicture || '';
           this.recuperarProductosPropietario();
-          this.loadReviewableProducts(); // Cargar productos que pueden recibir reseñas
+          this.loadReviewableProducts();
         },
         error: error => {
           console.error('Error al obtener perfil:', error);
@@ -124,26 +114,23 @@ export class ProfileComponent implements OnInit {
     const endIndex = startIndex + this.itemsPerPage;
     return this.products.slice(startIndex, endIndex);
   }
+
   get totalPages(): number[] {
     return Array.from({ length: Math.ceil(this.products.length / this.itemsPerPage) }, (_, i) => i + 1);
   }
-
-
 
   toggleReviewModal() {
     this.showReviewModal = !this.showReviewModal;
   }
   
   writeReview(productId: number) {
-    // Esta es una función de marcador de posición - la implementarás más tarde
     this.router.navigate(['/createReview/', productId]);
     console.log('Writing review for product ID:', productId);
   }
+
   openReviewModal() {
     this.showReviewModal = true;
   }
-
-
 
   mostrarProductos(): void {
     this.mostrarSeccionProductos = true;
@@ -177,9 +164,7 @@ export class ProfileComponent implements OnInit {
   }
 
   goToChat(conversationId: number) {
-    this.router.navigate(['/chat'], {
-      state: { conversationId }
-    });
+    this.router.navigate([`/chat/${conversationId}`]);
   }
 
   deleteConversation(conversationId: number) {
@@ -250,7 +235,7 @@ export class ProfileComponent implements OnInit {
         next: (response) => {
           console.log('Ubicación actualizada:', response);
           if (this.user) {
-            this.user = { ...this.user, locationName: this.municipio } as UserProfile; // Casteo explícito
+            this.user = { ...this.user, locationName: this.municipio } as UserProfile;
           }
           alert('Ubicación actualizada correctamente.');
         },
@@ -470,8 +455,6 @@ export class ProfileComponent implements OnInit {
     this.router.navigate(['/edit', productId]);
   }
 
-
-
   loadReviewableProducts() {
     if (!this.user || !this.user.id) {
       console.error('El usuario no está definido o no tiene un ID.');
@@ -492,7 +475,6 @@ export class ProfileComponent implements OnInit {
         const completedTransactionsObservables = products.map((product: any) =>
           this.transactionService.getCompletedTransactionsBetweenUsers(userId, product.ownerId).pipe(
             map((transactions) => {
-              // Recorrer transacciones y recolectar productos que debe reseñar el usuario
               transactions.forEach((transaction) => {
                 if (transaction.sellerId === userId && transaction.productRequestedId) {
                   productIdsToReview.push(transaction.productRequestedId);
@@ -500,9 +482,6 @@ export class ProfileComponent implements OnInit {
                   productIdsToReview.push(transaction.productOfferedId);
                 }
               });
-              
-  
-              // Si este producto está entre los recibidos, devolverlo para reseña
               const shouldReview = productIdsToReview.includes(product.id.toString());
               return shouldReview ? product : null;
             }),
@@ -528,5 +507,4 @@ export class ProfileComponent implements OnInit {
       },
     });
   }
-  
 }

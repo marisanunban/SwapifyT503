@@ -1,4 +1,3 @@
-// login.component.ts
 import { Component } from '@angular/core';
 import { AuthService } from '../../../services/auth-service/auth.service';
 import { UserService } from '../../../services/user-service/user.service';
@@ -16,11 +15,12 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
-  usermail: string = '';
+  username: string = '';
   password: string = '';
   error: string | null = null;
   successMessage: string | null = null;
   resetPassword: boolean = false;
+  resetEmail: string = '';
   resetToken: string = '';
   newPassword: string = '';
 
@@ -34,7 +34,7 @@ export class LoginComponent {
   onSubmit() {
     console.log('Iniciando login...');
     const loginData = {
-      useremail: this.usermail,
+      username: this.username,
       password: this.password,
     };
 
@@ -43,14 +43,13 @@ export class LoginComponent {
     this.authService.login(loginData).subscribe({
       next: (response) => {
         console.log('Respuesta del backend:', response.message);
-        console.log(response);
         const token = response.message.split(': ')[1]; // Extrae el token
         console.log('Token extraído:', token);
 
         localStorage.setItem('token', token);
 
         this.successMessage = '¡Login exitoso! Creando usuario...';
-        this.usermail = '';
+        this.username = '';
         this.password = '';
 
         // Llamada a /api/users/create
@@ -60,7 +59,7 @@ export class LoginComponent {
             // Actualizamos el usuario en el AuthService
             this.authService.updateUser({
               id: userInfo.id,
-              username: userInfo.useremail,
+              username: userInfo.nickname, // Usamos nickname en lugar de usermail
               credits: userInfo.credits
             });
             this.successMessage = '¡Usuario creado! Redirigiendo a home...';
@@ -82,12 +81,13 @@ export class LoginComponent {
   }
 
   enviarSolicitudReset() {
-    console.log(this.usermail)
-    this.resetPasswordService.requestPasswordReset(this.usermail).subscribe({
+    console.log('Enviando solicitud de reset para:', this.resetEmail);
+    this.resetPasswordService.requestPasswordReset(this.resetEmail).subscribe({
       next: (response) => {
         console.log('Correo de reseteo enviado:', response.message);
         this.successMessage = 'Correo enviado. Revisa tu bandeja de entrada.';
         this.error = null;
+        this.resetEmail = '';
       },
       error: (err) => {
         console.error('Error al solicitar reset:', err);
@@ -95,6 +95,7 @@ export class LoginComponent {
       }
     });
   }
+
   confirmarReset() {
     this.resetPasswordService.confirmPasswordReset(this.resetToken, this.newPassword).subscribe({
       next: (response) => {
@@ -102,8 +103,9 @@ export class LoginComponent {
         this.successMessage = 'Contraseña cambiada exitosamente. Ya podés iniciar sesión.';
         this.resetPassword = false;
         this.error = null;
-        this.usermail = '';
-        this.password = '';
+        this.resetEmail = '';
+        this.resetToken = '';
+        this.newPassword = '';
       },
       error: (err) => {
         console.error('Error al confirmar reset:', err);
@@ -111,15 +113,16 @@ export class LoginComponent {
       }
     });
   }
-    
 
   onResetPassword() {
     this.resetPassword = true;
+    this.resetEmail = this.username; // Prellenar con el username (o dejar vacío)
   }
 
   irARegistro() {
     this.router.navigate(['/register']);
   }
+
   irAMain() {
     this.router.navigate(['/main']);
   }
