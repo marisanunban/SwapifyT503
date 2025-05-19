@@ -73,16 +73,15 @@ public class UserServiceImpl implements UserService {
             return new UserDto(user.getId(), user.getUsermail(), user.getNickname(), user.getCredits());
         }
 
-        // Crear un nuevo usuario usando el ID del servicio de autenticación
+        // Crear un nuevo usuario
         User user = new User();
         user.setId(userInfoDto.getId());
         user.setUsermail(userInfoDto.getUseremail());
-        user.setNickname(userInfoDto.getNickname());
+        user.setNickname(userInfoDto.getNickname() != null ? userInfoDto.getNickname() : userInfoDto.getUsername());
         user.setCredits(100); // Créditos iniciales
         user.setUpdatedAt(LocalDateTime.now());
-        user.setProfilePictureId(userInfoDto.getImageId());
-        user.setRating(0.0); // Inicializar rating con valor por defecto
-        user.setReviewCount(0); // Inicializar reviewCount con valor por defecto
+        user.setRating(0.0);
+        user.setReviewCount(0);
 
         try {
             user = userRepository.save(user);
@@ -92,7 +91,6 @@ public class UserServiceImpl implements UserService {
 
         return new UserDto(user.getId(), user.getUsermail(), user.getNickname(), user.getCredits());
     }
-
     @Override
     public void updateUserProfile(Long id, UpdateUserProfileDto dto) {
         User user = userRepository.findById(id)

@@ -1,11 +1,11 @@
 package com.example.demo.dtos;
 
-import javax.management.relation.Role;
+import com.example.demo.entities.Users.Role;
 import java.time.LocalDateTime;
-
 
 public class UsersDTO {
     private Long id;
+    private String username;
     private String useremail;
     private Role role;
     private LocalDateTime createdAt;
@@ -17,6 +17,14 @@ public class UsersDTO {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getUseremail() {

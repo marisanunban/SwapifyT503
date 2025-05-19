@@ -1,5 +1,6 @@
 package com.example.demo.security;
 
+import com.example.demo.entities.Users;
 import com.example.demo.interfaces.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -21,12 +22,12 @@ public class UserDetailsImpl implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        log.debug("loadUserByEmail {}", email);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.debug("loadUserByUsername {}", username);
         try {
-            return userService.findByEmail(email); // Devuelve Users directamente
+            return userService.findByUsername(username); // Usa findByUsername en lugar de findByEmail
         } catch (EntityNotFoundException e) {
-            throw new UsernameNotFoundException("User not found with email: " + email);
+            throw new UsernameNotFoundException("Usuario no encontrado con username: " + username);
         }
     }
 }

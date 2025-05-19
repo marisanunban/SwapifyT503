@@ -26,6 +26,8 @@ public class Users implements UserDetails {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
     @Column(nullable = false, length = 255)
     private String password;
@@ -53,6 +55,10 @@ public class Users implements UserDetails {
         this.email = email;
     }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public void setPassword(String password) {
         this.password = password; // Solo asigna, el hasheo se hace en el controlador
     }
@@ -78,7 +84,7 @@ public class Users implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return username; // Devuelve username en lugar de email
     }
 
     @Override
@@ -93,7 +99,7 @@ public class Users implements UserDetails {
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Cambiado a true para que las credenciales sean válidas
+        return true;
     }
 
     @Override

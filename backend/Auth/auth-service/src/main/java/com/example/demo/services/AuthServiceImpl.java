@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public MessageDto login(LoginRequestDto loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUseremail(), loginRequest.getPassword())
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtTokenProvider.generateToken(authentication);
@@ -46,9 +46,14 @@ public class AuthServiceImpl implements AuthService {
         if (userService.existsByEmail(registerRequest.getUseremail())) {
             throw new IllegalArgumentException("El email ya está registrado");
         }
+        // Verificar si el username ya está en uso
+        if (userService.existsByUsername(registerRequest.getUsername())) {
+            throw new IllegalArgumentException("El username ya está registrado");
+        }
 
         // Crear nuevo usuario
         Users newUser = new Users();
+        newUser.setUsername(registerRequest.getUsername());
         newUser.setEmail(registerRequest.getUseremail());
         newUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         newUser.setRole(Role.USER);
