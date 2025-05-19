@@ -1,6 +1,7 @@
 package com.example.user_review.controller;
 
 import com.example.user_review.DTOs.ReviewDTO;
+import com.example.user_review.DTOs.TransactionDto;
 import com.example.user_review.clients.TransactionClient;
 import com.example.user_review.entities.Review;
 import com.example.user_review.serviceImpl.ReviewService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -28,17 +30,39 @@ public class ReviewController {
     public ResponseEntity<?> createReview(@RequestBody ReviewDTO request) {
         Long reviewerId = request.getReviewerId();
         Long reviewedUserId = request.getReviewedUserId();
+        String productId = request.getProductId();
 
-        // Verificar transacción completada entre usuarios
-        if (!transactionClient.hasCompletedTransaction(reviewerId, reviewedUserId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("No puedes dejar una review sin haber completado una transacción con este usuario.");
+        System.out.println("[ReviewController] reviewerId: " + reviewerId);
+        System.out.println("[ReviewController] reviewedUserId: " + reviewedUserId);
+        System.out.println("[ReviewController] productId de la review: " + productId);
+
+        List<TransactionDto> transactions =
+                transactionClient.checkCompletedTransaction(reviewerId, reviewedUserId);
+
+        System.out.println("[ReviewController] Transacciones encontradas: " + transactions.size());
+
+        for (TransactionDto t : transactions) {
+            System.out.println("[ReviewController] Transacción ID: " + t.getId() +
+                    ", offered: " + t.getProductOfferedId() +
+                    ", requested: " + t.getProductRequestedId());
         }
 
-        // Si pasó el filtro, crear la review
+        boolean productEnTransaccion = transactions.stream().anyMatch(t ->
+                productId.equals(t.getProductOfferedId()) || productId.equals(t.getProductRequestedId())
+        );
+
+        if (!productEnTransaccion) {
+            System.out.println("[ReviewController] Producto no encontrado en transacciones completadas.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("No puedes dejar una review de un producto no involucrado en una transacción completada.");
+        }
+
         Review review = reviewService.createReviewFromDTO(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(review);
     }
+
+
+
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Review>> getReviews(@PathVariable Long userId) {

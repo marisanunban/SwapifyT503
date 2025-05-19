@@ -119,4 +119,38 @@
 
             return ResponseEntity.ok(response);
         }
+
+        @GetMapping("/completed/full")
+        public ResponseEntity<List<TransactionDto>> getCompletedTransactionsBetweenUsers(
+                @RequestParam Long userA,
+                @RequestParam Long userB) {
+
+            List<Transaction> transactions =
+                    transactionRepository.findCompletedTransactionsBetweenUsers(userA, userB);
+
+            List<TransactionDto> response = transactions.stream()
+                    .map(this::toDto) // Usamos la función de arriba
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
+        }
+
+
+        public TransactionDto toDto(Transaction t) {
+            TransactionDto dto = new TransactionDto();
+            dto.setId(t.getId());
+            dto.setBuyerId(t.getBuyerId());
+            dto.setSellerId(t.getSellerId());
+            dto.setProductOfferedId(t.getProductOfferedId());
+            dto.setProductRequestedId(t.getProductRequestedId());
+            dto.setCreditsOffered(t.getCreditsOffered());
+            dto.setCreditsRequested(t.getCreditsRequested());
+            dto.setStatus(t.getStatus());
+            dto.setCreatedAt(t.getCreatedAt().toString());
+            dto.setUpdatedAt(t.getUpdatedAt().toString());
+            dto.setBuyerAccepted(t.isBuyerAccepted());
+            dto.setSellerAccepted(t.isSellerAccepted());
+            return dto;
+        }
+
     }

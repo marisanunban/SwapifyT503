@@ -9,8 +9,9 @@ import com.example.demo.dtos.ProductDto;
 import com.example.demo.dtos.TransactionDto;
 import com.example.demo.dtos.UpdateTransactionStatusDto;
 import com.example.demo.dtos.UserInfoDto;
+import com.example.demo.entities.Status;
 import com.example.demo.entities.Transaction;
-import com.example.demo.entities.Transaction.Status;
+
 import com.example.demo.interfaces.NotificationService;
 import com.example.demo.interfaces.TransactionService;
 import com.example.demo.repositories.TransactionRepository;
@@ -133,7 +134,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
 
-        if (transaction.getStatus() == Transaction.Status.COMPLETED || transaction.getStatus() == Transaction.Status.REJECTED) {
+        if (transaction.getStatus() == Status.COMPLETED || transaction.getStatus() == Status.REJECTED) {
             System.out.println("Transacción con ID " + id + " ya ha sido procesada con estado: " + transaction.getStatus());
             return mapToDto(transaction);
         }
@@ -173,7 +174,7 @@ public class TransactionServiceImpl implements TransactionService {
 
             if (newStatus.equals("REJECTED")) {
                 System.out.println("Usuario " + userInfo.getId() + " rechaza la transacción ID: " + id);
-                transaction.setStatus(Transaction.Status.REJECTED);
+                transaction.setStatus(Status.REJECTED);
             } else {
                 if (isBuyer) {
                     if (transaction.isBuyerAccepted()) {
@@ -325,7 +326,7 @@ public class TransactionServiceImpl implements TransactionService {
         } finally {
             transaction.setProcessing(false);
             transactionRepository.save(transaction);
-            if (transaction.getStatus() == Transaction.Status.REJECTED) {
+            if (transaction.getStatus() == Status.REJECTED) {
                 removeTransactionTokens(id);
             }
         }
@@ -373,7 +374,7 @@ public class TransactionServiceImpl implements TransactionService {
                 System.out.println("Eliminando tokens de la transacción " + transactionId + ": transacción no encontrada en la base de datos.");
                 return true;
             }
-            boolean shouldRemove = transaction.getStatus() == Transaction.Status.PENDING
+            boolean shouldRemove = transaction.getStatus() == Status.PENDING
                     && transaction.getCreatedAt().isBefore(LocalDateTime.now().minusHours(1));
             if (shouldRemove) {
                 System.out.println("Eliminando tokens de la transacción " + transactionId + ": está en estado PENDING y tiene más de 1 hora.");
@@ -392,7 +393,7 @@ public class TransactionServiceImpl implements TransactionService {
         dto.setProductRequestedId(transaction.getProductRequestedId());
         dto.setCreditsOffered(transaction.getCreditsOffered());
         dto.setCreditsRequested(transaction.getCreditsRequested());
-        dto.setStatus(transaction.getStatus().toString());
+        dto.setStatus(transaction.getStatus());
         dto.setCreatedAt(transaction.getCreatedAt() != null ? transaction.getCreatedAt().format(formatter) : null);
         dto.setUpdatedAt(transaction.getUpdatedAt() != null ? transaction.getUpdatedAt().format(formatter) : null);
         dto.setBuyerAccepted(transaction.isBuyerAccepted());

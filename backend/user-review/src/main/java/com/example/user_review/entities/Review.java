@@ -8,13 +8,14 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "reviews")
 public class Review {
-    public Review(Long id, Long reviewerId, Long reviewedUserId, int rating, String comment, LocalDateTime createdAt) {
+    public Review(Long id, Long reviewerId, Long reviewedUserId, int rating, String comment, LocalDateTime createdAt, String productId) {
         this.id = id;
         this.reviewerId = reviewerId;
         this.reviewedUserId = reviewedUserId;
         this.rating = rating;
         this.comment = comment;
         this.createdAt = createdAt;
+        this.productId = productId;
     }
 
     public Review() {
@@ -34,6 +35,16 @@ public class Review {
     private String comment;
 
     private LocalDateTime createdAt;
+
+    private String productId;
+
+    public String getProductId() {
+        return productId;
+    }
+
+    public void setProductId(String productId) {
+        this.productId = productId;
+    }
 
     public Long getId() {
         return id;
