@@ -3,7 +3,7 @@
       <div class="navbar-content d-flex align-items-center justify-content-between">
         <!-- Logo -->
         <a href="#" class="navbar-logo">
-          <img src="assets/swapify2.PNG" id="logo"alt="Swapify Logo">
+          <img src="assets/swapify2.PNG" id="logo" alt="Swapify Logo">
         </a>
   
         <!-- Buscador -->
@@ -65,7 +65,7 @@
             <!-- Botón de perfil -->
             <div class="profile-dropdown">
               <div class="profile-toggle d-flex align-items-center" (click)="toggleProfileMenu()">
-                <img [src]="userProfile?.profilePicture" alt="Imagen de perfil" class="profile-image">
+                <img [src]="userProfile?.profilePictureUrl || 'assets/placeholder.svg'" alt="Imagen de perfil" class="profile-image">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
                   width="12" 
@@ -92,8 +92,8 @@
         </div>
       </div>
     </div>
-  </nav>
-  <!-- Categorías -->
+</nav>
+<!-- Categorías -->
 <div class="categories-bar">
   <div class="container">
     <div class="categories-list">

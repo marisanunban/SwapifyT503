@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { UserDto } from '../../../models/user.model';
 
 @Component({
   selector: 'app-login',
@@ -52,15 +53,21 @@ export class LoginComponent {
         this.username = '';
         this.password = '';
 
-        // Llamada a /api/users/create
         this.userService.create(token).subscribe({
-          next: (userInfo) => {
+          next: (userInfo: UserDto) => {
             console.log('Usuario creado/recuperado:', userInfo);
-            // Actualizamos el usuario en el AuthService
+            // Verificar que usermail esté presente
+            if (!userInfo.usermail) {
+              console.error('Error: usermail no está presente en la respuesta del backend');
+              this.error = 'Error al crear usuario: información incompleta.';
+              return;
+            }
             this.authService.updateUser({
               id: userInfo.id,
-              username: userInfo.nickname, // Usamos nickname en lugar de usermail
-              credits: userInfo.credits
+              usermail: userInfo.usermail,
+              nickname: userInfo.nickname,
+              credits: userInfo.credits,
+              profilePictureUrl: userInfo.profilePictureUrl
             });
             this.successMessage = '¡Usuario creado! Redirigiendo a home...';
             setTimeout(() => {

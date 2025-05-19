@@ -2,13 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { UserDto } from '../../models/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/auth'; // Ensure this matches your backend
-  private userSubject = new BehaviorSubject<{ id: number; username: string; credits: number } | null>(null);
+  private apiUrl = 'http://localhost:8081/api/auth'; // Ajustado para coincidir con el backend
+  private userSubject = new BehaviorSubject<UserDto | null>(null);
   public user$ = this.userSubject.asObservable();
 
   constructor(private http: HttpClient) {
@@ -27,7 +28,7 @@ export class AuthService {
     );
   }
 
-  updateUser(userData: { id: number; username: string; credits: number }) {
+  updateUser(userData: UserDto) {
     this.userSubject.next(userData);
     localStorage.setItem('user', JSON.stringify(userData));
   }
