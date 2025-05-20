@@ -57,6 +57,11 @@ public class ReviewController {
                     .body("No puedes dejar una review de un producto no involucrado en una transacción completada.");
         }
 
+        if (reviewService.alreadyReviewed(reviewerId, reviewedUserId, request.getProductId())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Ya has dejado una review para este producto.");
+        }
+
         Review review = reviewService.createReviewFromDTO(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(review);
     }

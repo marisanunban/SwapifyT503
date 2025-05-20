@@ -135,7 +135,6 @@
             return ResponseEntity.ok(response);
         }
 
-
         public TransactionDto toDto(Transaction t) {
             TransactionDto dto = new TransactionDto();
             dto.setId(t.getId());
