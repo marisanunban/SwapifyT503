@@ -146,7 +146,5 @@ public class Transaction {
         this.conversationId = conversationId;
     }
 
-    public enum Status {
-        PENDING, COMPLETED, REJECTED
-    }
+
 }

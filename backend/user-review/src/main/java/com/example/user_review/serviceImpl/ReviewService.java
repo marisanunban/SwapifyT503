@@ -27,6 +27,7 @@ public class ReviewService {
         review.setRating(request.getRating());
         review.setComment(request.getComment());
         review.setCreatedAt(LocalDateTime.now()); // Asignas la fecha actual
+        review.setProductId(request.getProductId());
 
         return reviewRepository.save(review);
     }
@@ -50,5 +51,9 @@ public class ReviewService {
 
     public long getNegativeReviewCount(Long reviewedUserId) {
         return reviewRepository.countByReviewedUserIdAndRatingLessThanEqual(reviewedUserId, 2);
+    }
+
+    public boolean alreadyReviewed(Long reviewerId, Long reviewedUserId, String productId) {
+        return reviewRepository.existsByReviewerIdAndReviewedUserIdAndProductId(reviewerId, reviewedUserId, productId);
     }
 }

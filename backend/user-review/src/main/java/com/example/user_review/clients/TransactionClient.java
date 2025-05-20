@@ -1,12 +1,18 @@
 package com.example.user_review.clients;
 
+import com.example.user_review.DTOs.TransactionDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class TransactionClient {
@@ -14,11 +20,12 @@ public class TransactionClient {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Value("http://localhost:8084")
+    @Value("${transaction.service.url}")
     private String transactionServiceUrl;
 
     public boolean hasCompletedTransaction(Long userA, Long userB) {
-        String url = transactionServiceUrl + "/api/transactions/completed?userA=" + userA + "&userB=" + userB;
+        String url = transactionServiceUrl + "transactions/completed?userA=" + userA + "&userB=" + userB;
+        System.out.println("Consultando URL: " + url); // <-- agrega esto
 
         try {
             ResponseEntity<CompletedTransactionResponse> response =
@@ -26,10 +33,29 @@ public class TransactionClient {
 
             return response.getBody() != null && response.getBody().isHasCompletedTransaction();
         } catch (Exception e) {
-            // Manejar fallos o loggear
+            e.printStackTrace(); // Para ver si hay errores de conexión o mapeo
             return false;
         }
     }
+
+    public List<TransactionDto> checkCompletedTransaction(Long userA, Long userB) {
+        String url = transactionServiceUrl + "/transactions/completed/full?userA=" + userA + "&userB=" + userB;
+
+        try {
+            ResponseEntity<List<TransactionDto>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<TransactionDto>>() {}
+            );
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            System.out.println("[TransactionClient] Error al obtener transacciones completadas: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+
 
     // Clase interna o externa para mapear la respuesta
     public static class CompletedTransactionResponse {

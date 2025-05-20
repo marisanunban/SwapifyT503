@@ -3,11 +3,17 @@
     import com.example.demo.clients.AuthClient;
     import com.example.demo.clients.UserClient;
     import com.example.demo.dtos.*;
+    import com.example.demo.entities.Transaction;
+    import com.example.demo.repositories.TransactionRepository;
     import com.example.demo.services.TransactionServiceImpl;
     import jakarta.persistence.EntityNotFoundException;
+    import org.springframework.beans.factory.annotation.Autowired;
     import org.springframework.http.HttpStatus;
     import org.springframework.http.ResponseEntity;
     import org.springframework.web.bind.annotation.*;
+
+    import java.util.List;
+    import java.util.stream.Collectors;
 
     @CrossOrigin(origins = "http://localhost:4200")
     @RestController
@@ -17,6 +23,8 @@
         private final TransactionServiceImpl transactionService;
         private final AuthClient authClient;
         private final UserClient userClient;
+        @Autowired
+        private TransactionRepository transactionRepository;
 
         public TransactionController(
                 TransactionServiceImpl transactionService,
@@ -92,4 +100,56 @@
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
         }
+
+        @GetMapping("/completed")
+        public ResponseEntity<CompletedTransactionResponseDTO> checkCompletedTransaction(
+                @RequestParam Long userA,
+                @RequestParam Long userB) {
+
+            List<Transaction> transactions =
+                    transactionRepository.findCompletedTransactionsBetweenUsers(userA, userB);
+
+            boolean hasCompleted = !transactions.isEmpty();
+            List<Long> transactionIds = transactions.stream()
+                    .map(Transaction::getId)
+                    .collect(Collectors.toList());
+
+            CompletedTransactionResponseDTO response =
+                    new CompletedTransactionResponseDTO(hasCompleted, transactionIds);
+
+            return ResponseEntity.ok(response);
+        }
+
+        @GetMapping("/completed/full")
+        public ResponseEntity<List<TransactionDto>> getCompletedTransactionsBetweenUsers(
+                @RequestParam Long userA,
+                @RequestParam Long userB) {
+
+            List<Transaction> transactions =
+                    transactionRepository.findCompletedTransactionsBetweenUsers(userA, userB);
+
+            List<TransactionDto> response = transactions.stream()
+                    .map(this::toDto) // Usamos la función de arriba
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
+        }
+
+        public TransactionDto toDto(Transaction t) {
+            TransactionDto dto = new TransactionDto();
+            dto.setId(t.getId());
+            dto.setBuyerId(t.getBuyerId());
+            dto.setSellerId(t.getSellerId());
+            dto.setProductOfferedId(t.getProductOfferedId());
+            dto.setProductRequestedId(t.getProductRequestedId());
+            dto.setCreditsOffered(t.getCreditsOffered());
+            dto.setCreditsRequested(t.getCreditsRequested());
+            dto.setStatus(t.getStatus());
+            dto.setCreatedAt(t.getCreatedAt().toString());
+            dto.setUpdatedAt(t.getUpdatedAt().toString());
+            dto.setBuyerAccepted(t.isBuyerAccepted());
+            dto.setSellerAccepted(t.isSellerAccepted());
+            return dto;
+        }
+
     }

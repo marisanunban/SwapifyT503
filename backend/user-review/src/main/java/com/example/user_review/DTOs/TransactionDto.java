@@ -1,10 +1,6 @@
-package com.example.demo.dtos;
+package com.example.user_review.DTOs;
 
-import com.example.demo.entities.Status;
-import com.example.demo.entities.Transaction;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Data
 public class TransactionDto {
@@ -15,7 +11,7 @@ public class TransactionDto {
     private String productRequestedId;
     private Integer creditsOffered;
     private Integer creditsRequested;
-    private Status status;
+    private String status;
     private String createdAt;
     private String updatedAt; // Nuevo
     private boolean buyerAccepted;
@@ -34,7 +30,7 @@ public class TransactionDto {
         this.updatedAt = updatedAt;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 
@@ -98,7 +94,7 @@ public class TransactionDto {
         return creditsRequested;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
@@ -122,7 +118,7 @@ public class TransactionDto {
     public TransactionDto(Long id, Long buyerId, Long sellerId,
                           String productRequestedId, String productOfferedId,
                           Integer creditsOffered, Integer creditsRequested,
-                          Status status, String createdAt, String updatedAt,
+                          String status, String createdAt, String updatedAt,
                           boolean buyerAccepted, boolean sellerAccepted) {
         this.id = id;
         this.buyerId = buyerId;
@@ -141,5 +137,4 @@ public class TransactionDto {
     // Constructor por defecto
     public TransactionDto() {
     }
-
 }
