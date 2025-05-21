@@ -8,7 +8,7 @@ import { UserDto } from '../../models/user.model';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8081/api/auth'; // Ajustado para coincidir con el backend
+  private apiUrl = 'http://localhost:8081/auth'; // Ajustado para coincidir con el backend
   private userSubject = new BehaviorSubject<UserDto | null>(null);
   public user$ = this.userSubject.asObservable();
 
