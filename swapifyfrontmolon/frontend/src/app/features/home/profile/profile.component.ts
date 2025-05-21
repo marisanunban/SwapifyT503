@@ -149,12 +149,18 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  writeReview(productId: number) {
-    if (this.isOwnProfile) {
-      this.router.navigate(['/createReview/', productId]);
-      console.log('Writing review for product ID:', productId);
-    }
+writeReview(productId: string) {
+  if (this.isOwnProfile && this.user && this.profile) {
+    this.router.navigate(['/createReview'], {
+      queryParams: {
+        reviewerId: this.user.id, // usuario autenticado
+        reviewedUserId: this.profile.id, // usuario del perfil visitado
+        productId: productId.toString // producto sobre el que se escribe la reseña
+      }
+    });
+    console.log('Writing review for product ID:', productId);
   }
+}
 
   openReviewModal() {
     if (this.isOwnProfile) {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReviewService } from '../../../services/review-service/review.service';
-
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-create-review',
@@ -22,13 +22,18 @@ export class CreateReviewComponent implements OnInit {
   comment: string = '';
   @Output() reviewSubmitted = new EventEmitter<any>();
   @Output() reviewCancelled = new EventEmitter<void>();
-  constructor(private router: Router, private reviewService: ReviewService) {
+  constructor(private router: Router, private reviewService: ReviewService, private route: ActivatedRoute) {
+    // Constructor logic here
     
     
   }
 
   ngOnInit(): void {
     // Initialization logic here
+
+    this.reviewerId = Number(this.route.snapshot.queryParamMap.get('reviewerId')) || 0;
+  this.reviewedUserId = Number(this.route.snapshot.queryParamMap.get('reviewedUserId')) || 0;
+  this.productId = this.route.snapshot.queryParamMap.get('productId') || '';
   }
   setRating(value: number): void {
     this.rating = value;
