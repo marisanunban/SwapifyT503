@@ -73,11 +73,11 @@ export class ProductDetailComponent implements OnInit {
   }
 
   goToOwnerProfile(): void {
-    if (this.owner && this.owner.nickname && this.owner.nickname.trim()) {
-      console.log('Navegando al perfil del propietario:', this.owner.nickname);
-      this.router.navigate([`/viewOtherUser/${this.owner.nickname}`]);
+    if (this.owner && this.owner.id) {
+      console.log('Navegando al perfil del propietario con ID:', this.owner.id);
+      this.router.navigate([`/profile/${this.owner.id}`]);
     } else {
-      console.error('No se pudo encontrar un nickname válido del propietario:', this.owner);
+      console.error('No se pudo encontrar un ID válido del propietario:', this.owner);
       alert('No se puede acceder al perfil del propietario en este momento.');
     }
   }
