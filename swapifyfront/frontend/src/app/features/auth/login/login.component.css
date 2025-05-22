@@ -1,0 +1,20 @@
+/* Estilos especÃficos del componente */
+:host {
+    display: block;
+    width: 100%;
+    height: 100vh;
+  }
+  
+  input:focus {
+    outline: none;
+  }
+  
+  /* Ajustes para el logo */
+  svg path {
+    fill: none;
+  }
+  
+  /* Ajustes para los botones sociales */
+  button:focus {
+    outline: none;
+  }

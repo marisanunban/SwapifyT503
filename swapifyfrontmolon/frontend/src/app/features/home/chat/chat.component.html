@@ -1,0 +1,182 @@
+<div class="chat-container">
+  <!-- Sidebar de conversaciones -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <div class="d-flex align-items-center">
+        <button class="back-button me-2" (click)="goToProfile()" aria-label="Volver al perfil">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <h1 class="sidebar-title">Mensajes</h1>
+      </div>
+      <div class="sidebar-tabs">
+        <button class="tab-button active">Todas las conversaciones</button>
+        <button class="tab-button">Archivado</button>
+        <button class="tab-button">Destacado</button>
+      </div>
+    </div>
+    
+    <div class="conversation-list">
+      <div
+        *ngFor="let conversation of conversations"
+        class="conversation-item"
+        [ngClass]="{'active': conversation.id === selectedConversationId}"
+        (click)="selectConversation(conversation.id)"
+      >
+        <div class="conversation-content">
+          <div class="avatar-container">
+            <img
+              [src]="conversation.otherUser.profilePictureUrl || 'assets/placeholder.svg'"
+              alt="Profile"
+              class="avatar-img"
+            />
+            <!-- Indicador de online eliminado porque User no tiene online -->
+          </div>
+          <div class="conversation-details">
+            <div class="conversation-header">
+              <span class="user-name">{{ conversation.otherUser.nickname }}</span>
+              <span class="message-time">{{ conversation.lastMessage?.time || '' }}</span>
+            </div>
+            <div class="conversation-footer">
+              <p class="message-preview">
+                {{ conversation.productTitle }}: {{ conversation.lastMessage?.text || 'Sin mensajes' | slice:0:50 }}
+              </p>
+              <div *ngIf="conversation.unreadCount > 0" class="notification-badge">
+                {{ conversation.unreadCount }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área principal del chat -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <div class="d-flex align-items-center">
+        <img [src]="selectedChat.avatar" alt="Profile" class="avatar-img me-2" />
+        <div>
+          <h2 class="h5 mb-0">{{ selectedChat.name }}</h2>
+          <span class="user-status">{{ selectedChat.description }}</span>
+        </div>
+      </div>
+      <div class="chat-actions">
+        <button class="action-button" (click)="openProposalForm()" aria-label="Crear propuesta">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="messages-container" #messageContainer>
+      <div class="messages-wrapper">
+        <div class="no-messages" *ngIf="!messages.length">
+          <div class="no-messages-content">
+            <i class="fas fa-comment-slash fa-2x no-messages-icon"></i>
+            <p class="no-messages-text">No hay mensajes en esta conversación</p>
+          </div>
+        </div>
+
+        <div *ngFor="let message of messages; let i = index" class="message-row" [ngClass]="{'justify-content-end': isCurrentUser(message.senderId)}">
+          <div class="d-flex" [ngClass]="{'flex-row-reverse': isCurrentUser(message.senderId)}">
+            <img *ngIf="!isCurrentUser(message.senderId)" [src]="getMessageSender(message.senderId)?.profilePictureUrl || 'assets/placeholder.svg'" alt="Avatar" class="message-avatar" />
+            <div class="message-wrapper" [ngClass]="{'ms-2': !isCurrentUser(message.senderId), 'me-2': isCurrentUser(message.senderId)}">
+              <div *ngIf="message.isSystem; else regularMessage" class="system-message mx-auto">
+                <div class="system-message-content">
+                  {{ message.text }}
+                  <div *ngIf="consoleLog(transactions[getTransactionId(message.text)])"></div>
+                  <div *ngIf="transactions[getTransactionId(message.text)]" class="transaction-actions">
+                    <button
+                      *ngIf="transactions[getTransactionId(message.text)].status === 'PENDING' && !hasAccepted(getTransactionId(message.text))"
+                      class="btn btn-primary btn-sm"
+                      [disabled]="isAccepting[getTransactionId(message.text)]"
+                      (click)="acceptTransaction(getTransactionId(message.text))"
+                    >
+                      <span *ngIf="isAccepting[getTransactionId(message.text)]" class="spinner-border spinner-border-sm"></span>
+                      <span *ngIf="!isAccepting[getTransactionId(message.text)]">Aceptar</span>
+                    </button>
+                    <button
+                      *ngIf="transactions[getTransactionId(message.text)].status === 'PENDING' && !hasAccepted(getTransactionId(message.text))"
+                      class="btn btn-outline-danger btn-sm"
+                      [disabled]="isRejecting[getTransactionId(message.text)]"
+                      (click)="rejectTransaction(getTransactionId(message.text))"
+                    >
+                      <span *ngIf="isRejecting[getTransactionId(message.text)]" class="spinner-border spinner-border-sm"></span>
+                      <span *ngIf="!isRejecting[getTransactionId(message.text)]">Rechazar</span>
+                    </button>
+                    <button class="btn btn-link btn-sm" (click)="showTransactionDetails(getTransactionId(message.text))">Ver detalles</button>
+                  </div>
+                  <div *ngIf="transactions[getTransactionId(message.text)]?.status === 'PENDING' && hasAccepted(getTransactionId(message.text))" class="waiting-message">
+                    <i class="fas fa-hourglass-half me-1"></i> Esperando confirmación del otro usuario
+                  </div>
+                  <div *ngIf="transactions[getTransactionId(message.text)]?.status === 'COMPLETED'" class="completed-message">
+                    <i class="fas fa-check-circle me-1"></i> Transacción completada
+                  </div>
+                  <div *ngIf="transactions[getTransactionId(message.text)]?.status === 'REJECTED'" class="rejected-message">
+                    <i class="fas fa-times-circle me-1"></i> Transacción rechazada
+                  </div>
+                </div>
+              </div>
+              <ng-template #regularMessage>
+                <div class="message-bubble" [ngClass]="{'message-outgoing': isCurrentUser(message.senderId), 'message-incoming': !isCurrentUser(message.senderId)}">
+                  <div *ngIf="message.type !== 'TEXT'" class="message-type">
+                    {{ message.type === 'PROPOSAL' ? 'Propuesta' : 'Respuesta a propuesta' }}
+                  </div>
+                  <div class="message-content">
+                    {{ message.text }}
+                    <div *ngIf="message.productId || message.creditsOffered">
+                      <div *ngIf="message.productId">Producto: {{ getProductTitle(message.productId) }}</div>
+                      <div *ngIf="message.creditsOffered">Créditos: {{ message.creditsOffered }}</div>
+                    </div>
+                  </div>
+                  <div class="message-time">{{ message.time }}</div>
+                  <button *ngIf="message.type === 'PROPOSAL' && !isCurrentUser(message.senderId)" class="btn-respond" (click)="openResponseForm(message)">
+                    Responder
+                  </button>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="showProposalForm || showResponseForm" class="proposal-form">
+      <h3 class="form-title">{{ showProposalForm ? 'Crear propuesta' : 'Responder a propuesta' }}</h3>
+      <div *ngIf="showResponseForm && respondingToMessage" class="responding-to">
+        <p class="response-detail"><strong>Producto:</strong> {{ getProductTitle(respondingToMessage.productId) }}</p>
+        <p class="response-detail"><strong>Créditos:</strong> {{ respondingToMessage.creditsOffered || 0 }}</p>
+        <p class="response-detail"><strong>Mensaje:</strong> {{ respondingToMessage.text }}</p>
+      </div>
+      <form [formGroup]="proposalForm" (ngSubmit)="submitProposal()">
+        <div class="mb-3">
+          <label for="productId" class="form-label">Producto</label>
+          <select id="productId" class="form-select" formControlName="productId">
+            <option value="">Ninguno</option>
+            <option *ngFor="let product of userProducts" [value]="product.id">{{ product.title }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="creditsOffered" class="form-label">Créditos ofrecidos</label>
+          <input type="number" id="creditsOffered" class="form-control" formControlName="creditsOffered" min="0" />
+        </div>
+        <div class="mb-3">
+          <label for="content" class="form-label">Mensaje</label>
+          <textarea id="content" class="form-control" formControlName="content" rows="3"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="proposalForm.invalid">Enviar</button>
+          <button type="button" class="btn btn-outline-secondary" (click)="showProposalForm = false; showResponseForm = false">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="message-input-container" *ngIf="!showProposalForm && !showResponseForm">
+      <form class="input-group" (ngSubmit)="sendMessage()">
+        <input type="text" class="form-control message-input" [(ngModel)]="newMessage" [ngModelOptions]="{standalone: true}" placeholder="Escribe un mensaje..." />
+        <button type="submit" class="btn btn-send" [disabled]="!newMessage.trim()">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>

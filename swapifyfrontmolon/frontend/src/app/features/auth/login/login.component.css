@@ -1,0 +1,92 @@
+/* Estilos adicionales para el componente de login */
+:host {
+  display: block;
+  height: 100vh;
+  width: 100%;
+}
+
+/* Estilos para los inputs */
+input {
+  transition: all 0.2s ease;
+}
+
+input:focus {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para los botones */
+button {
+  transition: all 0.2s ease;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Estilos para el checkbox */
+input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Estilos para los enlaces */
+a {
+  transition: all 0.2s ease;
+}
+
+/* Estilos para el panel derecho */
+.md\:w-1\/2 img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+/* Asegurarse de que la imagen se muestre correctamente */
+.relative img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+/* Overlay para el testimonial */
+.relative .absolute {
+  z-index: 1;
+}
+
+/* Asegurar que la imagen remota se cargue correctamente */
+.relative img[src^="https://"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Mejorar la visibilidad del testimonial */
+.bg-white.bg-opacity-10 {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.rounded-pill{
+  width: 250px;	
+}
+.button-return{
+  width: 200px;
+  height: 50px;
+  font-size: 15px;
+  margin-right: 5px;
+
+}
+
+.back{
+  background-color: rgb(132, 218, 160);
+}
+
+/* Estilos para dispositivos móviles */
+@media (max-width: 768px) {
+  .w-full {
+    padding: 1.5rem;
+  }
+}

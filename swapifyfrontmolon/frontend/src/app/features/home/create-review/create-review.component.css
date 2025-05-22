@@ -1,0 +1,153 @@
+/* Contenedor principal */
+.review-container {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  /* Encabezado */
+  .review-header {
+    margin-bottom: 20px;
+  }
+  
+  .review-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+  }
+  
+  /* Formulario */
+  .review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .hidden-fields {
+    display: none;
+  }
+  
+  /* Sistema de estrellas */
+  .rating-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .rating-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+    min-width: 80px;
+  }
+  
+  .stars-container {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .star {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  
+  .star:hover {
+    transform: scale(1.1);
+  }
+  
+  .star-filled {
+    color: #2fa16c; /* Color naranja similar al de los botones de Swapify */
+  }
+  
+  .star-empty {
+    color: #d1d1d1;
+  }
+  
+  /* Área de comentarios */
+  .comment-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .comment-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .comment-textarea {
+    padding: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+  }
+  
+  .comment-textarea:focus {
+    outline: none;
+    border-color: #96bbaa;
+  }
+  
+  /* Botones de acción */
+  .review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  
+  .cancel-button {
+    padding: 10px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #333;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .cancel-button:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .submit-button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #96bbaa;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .submit-button:hover {
+    background-color: #2fa16c;
+  }
+  
+  .submit-button:disabled {
+    background-color: #ffb38a;
+    cursor: not-allowed;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .review-container {
+      padding: 16px;
+    }
+    
+    .rating-container {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  }
