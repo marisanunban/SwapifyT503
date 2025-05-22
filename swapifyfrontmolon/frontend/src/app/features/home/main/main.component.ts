@@ -413,4 +413,4 @@ export class MainComponent implements OnInit {
   loadSimilarProducts(): void {
     this.similarProducts = this.products.slice(0, 4);
   }
-}
+} 
