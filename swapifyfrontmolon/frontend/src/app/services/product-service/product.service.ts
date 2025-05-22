@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Product, CreateProductDto } from '../../models/product.model';
 
 @Injectable({
@@ -79,7 +80,7 @@ export class ProductService {
   ): Observable<Product[]> {
     const token = localStorage.getItem('token');
     if (!token) {
-      throw new Error('No hay token disponible. Por favor, inicia sesión.');
+      return throwError(() => new Error('No hay token disponible. Por favor, inicia sesión.'));
     }
 
     const headers = this.getAuthHeaders(token);
@@ -92,6 +93,13 @@ export class ProductService {
       ...(keyword && { keyword })
     };
 
-    return this.http.get<Product[]>(`${this.apiUrl}/by-coordinates`, { headers, params });
+    console.log('Enviando solicitud a /by-coordinates con parámetros:', params);
+
+    return this.http.get<Product[]>(`${this.apiUrl}/by-coordinates`, { headers, params }).pipe(
+      catchError(error => {
+        console.error('Error en searchProductsByCoordinates:', error);
+        return throwError(() => error);
+      })
+    );
   }
 }

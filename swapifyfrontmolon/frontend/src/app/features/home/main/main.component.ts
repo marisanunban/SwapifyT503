@@ -7,7 +7,9 @@ import { AuthService } from '../../../services/auth-service/auth.service';
 import { Product, Conversation } from '../../../models/product.model';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { UserService } from '../../../services/user-service/user.service';
-import { UserProfile, UserDto } from '../../../models/user.model'; // Import UserProfile and UserDto
+import { UserProfile, UserDto } from '../../../models/user.model';
+
+declare const google: any;
 
 @Component({
   selector: 'app-main',
@@ -23,16 +25,16 @@ export class MainComponent implements OnInit {
   searchCategory: boolean = false;
   isLoading: boolean = false;
   products: Product[] = [];
-  user: UserDto | null = null; // Changed to UserDto
+  user: UserDto | null = null;
   isProfileMenuOpen: boolean = false;
   isLocationModalOpen: boolean = false;
   radius: number = 10;
-  latitude: number | undefined;
-  longitude: number | undefined;
-
-  // Nuevas propiedades para las secciones
+  latitude: number = 40.416775; // Madrid por defecto
+  longitude: number = -3.703790; // Madrid por defecto
   recentlyViewed: Product[] = [];
   similarProducts: Product[] = [];
+  map: any;
+  marker: any; // Para el marcador en el mapa
 
   constructor(
     private productService: ProductService,
@@ -43,19 +45,17 @@ export class MainComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Cargar usuario
     this.authService.user$.subscribe(user => {
-      this.user = user as UserDto | null; // Changed to UserDto
+      this.user = user as UserDto | null;
       if (!this.user) {
         this.router.navigate(['/login']);
       } else {
-        // Cargar perfil completo del usuario para obtener profilePictureUrl
         const token = localStorage.getItem('token') ?? undefined;
         if (token) {
           this.userService.getUserProfile(token).subscribe({
             next: (profile: UserProfile) => {
               if (this.user) {
-                this.user = { ...this.user, profilePictureUrl: profile.profilePictureUrl }; // Changed to profilePictureUrl
+                this.user = { ...this.user, profilePictureUrl: profile.profilePictureUrl };
               }
             },
             error: (error) => {
@@ -66,20 +66,136 @@ export class MainComponent implements OnInit {
       }
     });
 
-    // Cargar productos iniciales
     this.loadProducts();
-
-    // Cargar productos vistos recientemente
     this.loadRecentlyViewed();
-
-    // Cargar productos similares (simulación o backend)
     this.loadSimilarProducts();
-
-    // Cargar conversaciones del usuario para asociarlas a los productos
     this.loadUserConversations();
   }
 
-  // Cargar todos los productos
+  initMap(): void {
+    const defaultLocation = { lat: this.latitude, lng: this.longitude }; // Usar valores iniciales
+    this.map = new google.maps.Map(document.getElementById('map'), {
+      center: defaultLocation,
+      zoom: 12,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    });
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.latitude = position.coords.latitude;
+          this.longitude = position.coords.longitude;
+          this.map.setCenter({ lat: this.latitude, lng: this.longitude });
+          this.addMarker(this.latitude, this.longitude);
+          console.log('Mapa inicializado en la ubicación del usuario:', { lat: this.latitude, lng: this.longitude });
+        },
+        (error) => {
+          console.error('Error al obtener la ubicación del usuario:', error);
+          alert('No se pudo obtener tu ubicación. Usando Madrid como ubicación predeterminada.');
+          this.addMarker(this.latitude, this.longitude);
+          console.log('Mapa inicializado en ubicación predeterminada (Madrid):', defaultLocation);
+        }
+      );
+    } else {
+      alert('La geolocalización no está soportada por tu navegador. Usando Madrid como ubicación predeterminada.');
+      this.addMarker(this.latitude, this.longitude);
+      console.log('Geolocalización no soportada, mapa inicializado en:', defaultLocation);
+    }
+
+    // Agregar listener para clics en el mapa
+    this.map.addListener('click', (event: any) => {
+      this.latitude = event.latLng.lat();
+      this.longitude = event.latLng.lng();
+      this.addMarker(this.latitude, this.longitude);
+      console.log('Ubicación seleccionada en el mapa:', { lat: this.latitude, lng: this.longitude });
+
+      // Geocodificación inversa para actualizar el campo de texto
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat: this.latitude, lng: this.longitude } }, (results: any, status: any) => {
+        if (status === google.maps.GeocoderStatus.OK && results[0]) {
+          const locationInput = document.getElementById('locationInput') as HTMLInputElement;
+          locationInput.value = results[0].formatted_address;
+          console.log('Dirección obtenida por geocodificación inversa:', results[0].formatted_address);
+        } else {
+          console.error('Error en geocodificación inversa:', status);
+        }
+      });
+    });
+  }
+
+  addMarker(lat: number, lng: number): void {
+    // Eliminar marcador anterior si existe
+    if (this.marker) {
+      this.marker.setMap(null);
+    }
+    // Crear nuevo marcador
+    this.marker = new google.maps.Marker({
+      position: { lat, lng },
+      map: this.map,
+      title: 'Ubicación seleccionada'
+    });
+  }
+
+  openLocationModal(): void {
+    this.isLocationModalOpen = true;
+    setTimeout(() => {
+      if (!this.map) {
+        this.initMap();
+      }
+    }, 0);
+  }
+
+  closeLocationModal(): void {
+    this.isLocationModalOpen = false;
+  }
+
+  centerMapOnLocation(): void {
+    const locationInput = (document.getElementById('locationInput') as HTMLInputElement).value;
+    if (!locationInput) {
+      alert('Por favor, introduce una ubicación');
+      return;
+    }
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: locationInput }, (results: any, status: any) => {
+      if (status === google.maps.GeocoderStatus.OK && results[0]) {
+        this.latitude = results[0].geometry.location.lat();
+        this.longitude = results[0].geometry.location.lng();
+        this.map.setCenter({ lat: this.latitude, lng: this.longitude });
+        this.addMarker(this.latitude, this.longitude);
+        console.log('Mapa centrado en:', locationInput, { lat: this.latitude, lng: this.longitude });
+      } else {
+        alert('No se pudo encontrar la ubicación. Inténtalo de nuevo.');
+        console.error('Error en geocodificación:', status);
+      }
+    });
+  }
+
+  updateRadius(): void {
+    console.log('Radio actualizado a:', this.radius);
+  }
+
+  applyFilterAndSearch(): void {
+    this.isLoading = true;
+    this.isLocationModalOpen = false;
+    this.search = true;
+    this.searchCategory = false;
+    this.productService
+      .searchProductsByCoordinates(this.latitude, this.longitude, this.radius, this.selectedCategory, this.searchKeyword)
+      .subscribe({
+        next: (products) => {
+          this.products = products;
+          this.isLoading = false;
+          this.updateProductConversations();
+        },
+        error: (error) => {
+          console.error('Error al buscar por coordenadas:', error);
+          this.isLoading = false;
+          alert('Error al buscar productos por ubicación. Por favor, intenta de nuevo.');
+        }
+      });
+  }
+
   loadProducts(): void {
     this.isLoading = true;
     const token = localStorage.getItem('token') ?? undefined;
@@ -87,7 +203,6 @@ export class MainComponent implements OnInit {
       next: (products) => {
         this.products = products;
         this.isLoading = false;
-        // Actualizar conversaciones para los productos
         this.updateProductConversations();
       },
       error: (error) => {
@@ -97,7 +212,6 @@ export class MainComponent implements OnInit {
     });
   }
 
-  // Buscar productos por palabra clave
   buscarProductos(): void {
     if (!this.searchKeyword.trim()) {
       this.search = false;
@@ -122,7 +236,6 @@ export class MainComponent implements OnInit {
       });
   }
 
-  // Filtrar productos por categoría
   filtrarPorCategoria(category: string): void {
     this.searchCategory = true;
     this.search = false;
@@ -140,7 +253,6 @@ export class MainComponent implements OnInit {
     });
   }
 
-  // Cargar conversaciones del usuario y asociarlas a los productos
   loadUserConversations(): void {
     if (!this.user) return;
     this.negotiationService.getUserConversations().subscribe({
@@ -153,7 +265,6 @@ export class MainComponent implements OnInit {
     });
   }
 
-  // Actualizar las conversaciones asociadas a los productos
   updateProductConversations(conversations?: Conversation[]): void {
     if (!conversations) {
       this.negotiationService.getUserConversations().subscribe({
@@ -169,7 +280,6 @@ export class MainComponent implements OnInit {
     }
   }
 
-  // Asignar conversaciones a los productos
   applyConversationsToProducts(conversations: Conversation[]): void {
     this.products = this.products.map(product => {
       const conversation = conversations.find(conv => conv.productId === product.id.toString());
@@ -185,52 +295,43 @@ export class MainComponent implements OnInit {
     });
   }
 
-  // Navegar a la página de creación de producto
   irACrear(): void {
     this.router.navigate(['/create-product']);
   }
 
-  // Navegar a la página de login
   irALogin(): void {
     this.router.navigate(['/login']);
   }
 
-  // Navegar al perfil del usuario
   irAProfile(): void {
     this.isProfileMenuOpen = false;
     this.router.navigate(['/profile']);
   }
 
-  // Navegar a los chats del usuario
   irAMisChats(): void {
     this.isProfileMenuOpen = false;
     this.router.navigate(['/chats']);
   }
 
-  // Navegar a los favoritos del usuario (aún sin implementar)
   irAFavoritos(): void {
     this.isProfileMenuOpen = false;
     this.router.navigate(['/favorites']);
   }
 
-  // Navegar a la página de contacto
   irAContacta(): void {
     this.router.navigate(['/contact']);
   }
 
-  // Cerrar sesión
   logout(): void {
     this.authService.logout();
     this.isProfileMenuOpen = false;
     this.router.navigate(['/login']);
   }
 
-  // Alternar el menú de perfil
   toggleProfileMenu(): void {
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
   }
 
-  // Navegar al detalle de un producto
   goToProductDetail(productId: number): void {
     const product = this.products.find(p => p.id === productId);
     if (product) {
@@ -239,7 +340,6 @@ export class MainComponent implements OnInit {
     this.router.navigate([`/product/${productId}`]);
   }
 
-  // Iniciar una negociación
   startNegotiation(productId: number): void {
     if (!this.user) {
       this.router.navigate(['/login']);
@@ -254,7 +354,6 @@ export class MainComponent implements OnInit {
           alert('No se pudo iniciar la conversación. Inténtalo de nuevo.');
           return;
         }
-        // Actualizar el producto con la nueva conversación
         this.products = this.products.map(p =>
           p.id === productId ? { ...p, conversation } : p
         );
@@ -264,7 +363,6 @@ export class MainComponent implements OnInit {
         this.similarProducts = this.similarProducts.map(p =>
           p.id === productId ? { ...p, conversation } : p
         );
-        // Navegar al chat usando el objeto state
         this.router.navigate(['/chat'], { state: { conversationId: conversation.id } }).then(success => {
           if (!success) {
             console.error('La navegación al chat falló');
@@ -281,7 +379,6 @@ export class MainComponent implements OnInit {
     });
   }
 
-  // Ir a un chat existente
   goToChat(conversationId: number): void {
     console.log('Intentando navegar a /chat con conversationId:', conversationId);
     this.router.navigate(['/chat'], { state: { conversationId } }).then(success => {
@@ -294,58 +391,6 @@ export class MainComponent implements OnInit {
     });
   }
 
-  // Abrir el modal de ubicación
-  openLocationModal(): void {
-    this.isLocationModalOpen = true;
-  }
-
-  // Cerrar el modal de ubicación
-  closeLocationModal(): void {
-    this.isLocationModalOpen = false;
-  }
-
-  // Centrar el mapa en la ubicación
-  centerMapOnLocation(): void {
-    const locationInput = (document.getElementById('locationInput') as HTMLInputElement).value;
-    // Aquí deberías integrar una API de geocodificación (como Google Maps Geocoding API)
-    // Por ahora, simularemos las coordenadas (Madrid como ejemplo)
-    if (locationInput.toLowerCase().includes('madrid')) {
-      this.latitude = 40.416775;
-      this.longitude = -3.703790;
-    } else {
-      this.latitude = undefined;
-      this.longitude = undefined;
-    }
-    console.log('Centrando mapa en:', locationInput, { lat: this.latitude, lng: this.longitude });
-  }
-
-  // Actualizar el radio del mapa
-  updateRadius(): void {
-    console.log('Radio actualizado a:', this.radius);
-  }
-
-  // Aplicar filtro de ubicación y buscar
-  applyFilterAndSearch(): void {
-    this.isLoading = true;
-    this.isLocationModalOpen = false;
-    this.search = true;
-    this.searchCategory = false;
-    this.productService
-      .searchProductsByCoordinates(this.latitude, this.longitude, this.radius, this.selectedCategory, this.searchKeyword)
-      .subscribe({
-        next: (products) => {
-          this.products = products;
-          this.isLoading = false;
-          this.updateProductConversations();
-        },
-        error: (error) => {
-          console.error('Error al buscar por coordenadas:', error);
-          this.isLoading = false;
-        }
-      });
-  }
-
-  // Añadir un producto a "Vistos Recientemente"
   addToRecentlyViewed(product: Product): void {
     const index = this.recentlyViewed.findIndex(p => p.id === product.id);
     if (index === -1) {
@@ -357,21 +402,15 @@ export class MainComponent implements OnInit {
     }
   }
 
-  // Cargar "Vistos Recientemente" desde localStorage
   loadRecentlyViewed(): void {
     const saved = localStorage.getItem('recentlyViewed');
     if (saved) {
       this.recentlyViewed = JSON.parse(saved);
-      // Asegurarnos de que los productos tengan las conversaciones actualizadas
       this.updateProductConversations();
     }
   }
 
-  // Cargar "Más como estos" (simulación)
   loadSimilarProducts(): void {
-    // Simulación: Tomar algunos productos aleatorios de la lista
     this.similarProducts = this.products.slice(0, 4);
-    // Para una integración real, podrías usar un endpoint del backend:
-    // this.productService.getSimilarProducts().subscribe(products => this.similarProducts = products);
   }
 }
