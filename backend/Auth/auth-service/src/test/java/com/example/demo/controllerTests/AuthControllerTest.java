@@ -26,10 +26,10 @@ public class AuthControllerTest {
 
     private RegisterRequestDto registerRequest;
 
-    @BeforeEach
-    public void setUp() {
-        registerRequest = new RegisterRequestDto("test@example.com", "password123");
-    }
+//    @BeforeEach
+//    public void setUp() {
+//        registerRequest = new RegisterRequestDto("test@example.com", "password123");
+//    }
 
     @Test
     void register_ShouldReturnSuccessMessage_WhenEmailDoesNotExist() {
