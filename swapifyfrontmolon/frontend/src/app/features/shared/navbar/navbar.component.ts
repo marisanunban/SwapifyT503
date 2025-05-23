@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { NegotiationService } from '../../../services/negotiation-service/negotiation.service';
 import { UserService } from '../../../services/user-service/user.service';
 import { Product } from '../../../models/product.model';
-import { UserDto, UserProfile } from '../../../models/user.model'; // Importamos UserDto
+import { UserDto, UserProfile } from '../../../models/user.model';
 
 declare var google: any;
 
@@ -16,7 +16,7 @@ declare var google: any;
   imports: [CommonModule, FormsModule],
   standalone: true,
   templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.css'
+  styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent implements OnInit {
   user: UserDto | null = null;
@@ -32,18 +32,24 @@ export class NavbarComponent implements OnInit {
   isProfileMenuOpen: boolean = false;
   map: any;
   isLoading: boolean = false;
+  favoriteCount: number = 0; // Nuevo: conteo de favoritos
 
   constructor(
     private router: Router,
     private productService: ProductService,
     private authService: AuthService,
     private negotiationService: NegotiationService,
-    private userService: UserService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
     this.authService.user$.subscribe(user => {
       this.user = user;
+      if (user) {
+        this.loadFavoriteCount();
+      } else {
+        this.favoriteCount = 0;
+      }
     });
 
     const token = localStorage.getItem('token');
@@ -56,8 +62,21 @@ export class NavbarComponent implements OnInit {
           console.error('Error al obtener el perfil del usuario:', err);
         }
       });
-    } else {
-      console.error('No se encontró un token en localStorage.');
+    }
+  }
+
+  loadFavoriteCount(): void {
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.productService.getUserFavorites(token).subscribe({
+        next: (favorites) => {
+          this.favoriteCount = favorites.length;
+        },
+        error: (err) => {
+          console.error('Error al cargar el conteo de favoritos:', err);
+          this.favoriteCount = 0;
+        }
+      });
     }
   }
 
@@ -144,8 +163,6 @@ export class NavbarComponent implements OnInit {
       console.error('Mapa o latLng no definidos:', { map: this.map, latLng });
       return;
     }
-
-    console.log('latLng recibido en addMarker:', latLng);
 
     let lat: number;
     let lng: number;
@@ -254,7 +271,6 @@ export class NavbarComponent implements OnInit {
         this.searchKeyword
       ).subscribe({
         next: (response: Product[]) => {
-          console.log('Respuesta del backend:', response);
           this.products = response;
           this.search = !!this.searchKeyword || !!this.tempSelectedLatLng;
           this.searchCategory = !!this.selectedCategory && !this.searchKeyword && !this.tempSelectedLatLng;
@@ -314,6 +330,10 @@ export class NavbarComponent implements OnInit {
     this.buscarProductos();
   }
 
+  irAMain() {
+    this.router.navigate(['/main']);
+  }
+
   irACrear() {
     this.router.navigate(['/create']);
   }
@@ -323,18 +343,22 @@ export class NavbarComponent implements OnInit {
   }
 
   irAProfile() {
+    this.isProfileMenuOpen = false;
     this.router.navigate(['/profile']);
   }
 
   irAMisChats() {
-    this.router.navigate(['/chats']);
+    this.isProfileMenuOpen = false;
+    this.router.navigate(['/chat']);
   }
 
   irAFavoritos() {
+    this.isProfileMenuOpen = false;
     this.router.navigate(['/favorites']);
   }
 
   irAContacta() {
+    this.isProfileMenuOpen = false;
     this.router.navigate(['/contact']);
   }
 
@@ -343,6 +367,7 @@ export class NavbarComponent implements OnInit {
   }
 
   logout() {
+    this.isProfileMenuOpen = false;
     this.authService.logout();
     this.router.navigate(['/main']);
   }

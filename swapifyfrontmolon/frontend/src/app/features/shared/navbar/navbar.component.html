@@ -1,119 +1,137 @@
 <nav class="navbar">
-    <div class="container">
-      <div class="navbar-content d-flex align-items-center justify-content-between">
-        <!-- Logo -->
-        <a href="#" class="navbar-logo">
-          <img src="assets/swapify2.PNG" id="logo" alt="Swapify Logo">
-        </a>
-  
-        <!-- Buscador -->
-        <div class="search-container d-flex align-items-center">
-          <div class="search-box d-flex align-items-center">
-            <i class="search-icon" (click)="buscarProductos()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-              </svg>
-            </i>
-            <input
-              type="text"
-              placeholder="Buscar"
-              [(ngModel)]="searchKeyword"
-              class="search-input"
-              (keyup.enter)="buscarProductos()"
-            />
-          </div>
-  
-          <!-- Botón de búsqueda -->
-          <button (click)="buscarProductos()" class="search-button">
-            Buscar
-          </button>
-  
-          <button (click)="irACrear()" class="create-product-button">
-            Crear Producto
-          </button>
-          <select
-            [(ngModel)]="selectedCategory"
-            class="category-select"
-          >
-            <option value="">Todas las categorías</option>
-            <option value="Hogar">Hogar</option>
-            <option value="Deportes">Deportes</option>
-            <option value="Ropa">Ropa</option>
-            <option value="Electrónica">Electrónica</option>
-          </select>
+  <div class="container">
+    <div class="navbar-content d-flex align-items-center justify-content-between">
+      <!-- Logo -->
+      <a href="#" class="navbar-logo" (click)="irAMain(); $event.preventDefault()">
+        <img src="assets/swapify2.PNG" id="logo" alt="Swapify Logo">
+      </a>
+
+      <!-- Buscador -->
+      <div class="search-container d-flex align-items-center">
+        <div class="search-box d-flex align-items-center">
+          <i class="search-icon" (click)="buscarProductos()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+            </svg>
+          </i>
+          <input
+            type="text"
+            placeholder="Buscar"
+            [(ngModel)]="searchKeyword"
+            class="search-input"
+            (keyup.enter)="buscarProductos()"
+          />
         </div>
-  
-        <!-- Acciones de usuario -->
-        <div class="user-actions d-flex align-items-center gap-3">
-          <!-- Si no hay usuario -->
-          <div *ngIf="!user" class="auth-buttons d-flex gap-2">
-            <button 
-              (click)="irALogin()" 
-              type="button" 
-              class="login-button">
-              Regístrate o inicia sesión
-            </button>
-          </div>
-  
-          <!-- Si hay usuario -->
-          <div *ngIf="user" class="user-menu d-flex align-items-center gap-3">
-            <!-- Créditos -->
-            <span class="credits-badge">
-              Créditos: {{ user.credits }}
-            </span>
-            
-            <!-- Botón de perfil -->
-            <div class="profile-dropdown">
-              <div class="profile-toggle d-flex align-items-center" (click)="toggleProfileMenu()">
-                <img [src]="userProfile?.profilePictureUrl || 'assets/placeholder.svg'" alt="Imagen de perfil" class="profile-image">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="12" 
-                  height="12" 
-                  fill="currentColor" 
-                  [ngClass]="{'rotate-180': isProfileMenuOpen}" 
-                  viewBox="0 0 16 16">
-                  <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-                </svg>
-              </div>
-  
-              <!-- Menú desplegable -->
-              <div 
-                *ngIf="isProfileMenuOpen" 
-                class="dropdown-menu">
-                <a (click)="irAProfile()" class="dropdown-item">Perfil</a>
-                <a (click)="irAMisChats()" class="dropdown-item">Mis chats</a>
-                <a (click)="irAFavoritos()" class="dropdown-item">Favoritos</a>
-                <div class="dropdown-divider"></div>
-                <a (click)="logout()" class="dropdown-item logout-item">Cerrar sesión</a>
-              </div>
+
+        <!-- Botón de búsqueda -->
+        <button (click)="buscarProductos()" class="search-button">
+          Buscar
+        </button>
+
+        <button (click)="irACrear()" class="create-product-button">
+          Crear Producto
+        </button>
+        <select
+          [(ngModel)]="selectedCategory"
+          class="category-select"
+          (change)="buscarProductos()"
+        >
+          <option value="">Todas las categorías</option>
+          <option value="Hogar">Hogar</option>
+          <option value="Deportes">Deportes</option>
+          <option value="Ropa">Ropa</option>
+          <option value="Electrónica">Electrónica</option>
+        </select>
+      </div>
+
+      <!-- Acciones de usuario -->
+      <div class="user-actions d-flex align-items-center gap-3">
+        <!-- Si no hay usuario -->
+        <div *ngIf="!user" class="auth-buttons d-flex gap-2">
+          <button 
+            (click)="irALogin()" 
+            type="button" 
+            class="login-button">
+            Regístrate o inicia sesión
+          </button>
+        </div>
+
+        <!-- Si hay usuario -->
+        <div *ngIf="user" class="user-menu d-flex align-items-center gap-3">
+          <!-- Ícono de favoritos -->
+          <button class="favorites-icon" (click)="irAFavoritos()" title="Ver favoritos">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+              <path d="m8 2.748-.717-.737C5.6.281 2.814.805 1.318 3.093.588 4.133.162 5.562.5 7.041c.338 1.479 1.5 2.75 3.5 4.25 1.5 1.125 3.182 2.068 4.5 2.659 1.318-.591 3-1.534 4.5-2.659 2-1.5 3.162-2.771 3.5-4.25.338-1.479-.088-2.908-.818-3.948-1.496-2.288-4.282-2.812-5.965-1.082L8 2.748zm0 1.5c1.068 0 2.132.527 3.465 1.854 1.133 1.125 1.696 2.354 1.535 3.563-.161 1.209-1.071 2.354-2.465 3.604-1.318.988-2.818 1.854-4.035 2.354-.717.295-1.465.295-2.182 0-1.217-.5-2.717-1.366-4.035-2.354-1.394-1.25-2.304-2.395-2.465-3.604-.161-1.209.402-2.438 1.535-3.563C5.868 4.775 6.932 4.248 8 4.248z"/>
+            </svg>
+            <span *ngIf="favoriteCount > 0" class="favorite-badge">{{ favoriteCount }}</span>
+          </button>
+
+          <!-- Créditos -->
+          <span class="credits-badge">
+            Créditos: {{ user.credits }}
+          </span>
+          
+          <!-- Botón de perfil -->
+          <div class="profile-dropdown">
+            <div class="profile-toggle d-flex align-items-center" (click)="toggleProfileMenu()">
+              <img [src]="userProfile?.profilePictureUrl || 'assets/placeholder.svg'" alt="Imagen de perfil" class="profile-image">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="12" 
+                height="12" 
+                fill="currentColor" 
+                [ngClass]="{'rotate-180': isProfileMenuOpen}" 
+                viewBox="0 0 16 16">
+                <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
+              </svg>
+            </div>
+
+            <!-- Menú desplegable -->
+            <div *ngIf="isProfileMenuOpen" class="dropdown-menu">
+              <button (click)="irAProfile()" class="dropdown-item">Perfil</button>
+              <button (click)="irAMisChats()" class="dropdown-item">Mis chats</button>
+              <button (click)="irAFavoritos()" class="dropdown-item">Favoritos</button>
+              <div class="dropdown-divider"></div>
+              <button (click)="logout()" class="dropdown-item logout-item">Cerrar sesión</button>
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 </nav>
-<!-- Categorías -->
-<div class="categories-bar">
-  <div class="container">
-    <div class="categories-list">
-      <button class="category-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
-        </svg>
-        Todas las categorías
-      </button>
-      <button (click)="filtrarPorCategoria('Hogar')" class="category-item">Hogar</button>
-      <button (click)="filtrarPorCategoria('Deportes')" class="category-item">Deportes</button>
-      <button (click)="filtrarPorCategoria('Ropa')" class="category-item">Ropa</button>
-      <button (click)="filtrarPorCategoria('Electrónica')" class="category-item">Electrónica</button>
-      <button (click)="irAContacta()" class="category-item">Contáctanos</button>
-      <button (click)="openLocationModal()" class="category-item">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
-        </svg>
-        Ubicación
-      </button>
+
+<!-- Modal de ubicación -->
+<div *ngIf="isLocationModalOpen" class="location-modal-backdrop">
+  <div class="location-modal">
+    <h2 class="modal-title">Seleccionar ubicación</h2>
+    <input
+      id="locationInput"
+      type="text"
+      placeholder="Introduce una ubicación"
+      class="location-input"
+    />
+    <button (click)="centerMapOnLocation()" class="center-map-button">
+      Centrar en ubicación
+    </button>
+    <div id="map" class="location-map"></div>
+    <div class="radius-control">
+      <label for="radiusRange" class="radius-label">Radio (km):</label>
+      <input
+        id="radiusRange"
+        type="range"
+        min="1"
+        max="100"
+        step="1"
+        [(ngModel)]="radius"
+        class="radius-slider"
+        (input)="updateRadius()"
+      />
+      <p class="radius-value">Radio seleccionado: {{ radius }} km</p>
+    </div>
+    <div class="modal-actions">
+      <button (click)="closeLocationModal()" class="cancel-button">Cancelar</button>
+      <button (click)="applyFilterAndSearch()" class="apply-button">Aplicar y Buscar</button>
     </div>
   </div>
 </div>

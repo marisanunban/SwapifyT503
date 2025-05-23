@@ -10,6 +10,7 @@ import { ChatComponent } from './features/home/chat/chat.component';
 import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { ProductDetailComponent } from './features/home/product-detail/product-detail.component';
 import { CreateReviewComponent } from './features/home/create-review/create-review.component';
+import { FavoritesComponent } from './features/home/favorites/favorites.component'; // Importar FavoritesComponent
 
 export const routes: Routes = [
   { path: 'main', component: MainComponent },
@@ -19,7 +20,7 @@ export const routes: Routes = [
   { path: 'home', redirectTo: '/main', pathMatch: 'full' },
   { path: 'profile', component: ProfileComponent },
   { path: 'profile/:userId', component: ProfileComponent },
-  { path: 'viewOtherUser/:nickname', component: ProfileComponent }, // Usar nickname como parámetro
+  { path: 'viewOtherUser/:nickname', component: ProfileComponent },
   { path: 'create', component: CreateProductComponent },
   { path: 'edit/:id', component: EditProductComponent },
   { path: 'contact', component: ContactComponent },
@@ -28,5 +29,6 @@ export const routes: Routes = [
   { path: 'resetPassword', component: ResetPasswordComponent },
   { path: 'product/:id', component: ProductDetailComponent },
   { path: 'createReview/:productId', component: CreateReviewComponent },
+  { path: 'favorites', component: FavoritesComponent }, // Nueva ruta para favoritos
   { path: '**', redirectTo: '/main' }
 ];

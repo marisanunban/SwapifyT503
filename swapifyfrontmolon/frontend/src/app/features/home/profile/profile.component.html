@@ -1,13 +1,11 @@
 <app-navbar></app-navbar>
-<!-- Header -->
 
-  
-  <!-- Contenido principal - Perfil de vendedor -->
-  <div class="container mx-auto px-4 py-8 min-h-screen">
+<main>
+  <div class="container">
     <!-- Encabezado del perfil -->
     <div class="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
       <!-- Portada -->
-      <div class="h-48 bg-gradient-to-r from-teal-500 to-green-400 relative" style="background-color: rgb(132, 218, 160); background-size: cover; background-position: center;">
+      <div class="h-24 bg-[var(--wallapop-primary-light)] relative">
       </div>
       
       <!-- Información del perfil -->
@@ -16,7 +14,7 @@
           <!-- Avatar -->
           <div class="relative -mt-16 mr-6">
             <img [src]="profileImageUrl" class="w-32 h-32 rounded-full border-4 border-white" alt="Foto de perfil">
-            <button class="absolute bottom-0 right-0 bg-teal-500 text-white p-1 rounded-full">
+            <button class="absolute bottom-0 right-0 bg-[var(--wallapop-primary)] text-white p-1 rounded-full">
               <svg xmlns="http://www.w3.org/2000/svg" (click)="enableEditing()" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -28,39 +26,24 @@
           <div class="py-4 flex-grow">
             <div class="flex flex-wrap items-center justify-between">
               <div class="flex items-center">
-                <h3 class="text-2xl font-bold m-1">{{nickname}} </h3>
-                <button class="text-teal-600 hover:text-teal-800" (click)="toggleEditUsername()">
-                  <svg xmlns="http://www.w3.org/2000/svg"  class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <h3 class="text-2xl font-bold m-1">{{nickname}}</h3>
+                <button class="text-[var(--wallapop-primary)] hover:text-[var(--wallapop-primary-dark)]" (click)="toggleEditUsername()">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                 </button>
                 <div *ngIf="isEditingUsername">
-                  <input type="text" [(ngModel)]="nickname" class="mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="Nuevo nombre de usuario">
-                  <button (click)="updateUsername()" class="mt-2 bg-teal-500 text-white px-4 py-2 rounded-md">Guardar</button>
+                  <input type="text" [(ngModel)]="nickname" class="mt-2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--wallapop-primary)] focus:border-[var(--wallapop-primary)]" placeholder="Nuevo nombre de usuario">
+                  <button (click)="updateUsername()" class="mt-2 bg-[var(--wallapop-primary)] text-white px-4 py-2 rounded-md">Guardar</button>
                 </div>
               </div>
               <div class="flex mt-2 md:mt-0">
                 <div class="relative mr-2">
-                  <div class="relative">
-                    <div class="relative">
-                      <button class="flex items-center px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50" (click)="openReviewModal()">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-                <div class="relative">
-                  <div class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                    <div class="py-1">
-                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Editar perfil</a>
-                      <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Configuración</a>
-                      <div class="border-t border-gray-100"></div>
-                      <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Cerrar sesión</a>
-                    </div>
-                  </div>
+                  <button class="flex items-center px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50" (click)="openReviewModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -78,7 +61,7 @@
           <div class="p-6">
             <div class="flex justify-between items-center mb-4">
               <h5 class="text-lg font-semibold">Sobre mí</h5>
-              <button class="text-teal-600 hover:text-teal-800">
+              <button class="text-[var(--wallapop-primary)] hover:text-[var(--wallapop-primary-dark)]">
                 <svg xmlns="http://www.w3.org/2000/svg" (click)="enableEditingMe()" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
@@ -92,15 +75,15 @@
             <div class="mb-4">
               <div class="flex items-center mb-3">
                 <button (click)="updateLocation()">
-                  <svg xmlns="http://www.w3.org/2000/svg"  class="h-5 w-5 text-teal-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--wallapop-primary)] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-              </button>
+                </button>
                 <span class="text-gray-700">{{ municipio || 'Ubicación no disponible' }} , {{pais}}</span>
               </div>
               <div class="flex items-center mb-3">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-[var(--wallapop-primary)] mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 <span class="text-gray-700">Vendedor verificado</span>
@@ -129,7 +112,7 @@
             <!-- Valoraciones -->
             <div class="flex justify-between items-center mb-2">
               <h6 class="font-medium mb-0">Valoraciones</h6>
-              <a href="#" class="text-teal-600 text-sm hover:underline">Ver todas</a>
+              <a href="#" class="text-[var(--wallapop-primary)] text-sm hover:underline">Ver todas</a>
             </div>
             <div class="mb-2">
               <div class="flex items-center mb-1">
@@ -137,7 +120,7 @@
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg></span>
                 <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div class="bg-green-500 h-full" style="width: 85%"></div>
+                  <div class="bg-[var(--wallapop-primary)] h-full" style="width: 85%"></div>
                 </div>
                 <span class="text-sm">85%</span>
               </div>
@@ -146,7 +129,7 @@
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg></span>
                 <div class="flex-grow h-1.5 mx-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div class="bg-green-500 h-full" style="width: 10%"></div>
+                  <div class="bg-[var(--wallapop-primary)] h-full" style="width: 10%"></div>
                 </div>
                 <span class="text-sm">10%</span>
               </div>
@@ -186,12 +169,12 @@
           <div class="p-6">
             <h5 class="text-lg font-semibold mb-3">Categorías</h5>
             <div class="flex flex-wrap gap-2">
-              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Electrónica</a>
-              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Fotografía</a>
-              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Smartphones</a>
-              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Accesorios</a>
-              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Ordenadores</a>
-              <a href="#" class="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm hover:bg-green-100">Audio</a>
+              <a href="#" class="px-3 py-1 bg-[var(--wallapop-primary-light)] text-[var(--wallapop-primary)] rounded-full text-sm hover:bg-[var(--wallapop-primary)] hover:text-white">Electrónica</a>
+              <a href="#" class="px-3 py-1 bg-[var(--wallapop-primary-light)] text-[var(--wallapop-primary)] rounded-full text-sm hover:bg-[var(--wallapop-primary)] hover:text-white">Fotografía</a>
+              <a href="#" class="px-3 py-1 bg-[var(--wallapop-primary-light)] text-[var(--wallapop-primary)] rounded-full text-sm hover:bg-[var(--wallapop-primary)] hover:text-white">Smartphones</a>
+              <a href="#" class="px-3 py-1 bg-[var(--wallapop-primary-light)] text-[var(--wallapop-primary)] rounded-full text-sm hover:bg-[var(--wallapop-primary)] hover:text-white">Accesorios</a>
+              <a href="#" class="px-3 py-1 bg-[var(--wallapop-primary-light)] text-[var(--wallapop-primary)] rounded-full text-sm hover:bg-[var(--wallapop-primary)] hover:text-white">Ordenadores</a>
+              <a href="#" class="px-3 py-1 bg-[var(--wallapop-primary-light)] text-[var(--wallapop-primary)] rounded-full text-sm hover:bg-[var(--wallapop-primary)] hover:text-white">Audio</a>
             </div>
           </div>
         </div>
@@ -202,8 +185,8 @@
         <!-- Añadir producto -->
         <div *ngIf="isEditing">
           <label for="profileImageUrl">Añada un archivo de imagen</label>
-          <input type="file" id="profileImageUrl" (change)="onFileSelected($event)" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-          <button (click)="saveProfile()">Guardar</button>
+          <input type="file" id="profileImageUrl" (change)="onFileSelected($event)" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--wallapop-primary)] focus:border-[var(--wallapop-primary)]">
+          <button (click)="saveProfile()" class="bg-[var(--wallapop-primary)] text-white px-4 py-2 rounded-md">Guardar</button>
 
           <div *ngIf="profileImageUrl">
             <p>Vista previa:</p>
@@ -211,87 +194,82 @@
           </div>
         </div>
         <div *ngIf="isEditingMe">
-          <label for="aboutMeText">Sobre mi:</label>
-          <input id="aboutMeText" [(ngModel)]="aboutMe" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
-          <button (click)="saveProfileAbout()">Guardar</button>
+          <label for="aboutMeText">Sobre mí:</label>
+          <input id="aboutMeText" [(ngModel)]="aboutMe" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--wallapop-primary)] focus:border-[var(--wallapop-primary)]">
+          <button (click)="saveProfileAbout()" class="bg-[var(--wallapop-primary)] text-white px-4 py-2 rounded-md">Guardar</button>
         </div>
         
         <!-- Pestañas de contenido -->
-<div class="border-b border-gray-200 mb-6">
-  <nav class="flex">
-    <a 
-      href="#" 
-      class="px-4 py-3 text-decoration-none font-medium "
-      [class.text-success]="mostrarSeccionProductos"
-      [class.border-b-2]="mostrarSeccionProductos"
-      [class.border-teal-600]="mostrarSeccionProductos"
-      [class.text-gray-500]="!mostrarSeccionProductos"
-      (click)="mostrarProductos(); $event.preventDefault()"
-    >
-      Productos a la venta ({{products.length}})
-    </a>
-    <a 
-      href="#" 
-      class="px-4 py-3 text-decoration-none font-medium"
-      [class.text-success]="!mostrarSeccionProductos"
-      [class.border-b-2]="!mostrarSeccionProductos"
-      [class.border-teal-600]="!mostrarSeccionProductos"
-      [class.text-gray-500]="mostrarSeccionProductos"
-      (click)="mostrarConversaciones(); $event.preventDefault()"
-    >
-      Conversaciones ({{conversations.length}})
-    </a>
-  </nav>
-</div>
+        <div class="border-b border-gray-200 mb-6">
+          <nav class="flex">
+            <a 
+              href="#" 
+              class="px-4 py-3 text-decoration-none font-medium"
+              [class.text-[var(--wallapop-primary)]]="mostrarSeccionProductos"
+              [class.border-b-2]="mostrarSeccionProductos"
+              [class.border-[var(--wallapop-primary)]]="mostrarSeccionProductos"
+              [class.text-gray-500]="!mostrarSeccionProductos"
+              (click)="mostrarProductos(); $event.preventDefault()"
+            >
+              Productos a la venta ({{products.length}})
+            </a>
+            <a 
+              href="#" 
+              class="px-4 py-3 text-decoration-none font-medium"
+              [class.text-[var(--wallapop-primary)]]="!mostrarSeccionProductos"
+              [class.border-b-2]="!mostrarSeccionProductos"
+              [class.border-[var(--wallapop-primary)]]="!mostrarSeccionProductos"
+              [class.text-gray-500]="mostrarSeccionProductos"
+              (click)="mostrarConversaciones(); $event.preventDefault()"
+            >
+              Conversaciones ({{conversations.length}})
+            </a>
+          </nav>
+        </div>
 
-<!-- Sección de productos -->
-<div *ngIf="mostrarSeccionProductos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-  <div *ngFor="let product of paginatedProducts" class="bg-white rounded-lg shadow-sm overflow-hidden">
-    <div class="relative">
-      <img [src]="product.imageUrl" class="w-full h-48 object-cover" alt="Producto">
-    </div>
-    <div class="p-4">
-      <h5 class="text-lg font-medium">{{product.title}}</h5>
-      <p class="text-gray-600 text-sm">{{product.description}}</p>
-      <span class="font-bold text-teal-600">{{product.price}}</span>
-    </div>
-    <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
-      <button class="flex items-center text-teal-600 hover:text-teal-800" (click)="irAEditar(product.id)">
-        <i class="fas fa-edit mr-1"></i> Editar
-      </button>
-      <button class="flex items-center text-red-500 hover:text-red-700" (click)="eliminarProducto(product.id, product.imageId)">
-        <i class="fas fa-trash mr-1"></i> Eliminar
-      </button>
-    </div>
-  </div>
-</div>
+        <!-- Sección de productos -->
+        <div *ngIf="mostrarSeccionProductos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div *ngFor="let product of paginatedProducts" class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="relative">
+              <img [src]="product.imageUrl" class="w-full h-48 object-cover" alt="Producto">
+            </div>
+            <div class="p-4">
+              <h5 class="text-lg font-medium">{{product.title}}</h5>
+              <p class="text-gray-600 text-sm">{{product.description}}</p>
+              <span class="font-bold text-[var(--wallapop-primary)]">{{product.price}}</span>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
+              <button class="flex items-center text-[var(--wallapop-primary)] hover:text-[var(--wallapop-primary-dark)]" (click)="irAEditar(product.id)">
+                <i class="fas fa-edit mr-1"></i> Editar
+              </button>
+              <button class="flex items-center text-[#e53935] hover:text-[#e53935]" (click)="eliminarProducto(product.id, product.imageId)">
+                <i class="fas fa-trash mr-1"></i> Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
 
-<!-- Sección de conversaciones -->
-<div *ngIf="!mostrarSeccionProductos" class="bg-white rounded-lg shadow-sm p-6 mb-6">
-  <h5 class="text-lg font-semibold mb-4">Conversaciones activas</h5>
-  <div *ngFor="let conversation of conversations" class="border-b border-gray-200 py-3">
-    <div class="flex justify-between items-center">
-      <div>
-        <p class="font-medium">Conversación con: {{ otherUserNames[conversation.id] || 'Cargando...' }}</p>
-        <p class="text-sm text-gray-600">Estado: {{ conversation.status }}</p>
-        <p class="text-sm text-gray-600">Creado: {{ conversation.createdAt | date:'short' }}</p>
-      </div>
-      <div class="flex items-center space-x-4">
-        <button class=" m-2 flex items-center text-blue-500 hover:text-blue-700" (click)="goToChat(conversation.id)">
-          <i class="fas fa-comments mr-1"></i> Ir al chat
-        </button>
-        <button class="flex items-center text-red-500 hover:text-red-700" (click)="deleteConversation(conversation.id)">
-          <i class="fas fa-trash mr-1"></i> Eliminar
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-         
-          
-          
-          
-          
+        <!-- Sección de conversaciones -->
+        <div *ngIf="!mostrarSeccionProductos" class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h5 class="text-lg font-semibold mb-4">Conversaciones activas</h5>
+          <div *ngFor="let conversation of conversations" class="border-b border-gray-200 py-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="font-medium">Conversación con: {{ otherUserNames[conversation.id] || 'Cargando...' }}</p>
+                <p class="text-sm text-gray-600">Estado: {{ conversation.status }}</p>
+                <p class="text-sm text-gray-600">Creado: {{ conversation.createdAt | date:'short' }}</p>
+              </div>
+              <div class="flex items-center space-x-4">
+                <button class="m-2 flex items-center text-[var(--wallapop-primary)] hover:text-[var(--wallapop-primary-dark)]" (click)="goToChat(conversation.id)">
+                  <i class="fas fa-comments mr-1"></i> Ir al chat
+                </button>
+                <button class="flex items-center text-[#e53935] hover:text-[#e53935]" (click)="deleteConversation(conversation.id)">
+                  <i class="fas fa-trash mr-1"></i> Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         
         <!-- Paginación -->
         <div class="mt-6 flex justify-center">
@@ -309,12 +287,12 @@
             <button 
               *ngFor="let page of totalPages; let i = index"
               class="py-2 px-4"
-              [class.bg-teal-600]="currentPage === page"
+              [class.bg-[var(--wallapop-primary)]]="currentPage === page"
               [class.text-white]="currentPage === page"
               [class.bg-white]="currentPage !== page"
               [class.text-gray-500]="currentPage !== page"
               [class.border]="true"
-              [class.border-teal-600]="currentPage === page"
+              [class.border-[var(--wallapop-primary)]]="currentPage === page"
               [class.border-gray-300]="currentPage !== page"
               (click)="currentPage = page"
             >
@@ -334,6 +312,7 @@
       </div>
     </div>
   </div>
+</main>
 
 <!-- Modal de reseñas -->
 <div *ngIf="showReviewModal" class="review-modal-overlay">
@@ -390,9 +369,8 @@
     </div>
   </div>
 </div>
-  
-  
-<!-- Footer simplificado estilo Wallapop -->
+
+<!-- Footer -->
 <footer class="footer">
   <div class="container">
     <div class="footer-grid">
@@ -453,4 +431,4 @@
       <p class="copyright">© 2025 Swapify. Todos los derechos reservados.</p>
     </div>
   </div>
-</footer>
+</footer> 
