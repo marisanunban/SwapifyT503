@@ -55,6 +55,41 @@ public class TransactionClient {
         }
     }
 
+    public List<String> getReceivedProductIds(Long userId) {
+        String url = transactionServiceUrl + "/transactions/received-products/" + userId;
+
+        try {
+            ResponseEntity<List<String>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<String>>() {}
+            );
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            System.out.println("[TransactionClient] Error al obtener productos recibidos: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public List<TransactionDto> getCompletedTransactionsByBuyer(Long buyerId) {
+        String url = transactionServiceUrl + "/transactions/completed/by-buyer/" + buyerId;
+
+        try {
+            ResponseEntity<List<TransactionDto>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<TransactionDto>>() {}
+            );
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            System.out.println("[TransactionClient] Error al obtener transacciones por buyer: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+
 
 
     // Clase interna o externa para mapear la respuesta
@@ -78,4 +113,6 @@ public class TransactionClient {
             this.transactionIds = transactionIds;
         }
     }
+
+
 }

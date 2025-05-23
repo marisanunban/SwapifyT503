@@ -1,12 +1,18 @@
 package com.example.user_review.serviceImpl;
 
+import com.example.user_review.DTOs.ProductDto;
 import com.example.user_review.DTOs.ReviewDTO;
+import com.example.user_review.DTOs.RevieweableProductDto;
+import com.example.user_review.DTOs.TransactionDto;
+import com.example.user_review.clients.ProductClient;
+import com.example.user_review.clients.TransactionClient;
 import com.example.user_review.entities.Review;
 import com.example.user_review.repository.ReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -14,6 +20,12 @@ public class ReviewService {
 
     @Autowired
     private ReviewRepository reviewRepository;
+
+    @Autowired
+    private TransactionClient transactionClient;
+
+    @Autowired
+    private ProductClient productClient;
 
     public Review createReview(Review review) {
         // Puedes añadir validaciones para no permitir múltiples reviews del mismo user a otro
@@ -56,4 +68,35 @@ public class ReviewService {
     public boolean alreadyReviewed(Long reviewerId, Long reviewedUserId, String productId) {
         return reviewRepository.existsByReviewerIdAndReviewedUserIdAndProductId(reviewerId, reviewedUserId, productId);
     }
+
+    public List<RevieweableProductDto> getReviewableProducts(Long userId) {
+        List<TransactionDto> transactions = transactionClient.getCompletedTransactionsByBuyer(userId);
+
+        List<RevieweableProductDto> reviewableProducts = new ArrayList<>();
+
+        for (TransactionDto transaction : transactions) {
+            String productId = transaction.getProductOfferedId();
+            Long reviewedUserId = transaction.getSellerId(); // el que ofreció el producto
+
+            // Llamada al product-service
+            ProductDto product = productClient.getProductById(productId);
+
+            if (product != null) {
+                RevieweableProductDto dto = new RevieweableProductDto();
+                dto.setProductId(product.getId());
+                dto.setTitle(product.getTitle());
+                dto.setDescription(product.getDescription());
+                dto.setImageUrl(product.getImageUrl().isEmpty() ? null : product.getImageUrl().get(0));
+
+                dto.setReviewerId(userId);
+                dto.setReviewedUserId(reviewedUserId);
+
+                reviewableProducts.add(dto);
+            }
+        }
+
+        return reviewableProducts;
+    }
+
+
 }

@@ -10,5 +10,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     long countByReviewedUserIdAndRatingGreaterThanEqual(Long reviewedUserId, int rating);
     long countByReviewedUserIdAndRatingLessThanEqual(Long reviewedUserId, int rating);
     boolean existsByReviewerIdAndReviewedUserIdAndProductId(Long reviewerId, Long reviewedUserId, String productId);
+    boolean existsByReviewerIdAndProductId(Long reviewerId, String productId);
+
 
 }
