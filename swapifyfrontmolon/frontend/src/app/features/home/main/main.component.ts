@@ -25,16 +25,17 @@ export class MainComponent implements OnInit {
   searchCategory: boolean = false;
   isLoading: boolean = false;
   products: Product[] = [];
+  trendingProducts: Product[] = [];
   user: UserDto | null = null;
   isProfileMenuOpen: boolean = false;
   isLocationModalOpen: boolean = false;
   radius: number = 10;
-  latitude: number = 40.416775; // Madrid por defecto
-  longitude: number = -3.703790; // Madrid por defecto
+  latitude: number = 40.416775;
+  longitude: number = -3.703790;
   recentlyViewed: Product[] = [];
   similarProducts: Product[] = [];
   map: any;
-  marker: any; // Para el marcador en el mapa
+  marker: any;
 
   constructor(
     private productService: ProductService,
@@ -62,18 +63,116 @@ export class MainComponent implements OnInit {
               console.error('Error al cargar el perfil del usuario:', error);
             }
           });
+          this.loadFavorites(token);
         }
       }
     });
 
     this.loadProducts();
+    this.loadTrendingProducts();
     this.loadRecentlyViewed();
     this.loadSimilarProducts();
     this.loadUserConversations();
   }
 
+  loadFavorites(token: string): void {
+    this.productService.getUserFavorites(token).subscribe({
+      next: (favorites) => {
+        this.updateFavoriteStatus(favorites);
+      },
+      error: (error) => {
+        console.error('Error al cargar favoritos:', error);
+      }
+    });
+  }
+
+  updateFavoriteStatus(favorites: Product[]): void {
+    const favoriteIds = new Set(favorites.map(f => f.id));
+    this.products = this.products.map(p => ({
+      ...p,
+      isFavorite: favoriteIds.has(p.id)
+    }));
+    this.trendingProducts = this.trendingProducts.map(p => ({
+      ...p,
+      isFavorite: favoriteIds.has(p.id)
+    }));
+    this.recentlyViewed = this.recentlyViewed.map(p => ({
+      ...p,
+      isFavorite: favoriteIds.has(p.id)
+    }));
+    this.similarProducts = this.similarProducts.map(p => ({
+      ...p,
+      isFavorite: favoriteIds.has(p.id)
+    }));
+  }
+
+  loadTrendingProducts(): void {
+    this.productService.getTrendingProducts().subscribe({
+      next: (products) => {
+        this.trendingProducts = products;
+        this.updateProductConversations();
+        const token = localStorage.getItem('token');
+        if (token) {
+          this.loadFavorites(token);
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar productos trending:', error);
+      }
+    });
+  }
+
+  toggleFavorite(product: Product): void {
+    if (!this.user) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Por favor, inicia sesión para gestionar favoritos.');
+      return;
+    }
+
+    if (product.isFavorite) {
+      this.productService.removeFavorite(product.id, token).subscribe({
+        next: () => {
+          product.isFavorite = false;
+          product.favoriteCount = (product.favoriteCount || 1) - 1;
+          this.updateFavoriteInLists(product);
+        },
+        error: (error) => {
+          console.error('Error al eliminar favorito:', error);
+          alert('No se pudo eliminar el favorito. Inténtalo de nuevo.');
+        }
+      });
+    } else {
+      this.productService.addFavorite(product.id, token).subscribe({
+        next: () => {
+          product.isFavorite = true;
+          product.favoriteCount = (product.favoriteCount || 0) + 1;
+          this.updateFavoriteInLists(product);
+        },
+        error: (error) => {
+          console.error('Error al añadir favorito:', error);
+          alert('No se pudo añadir el favorito. Inténtalo de nuevo.');
+        }
+      });
+    }
+  }
+
+  updateFavoriteInLists(updatedProduct: Product): void {
+    const updateList = (list: Product[]) =>
+      list.map(p => p.id === updatedProduct.id ? { ...p, isFavorite: updatedProduct.isFavorite, favoriteCount: updatedProduct.favoriteCount } : p);
+
+    this.products = updateList(this.products);
+    this.trendingProducts = updateList(this.trendingProducts);
+    this.recentlyViewed = updateList(this.recentlyViewed);
+    this.similarProducts = updateList(this.similarProducts);
+  }
+
   initMap(): void {
-    const defaultLocation = { lat: this.latitude, lng: this.longitude }; // Usar valores iniciales
+    const defaultLocation = { lat: this.latitude, lng: this.longitude };
     this.map = new google.maps.Map(document.getElementById('map'), {
       center: defaultLocation,
       zoom: 12,
@@ -87,48 +186,37 @@ export class MainComponent implements OnInit {
           this.longitude = position.coords.longitude;
           this.map.setCenter({ lat: this.latitude, lng: this.longitude });
           this.addMarker(this.latitude, this.longitude);
-          console.log('Mapa inicializado en la ubicación del usuario:', { lat: this.latitude, lng: this.longitude });
         },
         (error) => {
           console.error('Error al obtener la ubicación del usuario:', error);
           alert('No se pudo obtener tu ubicación. Usando Madrid como ubicación predeterminada.');
           this.addMarker(this.latitude, this.longitude);
-          console.log('Mapa inicializado en ubicación predeterminada (Madrid):', defaultLocation);
         }
       );
     } else {
       alert('La geolocalización no está soportada por tu navegador. Usando Madrid como ubicación predeterminada.');
       this.addMarker(this.latitude, this.longitude);
-      console.log('Geolocalización no soportada, mapa inicializado en:', defaultLocation);
     }
 
-    // Agregar listener para clics en el mapa
     this.map.addListener('click', (event: any) => {
       this.latitude = event.latLng.lat();
       this.longitude = event.latLng.lng();
       this.addMarker(this.latitude, this.longitude);
-      console.log('Ubicación seleccionada en el mapa:', { lat: this.latitude, lng: this.longitude });
 
-      // Geocodificación inversa para actualizar el campo de texto
       const geocoder = new google.maps.Geocoder();
       geocoder.geocode({ location: { lat: this.latitude, lng: this.longitude } }, (results: any, status: any) => {
         if (status === google.maps.GeocoderStatus.OK && results[0]) {
           const locationInput = document.getElementById('locationInput') as HTMLInputElement;
           locationInput.value = results[0].formatted_address;
-          console.log('Dirección obtenida por geocodificación inversa:', results[0].formatted_address);
-        } else {
-          console.error('Error en geocodificación inversa:', status);
         }
       });
     });
   }
 
   addMarker(lat: number, lng: number): void {
-    // Eliminar marcador anterior si existe
     if (this.marker) {
       this.marker.setMap(null);
     }
-    // Crear nuevo marcador
     this.marker = new google.maps.Marker({
       position: { lat, lng },
       map: this.map,
@@ -163,16 +251,14 @@ export class MainComponent implements OnInit {
         this.longitude = results[0].geometry.location.lng();
         this.map.setCenter({ lat: this.latitude, lng: this.longitude });
         this.addMarker(this.latitude, this.longitude);
-        console.log('Mapa centrado en:', locationInput, { lat: this.latitude, lng: this.longitude });
       } else {
         alert('No se pudo encontrar la ubicación. Inténtalo de nuevo.');
-        console.error('Error en geocodificación:', status);
       }
     });
   }
 
   updateRadius(): void {
-    console.log('Radio actualizado a:', this.radius);
+    // Implementar si es necesario
   }
 
   applyFilterAndSearch(): void {
@@ -187,6 +273,10 @@ export class MainComponent implements OnInit {
           this.products = products;
           this.isLoading = false;
           this.updateProductConversations();
+          const token = localStorage.getItem('token');
+          if (token) {
+            this.loadFavorites(token);
+          }
         },
         error: (error) => {
           console.error('Error al buscar por coordenadas:', error);
@@ -204,6 +294,9 @@ export class MainComponent implements OnInit {
         this.products = products;
         this.isLoading = false;
         this.updateProductConversations();
+        if (token) {
+          this.loadFavorites(token);
+        }
       },
       error: (error) => {
         console.error('Error al cargar productos:', error);
@@ -228,6 +321,10 @@ export class MainComponent implements OnInit {
           this.products = products;
           this.isLoading = false;
           this.updateProductConversations();
+          const token = localStorage.getItem('token');
+          if (token) {
+            this.loadFavorites(token);
+          }
         },
         error: (error) => {
           console.error('Error al buscar productos:', error);
@@ -245,6 +342,10 @@ export class MainComponent implements OnInit {
         this.products = products;
         this.isLoading = false;
         this.updateProductConversations();
+        const token = localStorage.getItem('token');
+        if (token) {
+          this.loadFavorites(token);
+        }
       },
       error: (error) => {
         console.error('Error al filtrar por categoría:', error);
@@ -282,15 +383,19 @@ export class MainComponent implements OnInit {
 
   applyConversationsToProducts(conversations: Conversation[]): void {
     this.products = this.products.map(product => {
-      const conversation = conversations.find(conv => conv.productId === product.id.toString());
+      const conversation = conversations.find(conv => conv.productId === product.id);
+      return conversation ? { ...product, conversation } : product;
+    });
+    this.trendingProducts = this.trendingProducts.map(product => {
+      const conversation = conversations.find(conv => conv.productId === product.id);
       return conversation ? { ...product, conversation } : product;
     });
     this.recentlyViewed = this.recentlyViewed.map(product => {
-      const conversation = conversations.find(conv => conv.productId === product.id.toString());
+      const conversation = conversations.find(conv => conv.productId === product.id);
       return conversation ? { ...product, conversation } : product;
     });
     this.similarProducts = this.similarProducts.map(product => {
-      const conversation = conversations.find(conv => conv.productId === product.id.toString());
+      const conversation = conversations.find(conv => conv.productId === product.id);
       return conversation ? { ...product, conversation } : product;
     });
   }
@@ -332,7 +437,7 @@ export class MainComponent implements OnInit {
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
   }
 
-  goToProductDetail(productId: number): void {
+  goToProductDetail(productId: string): void {
     const product = this.products.find(p => p.id === productId);
     if (product) {
       this.addToRecentlyViewed(product);
@@ -340,21 +445,17 @@ export class MainComponent implements OnInit {
     this.router.navigate([`/product/${productId}`]);
   }
 
-  startNegotiation(productId: number): void {
+  startNegotiation(productId: string): void {
     if (!this.user) {
       this.router.navigate(['/login']);
       return;
     }
-    console.log('Iniciando negociación para el producto:', productId);
-    this.negotiationService.startNegotiation(productId.toString()).subscribe({
+    this.negotiationService.startNegotiation(productId).subscribe({
       next: (conversation) => {
-        console.log('Conversación creada:', conversation);
-        if (!conversation || !conversation.id) {
-          console.error('No se recibió un ID de conversación válido:', conversation);
-          alert('No se pudo iniciar la conversación. Inténtalo de nuevo.');
-          return;
-        }
         this.products = this.products.map(p =>
+          p.id === productId ? { ...p, conversation } : p
+        );
+        this.trendingProducts = this.trendingProducts.map(p =>
           p.id === productId ? { ...p, conversation } : p
         );
         this.recentlyViewed = this.recentlyViewed.map(p =>
@@ -363,14 +464,7 @@ export class MainComponent implements OnInit {
         this.similarProducts = this.similarProducts.map(p =>
           p.id === productId ? { ...p, conversation } : p
         );
-        this.router.navigate(['/chat'], { state: { conversationId: conversation.id } }).then(success => {
-          if (!success) {
-            console.error('La navegación al chat falló');
-            alert('No se pudo navegar al chat. Verifica la configuración de las rutas.');
-          } else {
-            console.log('Navegación exitosa a /chat con conversationId:', conversation.id);
-          }
-        });
+        this.router.navigate(['/chat'], { state: { conversationId: conversation.id } });
       },
       error: (error) => {
         console.error('Error al iniciar negociación:', error);
@@ -380,15 +474,7 @@ export class MainComponent implements OnInit {
   }
 
   goToChat(conversationId: number): void {
-    console.log('Intentando navegar a /chat con conversationId:', conversationId);
-    this.router.navigate(['/chat'], { state: { conversationId } }).then(success => {
-      if (!success) {
-        console.error('La navegación al chat falló para conversationId:', conversationId);
-        alert('No se pudo navegar al chat. Verifica la configuración de las rutas.');
-      } else {
-        console.log('Navegación exitosa a /chat con conversationId:', conversationId);
-      }
-    });
+    this.router.navigate(['/chat'], { state: { conversationId } });
   }
 
   addToRecentlyViewed(product: Product): void {
@@ -407,10 +493,18 @@ export class MainComponent implements OnInit {
     if (saved) {
       this.recentlyViewed = JSON.parse(saved);
       this.updateProductConversations();
+      const token = localStorage.getItem('token');
+      if (token) {
+        this.loadFavorites(token);
+      }
     }
   }
 
   loadSimilarProducts(): void {
     this.similarProducts = this.products.slice(0, 4);
+    const token = localStorage.getItem('token');
+    if (token) {
+      this.loadFavorites(token);
+    }
   }
-} 
+}

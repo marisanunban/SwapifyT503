@@ -11,7 +11,7 @@ export interface Conversation {
 }
 
 export interface Product {
-  id: number;
+  id: string;
   title: string;
   price: number;
   description?: string;
@@ -19,7 +19,16 @@ export interface Product {
   ownerId: number;
   category?: string;
   imageId?: string[];
-  conversation?: Conversation; // Usar el tipo completo Conversation
+  attributes?: { [key: string]: string };
+  conversation?: Conversation;
+  isFavorite?: boolean;
+  favoriteCount?: number;
+  latitude?: number;
+  longitude?: number;
+  ownerLocation?: string;
+  ownerUsername?: string;
+  ownerRating?: number;
+  ownerReviewCount?: number;
 }
 
 export interface CreateProductDto {
@@ -29,5 +38,6 @@ export interface CreateProductDto {
   price: number;
   imageUrl: string[];
   imageId: string[];
+  attributes: { [key: string]: string };
   ownerId: number;
 }

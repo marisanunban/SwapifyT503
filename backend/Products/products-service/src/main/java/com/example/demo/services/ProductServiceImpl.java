@@ -5,16 +5,17 @@ import com.example.demo.clients.UserClient;
 import com.example.demo.dtos.CreateProductDto;
 import com.example.demo.dtos.ProductDto;
 import com.example.demo.dtos.UpdateProductDto;
+import com.example.demo.dtos.UserInfoDto;
 import com.example.demo.dtos.UserLocationDto;
 import com.example.demo.entities.Product;
 import com.example.demo.interfaces.ProductService;
+import com.example.demo.repositories.FavoriteRepository;
 import com.example.demo.repositories.ProductRepository;
 import com.example.demo.utils.DistanceCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -26,11 +27,13 @@ public class ProductServiceImpl implements ProductService {
     private ProductRepository productRepository;
 
     @Autowired
+    private FavoriteRepository favoriteRepository; // Añadido
+
+    @Autowired
     private AuthClient authClient;
 
     private final UserClient userClient;
 
-    // ThreadLocal para almacenar el token de la solicitud actual
     private static final ThreadLocal<String> currentToken = new ThreadLocal<>();
 
     public ProductServiceImpl(UserClient userClient, ProductRepository productRepository) {
@@ -38,12 +41,10 @@ public class ProductServiceImpl implements ProductService {
         this.productRepository = productRepository;
     }
 
-    // Método para establecer el token (llamado desde el controlador)
     public static void setCurrentToken(String token) {
         currentToken.set(token);
     }
 
-    // Método para limpiar el token (para evitar fugas de memoria)
     public static void clearCurrentToken() {
         currentToken.remove();
     }
@@ -57,8 +58,8 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(dto.getCategory());
         product.setAttributes(dto.getAttributes());
         product.setPrice(dto.getPrice());
-        product.setImageUrl(dto.getImageUrl()); // Ahora es una lista
-        product.setImageId(dto.getImageId());   // Ahora es una lista
+        product.setImageUrl(dto.getImageUrl());
+        product.setImageId(dto.getImageId());
 
         product = productRepository.save(product);
         return mapToDto(product);
@@ -97,19 +98,12 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("You are not authorized to update this product");
         }
 
-        // Actualizar solo los campos que no son null
         if (dto.getTitle() != null) product.setTitle(dto.getTitle());
         if (dto.getDescription() != null) product.setDescription(dto.getDescription());
         if (dto.getAttributes() != null) product.setAttributes(dto.getAttributes());
         if (dto.getPrice() != null) product.setPrice(dto.getPrice());
-
-        // Manejar las listas de imágenes
-        if (dto.getImageUrl() != null) {
-            product.setImageUrl(dto.getImageUrl()); // Asigna la nueva lista de URLs
-        }
-        if (dto.getImageId() != null) {
-            product.setImageId(dto.getImageId());   // Asigna la nueva lista de IDs
-        }
+        if (dto.getImageUrl() != null) product.setImageUrl(dto.getImageUrl());
+        if (dto.getImageId() != null) product.setImageId(dto.getImageId());
 
         product = productRepository.save(product);
         return mapToDto(product);
@@ -152,9 +146,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductDto> findByOwnerId(long ownerId) {
         List<Product> products = productRepository.findByOwnerId(ownerId);
-        return products.stream()
-                .map(this::mapToDto)
-                .toList();
+        return products.stream().map(this::mapToDto).toList();
     }
 
     @Override
@@ -166,12 +158,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductDto> getProductsByLocation(String location) {
         List<Long> userIds = userClient.getUserIdsByLocation(location);
         List<Product> products = productRepository.findByOwnerIdIn(userIds);
-
-        List<ProductDto> dtos = new ArrayList<>();
-        for (Product product : products) {
-            dtos.add(mapToDto(product));
-        }
-        return dtos;
+        return products.stream().map(this::mapToDto).toList();
     }
 
     @Override
@@ -180,30 +167,21 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Latitude and longitude are required");
         }
 
-        // Obtener el token del ThreadLocal
         String token = currentToken.get();
         if (token == null) {
             throw new IllegalStateException("No token available in the current context");
         }
 
-        // Obtener todos los usuarios con ubicación desde el microservicio de Usuarios
         List<UserLocationDto> users = userClient.getUsersWithLocation(token);
-
-        // Filtrar usuarios dentro del radio
         List<Long> userIdsInRange = users.stream()
-                .filter(user -> user.getLatitude() != null && user.getLongitude() != null) // Asegurarse de que tengan ubicación
-                .filter(user -> {
-                    double distance = DistanceCalculator.calculateDistance(
-                            latitude, longitude, user.getLatitude(), user.getLongitude());
-                    return distance <= radius; // Filtrar por distancia
-                })
+                .filter(user -> user.getLatitude() != null && user.getLongitude() != null)
+                .filter(user -> DistanceCalculator.calculateDistance(
+                        latitude, longitude, user.getLatitude(), user.getLongitude()) <= radius)
                 .map(UserLocationDto::getId)
                 .collect(Collectors.toList());
 
-        // Obtener productos de esos usuarios
         List<Product> products = productRepository.findByOwnerIdIn(userIdsInRange);
 
-        // Aplicar filtros adicionales (categoría y palabra clave)
         if (category != null && !category.isEmpty()) {
             products = products.stream()
                     .filter(p -> p.getCategory() != null && p.getCategory().equalsIgnoreCase(category))
@@ -215,10 +193,7 @@ public class ProductServiceImpl implements ProductService {
                     .collect(Collectors.toList());
         }
 
-        // Convertir a DTOs
-        return products.stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        return products.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
     public ProductDto mapToDto(Product product) {
@@ -235,8 +210,19 @@ public class ProductServiceImpl implements ProductService {
         dto.setCreatedAt(product.getCreatedAt());
         dto.setImageId(product.getImageId());
 
-        // Obtener la ubicación del usuario propietario
+        // Calcular isFavorite y favoriteCount
         String token = currentToken.get();
+        if (token != null) {
+            Long userId = getOwnerIdFromToken(token);
+            dto.setIsFavorite(favoriteRepository.existsByUserIdAndProductId(userId, product.getId()));
+            long favoriteCount = favoriteRepository.countByProductId(product.getId());
+            dto.setFavoriteCount(favoriteCount);
+        } else {
+            dto.setIsFavorite(false);
+            dto.setFavoriteCount(0);
+        }
+
+        // Obtener la ubicación del usuario propietario
         if (token != null) {
             List<UserLocationDto> users = userClient.getUsersWithLocation(token);
             UserLocationDto ownerLocation = users.stream()
@@ -269,5 +255,14 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return dto;
+    }
+
+    private Long getOwnerIdFromToken(String token) {
+        String bearerToken = token.replace("Bearer ", "");
+        UserInfoDto userInfo = authClient.validateUserToken(bearerToken).block();
+        if (userInfo == null || userInfo.getId() == null) {
+            throw new IllegalArgumentException("Invalid token or user not found");
+        }
+        return userInfo.getId();
     }
 }

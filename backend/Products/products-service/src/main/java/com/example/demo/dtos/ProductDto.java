@@ -4,32 +4,49 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+
 public class ProductDto {
     private String id;
     private Long ownerId;
-    private String title;
-    private String description;
-    private String category;
-    private String status;
-    private List<String> imageUrl; // Cambiado de String a List<String>
-    private List<String> imageId;  // Cambiado de String a List<String>
-    private Map<String, String> attributes;
-    private Double price;
-    private LocalDateTime createdAt;
-    private Double latitude;
-    private Double longitude;
-    private String ownerLocation;
-    private String ownerUsername;
-    private Double ownerRating;
-    private Integer ownerReviewCount;
 
-    // Getters y setters
     public String getId() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public long getFavoriteCount() {
+        return favoriteCount;
+    }
+
+    public void setFavoriteCount(long favoriteCount) {
+        this.favoriteCount = favoriteCount;
+    }
+
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
+    public void setFavorite(boolean favorite) {
+        isFavorite = favorite;
+    }
+
+    public Integer getOwnerReviewCount() {
+        return ownerReviewCount;
+    }
+
+    public void setOwnerReviewCount(Integer ownerReviewCount) {
+        this.ownerReviewCount = ownerReviewCount;
+    }
+
+    public String getOwnerUsername() {
+        return ownerUsername;
+    }
+
+    public void setOwnerUsername(String ownerUsername) {
+        this.ownerUsername = ownerUsername;
     }
 
     public Long getOwnerId() {
@@ -136,27 +153,32 @@ public class ProductDto {
         this.ownerLocation = ownerLocation;
     }
 
-    public String getOwnerUsername() {
-        return ownerUsername;
-    }
-
-    public void setOwnerUsername(String ownerUsername) {
-        this.ownerUsername = ownerUsername;
-    }
-
     public Double getOwnerRating() {
         return ownerRating;
+    }
+    public void setIsFavorite(boolean isFavorite) {
+        this.isFavorite = isFavorite;
     }
 
     public void setOwnerRating(Double ownerRating) {
         this.ownerRating = ownerRating;
     }
 
-    public Integer getOwnerReviewCount() {
-        return ownerReviewCount;
-    }
-
-    public void setOwnerReviewCount(Integer ownerReviewCount) {
-        this.ownerReviewCount = ownerReviewCount;
-    }
+    private String title;
+    private String description;
+    private String category;
+    private String status;
+    private List<String> imageUrl;
+    private List<String> imageId;
+    private Map<String, String> attributes;
+    private Double price;
+    private LocalDateTime createdAt;
+    private Double latitude;
+    private Double longitude;
+    private String ownerLocation;
+    private String ownerUsername;
+    private Double ownerRating;
+    private Integer ownerReviewCount;
+    private boolean isFavorite; // Añadido para indicar si el producto está en los favoritos del usuario
+    private long favoriteCount; // Añadido para el número de usuarios que marcaron el producto como favorito
 }
