@@ -49,8 +49,8 @@ body {
 }
 
 #logo {
-  height: 40px;
-  width: auto;
+  height: 60px;
+  width: 60px;
 }
 
 /* Buscador */
@@ -71,7 +71,7 @@ body {
 }
 
 .search-input {
-  width: 100%;
+  width: 500px;
   padding: 10px 15px 10px 40px;
   border-radius: 30px;
   border: 1px solid #e0e0e0;
@@ -116,25 +116,27 @@ body {
 
 /* Corregir el estilo del botón Vender */
 .vender-button {
-  background-color: var(--wallapop-primary);
-  color: white;
-  border: none;
+  background-color: rgb(132, 218, 160);
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border: solid 0.2px;
   padding: 8px 20px;
   border-radius: 30px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
-  white-space: nowrap;
   display: flex;
   align-items: center;
   gap: 5px;
   text-decoration: none;
 }
-
 .vender-button:hover {
-  background-color: var(--wallapop-primary-dark);
+  background-color: black;
+  color: white !important;
+  border: 2px solid #ffffff; /* Mantener el borde azul */
 }
+
 
 .me-1 {
   margin-right: 4px;
@@ -201,10 +203,11 @@ body {
 }
 
 .profile-image {
-  width: 32px;
-  height: 32px;
+  width: 50px;
+  height: 50px;
+  margin-left: 5px;
   border-radius: 50%;
-  border: 2px solid #f3f4f6;
+  border: 1px solid #173a1a;
   transition: all 0.2s ease;
   object-fit: cover;
 }
@@ -496,7 +499,7 @@ body {
   flex: 1;
   padding: 10px;
   border: 1px solid #e0e0e0;
-  background-color: white;
+  background-color: rgb(132, 218, 160);
   border-radius: 4px;
   font-size: 14px;
   cursor: pointer;
@@ -506,7 +509,7 @@ body {
   flex: 1;
   padding: 10px;
   border: none;
-  background-color: var(--wallapop-primary);
+  background-color: black;
   color: white;
   border-radius: 4px;
   font-size: 14px;

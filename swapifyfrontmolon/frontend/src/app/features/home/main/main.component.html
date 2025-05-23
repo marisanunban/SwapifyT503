@@ -29,15 +29,10 @@
             </svg>
           </button>
         </div>
-
-        <!-- Botón de búsqueda -->
-        <button (click)="buscarProductos()" class="search-button">
-          Buscar
-        </button>
       </div>
 
       <!-- Botón Vender -->
-      <a (click)="goToCreateProduct()" class="vender-button">
+      <a (click)="goToCreateProduct()" class="vender-button !text-gray-800">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1">
           <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
         </svg>
@@ -68,7 +63,7 @@
             (click)="irALogin()" 
             type="button" 
             class="login-button">
-            Tú
+            Iniciar Sesión
           </button>
         </div>
 
@@ -76,7 +71,7 @@
         <div *ngIf="user" class="user-menu">
           <!-- Créditos -->
           <span class="credits-badge">
-            {{ user.credits }}
+            Créditos: {{ user.credits }}
           </span>
           
           <!-- Botón de perfil -->
@@ -118,7 +113,6 @@
       <button (click)="filtrarPorCategoria('Deportes')" class="category-item">Deportes</button>
       <button (click)="filtrarPorCategoria('Ropa')" class="category-item">Ropa</button>
       <button (click)="filtrarPorCategoria('Electrónica')" class="category-item">Electrónica</button>
-      <button (click)="irAContacta()" class="category-item">Contáctanos</button>
       <button (click)="openLocationSidebar()" class="category-item">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
@@ -201,7 +195,7 @@
     </div>
     
     <div class="sidebar-footer">
-      <button (click)="resetFilters()" class="reset-button">Restablecer</button>
+      <button (click)="resetFilters()" class="reset-button text-gray-800">Restablecer</button>
       <button (click)="applyFiltersAndSearch()" class="apply-button">Aplicar filtros</button>
     </div>
   </div>
@@ -404,49 +398,7 @@
     </div>
   </div>
 
-  <!-- Sección de categorías destacadas -->
-  <div *ngIf="!search && !searchCategory" class="categories-section">
-    <div class="container">
-      <h2 class="section-title">Renueva tu rutina</h2>
-      <div class="categories-grid">
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Cinta de correr" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Cinta de correr</h3>
-            <p class="category-count">11.568 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Bicicleta estática" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Bicicleta estática</h3>
-            <p class="category-count">26.812 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Elíptica" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Elíptica</h3>
-            <p class="category-count">16.015 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Mancuernas" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Mancuernas</h3>
-            <p class="category-count">9.115 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Pesas" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Pesas</h3>
-            <p class="category-count">49.258 anuncios</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  
 </main>
 
 <!-- Footer -->
@@ -465,7 +417,7 @@
         <h3 class="footer-title">Soporte</h3>
         <ul class="footer-links">
           <li><a href="#" class="footer-link">Centro de ayuda</a></li>
-          <li><a href="#" class="footer-link">Contacto</a></li>
+          <li><a href="/contact" class="footer-link">Contáctanos</a></li>
           <li><a href="#" class="footer-link">Reglas de publicación</a></li>
         </ul>
       </div>
