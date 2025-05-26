@@ -14,7 +14,7 @@ import { NegotiationService } from '../../../services/negotiation-service/negoti
 import { TransactionService } from '../../../services/transaction-service/transaction.service';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { UserProfile, UserDto } from '../../../models/user.model';
-
+import { UserReviewService } from '../../../services/user-review-service/user-review.service';
 export interface Transaction {
   id: number;
   sellerId: number;
@@ -74,7 +74,8 @@ export class ProfileComponent implements OnInit {
     private cloudinaryService: CloudinaryService,
     private http: HttpClient,
     private negotiationService: NegotiationService,
-    private transactionService: TransactionService
+    private transactionService: TransactionService,
+    private userReviewService: UserReviewService,
   ) {}
 
   ngOnInit() {
@@ -151,12 +152,10 @@ export class ProfileComponent implements OnInit {
 
 writeReview(productId: string) {
   if (this.isOwnProfile && this.user && this.profile) {
-    this.router.navigate(['/createReview'], {
-      queryParams: {
-        reviewerId: this.user.id, // usuario autenticado
-        reviewedUserId: this.profile.id, // usuario del perfil visitado
-        productId: productId.toString // producto sobre el que se escribe la reseña
-      }
+    console.log("he entrado en writeReview");
+    console.log (productId)
+    this.router.navigate(['/createReview/'+productId], {
+
     });
     console.log('Writing review for product ID:', productId);
   }
@@ -533,56 +532,20 @@ writeReview(productId: string) {
     }
   }
 
-  loadReviewableProducts() {
-    if (!this.isOwnProfile || !this.user || !this.user.id) {
-      console.error('Cannot load reviewable products: not own profile or no user.');
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('No token available.');
-      return;
-    }
-
-    const userId = this.user.id;
-    const productIdsToReview: string[] = [];
-
-    this.productService.getAllProducts(token).subscribe({
-      next: (products) => {
-        const completedTransactionsObservables = products.map((product: any) =>
-          this.transactionService.getCompletedTransactionsBetweenUsers(userId, product.ownerId).pipe(
-            map((transactions) => {
-              transactions.forEach((transaction) => {
-                if (transaction.sellerId === userId && transaction.productRequestedId) {
-                  productIdsToReview.push(transaction.productRequestedId);
-                } else if (transaction.buyerId === userId && transaction.productOfferedId) {
-                  productIdsToReview.push(transaction.productOfferedId);
-                }
-              });
-              const shouldReview = productIdsToReview.includes(product.id.toString());
-              return shouldReview ? product : null;
-            }),
-            catchError((error) => {
-              console.error(`Error fetching transactions for product ${product.id}:`, error);
-              return of(null);
-            })
-          )
-        );
-
-        forkJoin(completedTransactionsObservables).subscribe({
-          next: (results) => {
-            this.reviewableProducts = results.filter((product) => product !== null);
-            console.log('Reviewable products:', this.reviewableProducts);
-          },
-          error: (error) => {
-            console.error('Error checking completed transactions:', error);
-          },
-        });
-      },
-      error: (error) => {
-        console.error('Error loading products:', error);
-      },
-    });
+loadReviewableProducts() {
+  if (!this.isOwnProfile || !this.user || !this.user.id) {
+    console.error('Cannot load reviewable products: not own profile or no user.');
+    return;
   }
+
+  this.userReviewService.getProductsAvailableForReview(this.user.id).subscribe({
+    next: (products) => {
+      this.reviewableProducts = products;
+      console.log('Reviewable products:', this.reviewableProducts);
+    },
+    error: (error) => {
+      console.error('Error fetching reviewable products:', error);
+    }
+  });
+}
 }
