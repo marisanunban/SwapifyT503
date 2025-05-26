@@ -7,6 +7,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
@@ -72,6 +74,19 @@ public class TransactionClient {
         }
     }
 
+    public List<TransactionDto> getCompletedTransactionsByUser(Long userId) {
+        String url = "http://localhost:8084/transactions/completed/user/" + userId;
+        // Reemplaza 808X por el puerto correcto del transaction-service
+
+        ResponseEntity<TransactionDto[]> response = restTemplate.getForEntity(url, TransactionDto[].class);
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            return Arrays.asList(response.getBody());
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
     public List<TransactionDto> getCompletedTransactionsByBuyer(Long buyerId) {
         String url = transactionServiceUrl + "/transactions/completed/by-buyer/" + buyerId;
 
@@ -87,7 +102,11 @@ public class TransactionClient {
             System.out.println("[TransactionClient] Error al obtener transacciones por buyer: " + e.getMessage());
             return Collections.emptyList();
         }
+
+
+
     }
+
 
 
 

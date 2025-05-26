@@ -70,15 +70,27 @@ public class ReviewService {
     }
 
     public List<RevieweableProductDto> getReviewableProducts(Long userId) {
-        List<TransactionDto> transactions = transactionClient.getCompletedTransactionsByBuyer(userId);
+        List<TransactionDto> allCompletedTransactions = transactionClient.getCompletedTransactionsByUser(userId);
 
         List<RevieweableProductDto> reviewableProducts = new ArrayList<>();
 
-        for (TransactionDto transaction : transactions) {
-            String productId = transaction.getProductOfferedId();
-            Long reviewedUserId = transaction.getSellerId(); // el que ofreció el producto
+        for (TransactionDto transaction : allCompletedTransactions) {
+            String productId;
+            Long reviewedUserId;
 
-            // Llamada al product-service
+            // Si el usuario fue el comprador, recibió el producto ofrecido por el otro
+            if (transaction.getBuyerId().equals(userId)) {
+                productId = transaction.getProductOfferedId();
+                reviewedUserId = transaction.getSellerId();
+            }
+            // Si fue el vendedor, recibió el producto solicitado por el otro
+            else if (transaction.getSellerId().equals(userId)) {
+                productId = transaction.getProductRequestedId();
+                reviewedUserId = transaction.getBuyerId();
+            } else {
+                continue; // no es parte de la transacción
+            }
+
             ProductDto product = productClient.getProductById(productId);
 
             if (product != null) {
@@ -94,6 +106,7 @@ public class ReviewService {
                 reviewableProducts.add(dto);
             }
         }
+
 
         return reviewableProducts;
     }

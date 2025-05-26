@@ -156,6 +156,17 @@
             return ResponseEntity.ok(dtos);
         }
 
+        @GetMapping("/completed/user/{userId}")
+        public ResponseEntity<List<TransactionDto>> getCompletedTransactionsByUser(@PathVariable Long userId) {
+            List<Transaction> transactions = transactionRepository.findByBuyerIdOrSellerIdAndStatus(userId, userId, Status.COMPLETED);
+            List<TransactionDto> dtos = transactions.stream()
+                    .map(this::toDto)
+                    .toList();
+
+            return ResponseEntity.ok(dtos);
+        }
+
+
         public TransactionDto toDto(Transaction t) {
             TransactionDto dto = new TransactionDto();
             dto.setId(t.getId());
