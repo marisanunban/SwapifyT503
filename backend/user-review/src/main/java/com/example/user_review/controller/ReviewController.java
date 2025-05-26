@@ -1,10 +1,13 @@
 package com.example.user_review.controller;
 
 import com.example.user_review.DTOs.ReviewDTO;
+import com.example.user_review.DTOs.RevieweableProductDto;
 import com.example.user_review.DTOs.TransactionDto;
 import com.example.user_review.clients.TransactionClient;
 import com.example.user_review.entities.Review;
+import com.example.user_review.repository.ReviewRepository;
 import com.example.user_review.serviceImpl.ReviewService;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
+import java.util.stream.Collectors;
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/reviews")
 public class ReviewController {
@@ -66,6 +70,10 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.CREATED).body(review);
     }
 
+    @GetMapping("/available-products")
+    public ResponseEntity<List<RevieweableProductDto>> getProductsAvailableForReview(@RequestParam Long userId) {
+        return ResponseEntity.ok(reviewService.getReviewableProducts(userId));
+    }
 
 
 

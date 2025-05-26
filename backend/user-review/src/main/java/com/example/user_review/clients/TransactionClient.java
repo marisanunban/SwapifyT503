@@ -7,6 +7,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
@@ -55,6 +57,58 @@ public class TransactionClient {
         }
     }
 
+    public List<String> getReceivedProductIds(Long userId) {
+        String url = transactionServiceUrl + "/transactions/received-products/" + userId;
+
+        try {
+            ResponseEntity<List<String>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<String>>() {}
+            );
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            System.out.println("[TransactionClient] Error al obtener productos recibidos: " + e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public List<TransactionDto> getCompletedTransactionsByUser(Long userId) {
+        String url = "http://localhost:8084/transactions/completed/user/" + userId;
+        // Reemplaza 808X por el puerto correcto del transaction-service
+
+        ResponseEntity<TransactionDto[]> response = restTemplate.getForEntity(url, TransactionDto[].class);
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            return Arrays.asList(response.getBody());
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    public List<TransactionDto> getCompletedTransactionsByBuyer(Long buyerId) {
+        String url = transactionServiceUrl + "/transactions/completed/by-buyer/" + buyerId;
+
+        try {
+            ResponseEntity<List<TransactionDto>> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<TransactionDto>>() {}
+            );
+            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+        } catch (Exception e) {
+            System.out.println("[TransactionClient] Error al obtener transacciones por buyer: " + e.getMessage());
+            return Collections.emptyList();
+        }
+
+
+
+    }
+
+
+
 
 
     // Clase interna o externa para mapear la respuesta
@@ -78,4 +132,6 @@ public class TransactionClient {
             this.transactionIds = transactionIds;
         }
     }
+
+
 }

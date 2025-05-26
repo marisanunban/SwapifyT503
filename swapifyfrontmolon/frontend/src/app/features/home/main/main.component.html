@@ -1,15 +1,15 @@
 <!-- Navbar -->
 <nav class="navbar">
   <div class="container">
-    <div class="navbar-content d-flex align-items-center justify-content-between">
+    <div class="navbar-content">
       <!-- Logo -->
       <a href="#" class="navbar-logo">
         <img src="assets/swapify2.PNG" id="logo" alt="Swapify Logo">
       </a>
 
       <!-- Buscador -->
-      <div class="search-container d-flex align-items-center">
-        <div class="search-box d-flex align-items-center">
+      <div class="search-container">
+        <div class="search-box">
           <i class="search-icon" (click)="buscarProductos()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -17,47 +17,58 @@
           </i>
           <input
             type="text"
-            placeholder="Buscar"
+            placeholder="Buscar en Swapify"
             [(ngModel)]="searchKeyword"
             class="search-input"
             (keyup.enter)="buscarProductos()"
           />
+          <!-- Botón de filtros -->
+          <button class="filter-button" (click)="toggleSearchSidebar()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2h-11z"/>
+            </svg>
+          </button>
         </div>
-
-        <!-- Botón de búsqueda -->
-        <button (click)="buscarProductos()" class="search-button">
-          Buscar
-        </button>
-
-        <button (click)="irACrear()" class="create-product-button">
-          Crear Producto
-        </button>
-        <select
-          [(ngModel)]="selectedCategory"
-          class="category-select"
-        >
-          <option value="">Todas las categorías</option>
-          <option value="Hogar">Hogar</option>
-          <option value="Deportes">Deportes</option>
-          <option value="Ropa">Ropa</option>
-          <option value="Electrónica">Electrónica</option>
-        </select>
       </div>
 
+      <!-- Botón Vender -->
+      <a (click)="goToCreateProduct()" class="vender-button ">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-1">
+          <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+        </svg>
+        <span>Vender</span>
+      </a>
+
       <!-- Acciones de usuario -->
-      <div class="user-actions d-flex align-items-center gap-3">
+      <div class="user-actions">
+        <!-- Favoritos -->
+        <a href="#" class="icon-link" (click)="irAFavoritos(); $event.preventDefault()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+            <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01L8 2.748zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143c.06.055.119.112.176.171a3.12 3.12 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15z"/>
+          </svg>
+          <span class="d-none d-md-inline">Favoritos</span>
+        </a>
+
+        <!-- Buzón -->
+        <a href="#" class="icon-link" (click)="irAMisChats(); $event.preventDefault()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+          </svg>
+          <span class="d-none d-md-inline">Buzón</span>
+        </a>
+
         <!-- Si no hay usuario -->
-        <div *ngIf="!user" class="auth-buttons d-flex gap-2">
+        <div *ngIf="!user" class="auth-buttons">
           <button 
             (click)="irALogin()" 
             type="button" 
             class="login-button">
-            Regístrate o inicia sesión
+            Iniciar Sesión
           </button>
         </div>
 
         <!-- Si hay usuario -->
-        <div *ngIf="user" class="user-menu d-flex align-items-center gap-3">
+        <div *ngIf="user" class="user-menu">
           <!-- Créditos -->
           <span class="credits-badge">
             Créditos: {{ user.credits }}
@@ -65,26 +76,13 @@
           
           <!-- Botón de perfil -->
           <div class="profile-dropdown">
-            <div class="profile-toggle d-flex align-items-center">
+            <div class="profile-toggle">
               <img
                 [src]="user.profilePictureUrl || '/placeholder.svg?height=40&width=40'"
                 alt="Imagen de perfil"
                 class="profile-image"
-                (click)="irAProfile()"
-                style="cursor: pointer;"
-              >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="12"
-                height="12"
-                fill="currentColor"
-                [ngClass]="{'rotate-180': isProfileMenuOpen}"
-                viewBox="0 0 16 16"
                 (click)="toggleProfileMenu()"
-                style="cursor: pointer;"
               >
-                <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-              </svg>
             </div>
 
             <!-- Menú desplegable -->
@@ -102,11 +100,10 @@
   </div>
 </nav>
 
-<!-- Categorías -->
 <div class="categories-bar">
   <div class="container">
     <div class="categories-list">
-      <button class="category-item">
+      <button class="category-item" (click)="loadProducts()">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
           <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
         </svg>
@@ -116,8 +113,7 @@
       <button (click)="filtrarPorCategoria('Deportes')" class="category-item">Deportes</button>
       <button (click)="filtrarPorCategoria('Ropa')" class="category-item">Ropa</button>
       <button (click)="filtrarPorCategoria('Electrónica')" class="category-item">Electrónica</button>
-      <button (click)="irAContacta()" class="category-item">Contáctanos</button>
-      <button (click)="openLocationModal()" class="category-item">
+      <button (click)="openLocationSidebar()" class="category-item">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
         </svg>
@@ -127,37 +123,80 @@
   </div>
 </div>
 
-<!-- Modal de ubicación -->
-<div *ngIf="isLocationModalOpen" class="location-modal-backdrop">
-  <div class="location-modal">
-    <h2 class="modal-title">Seleccionar ubicación</h2>
-    <input
-      id="locationInput"
-      type="text"
-      placeholder="Introduce una ubicación"
-      class="location-input"
-    />
-    <button (click)="centerMapOnLocation()" class="center-map-button">
-      Centrar en ubicación
-    </button>
-    <div id="map" class="location-map"></div>
-    <div class="radius-control">
-      <label for="radiusRange" class="radius-label">Radio (km):</label>
-      <input
-        id="radiusRange"
-        type="range"
-        min="1"
-        max="100"
-        step="1"
-        [(ngModel)]="radius"
-        class="radius-slider"
-        (input)="updateRadius()"
-      />
-      <p class="radius-value">Radio seleccionado: {{ radius }} km</p>
+<!-- Barra lateral de búsqueda -->
+<div *ngIf="showSearchSidebar" class="search-sidebar-backdrop" (click)="closeSearchSidebar($event)">
+  <div class="search-sidebar" (click)="$event.stopPropagation()">
+    <div class="sidebar-header">
+      <h3>Filtros de búsqueda</h3>
+      <button class="close-sidebar" (click)="showSearchSidebar = false">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
     </div>
-    <div class="modal-actions">
-      <button (click)="closeLocationModal()" class="cancel-button">Cancelar</button>
-      <button (click)="applyFilterAndSearch()" class="apply-button">Aplicar y Buscar</button>
+    
+    <!-- Categorías en la barra lateral -->
+    <div class="sidebar-section">
+      <h4>Categorías</h4>
+      <div class="sidebar-categories">
+        <label class="category-checkbox">
+          <input type="radio" name="category" [(ngModel)]="selectedCategory" value="" (change)="onCategoryChange('')">
+          <span>Todas las categorías</span>
+        </label>
+        <label class="category-checkbox">
+          <input type="radio" name="category" [(ngModel)]="selectedCategory" value="Hogar" (change)="onCategoryChange('Hogar')">
+          <span>Hogar</span>
+        </label>
+        <label class="category-checkbox">
+          <input type="radio" name="category" [(ngModel)]="selectedCategory" value="Deportes" (change)="onCategoryChange('Deportes')">
+          <span>Deportes</span>
+        </label>
+        <label class="category-checkbox">
+          <input type="radio" name="category" [(ngModel)]="selectedCategory" value="Ropa" (change)="onCategoryChange('Ropa')">
+          <span>Ropa</span>
+        </label>
+        <label class="category-checkbox">
+          <input type="radio" name="category" [(ngModel)]="selectedCategory" value="Electrónica" (change)="onCategoryChange('Electrónica')">
+          <span>Electrónica</span>
+        </label>
+      </div>
+    </div>
+    
+    <!-- Ubicación en la barra lateral -->
+    <div class="sidebar-section">
+      <h4>Ubicación</h4>
+      <input
+        type="text"
+        placeholder="Introduce una ubicación"
+        class="location-input"
+        id="sidebarLocationInput"
+        [(ngModel)]="locationInput"
+      />
+      <button (click)="centerMapOnLocation('sidebar')" class="center-map-button">
+        Centrar en ubicación
+      </button>
+      <div class="location-map-container">
+        <div id="sidebarMap" class="location-map"></div>
+      </div>
+      <div class="radius-control">
+        <label for="sidebarRadiusRange" class="radius-label">Radio (km):</label>
+        <input
+          id="sidebarRadiusRange"
+          type="range"
+          min="1"
+          max="100"
+          step="1"
+          [(ngModel)]="radius"
+          class="radius-slider"
+          (input)="updateRadius()"
+        />
+        <p class="radius-value">Radio seleccionado: {{ radius }} km</p>
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <button (click)="resetFilters()" class="reset-button text-gray-800">Restablecer</button>
+      <button (click)="applyFiltersAndSearch()" class="apply-button">Aplicar filtros</button>
     </div>
   </div>
 </div>
@@ -429,49 +468,7 @@
     </div>
   </div>
 
-  <!-- Sección de categorías destacadas -->
-  <div *ngIf="!search && !searchCategory" class="categories-section">
-    <div class="container">
-      <h2 class="section-title">Renueva tu rutina</h2>
-      <div class="categories-grid">
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Cinta de correr" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Cinta de correr</h3>
-            <p class="category-count">11.568 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Bicicleta estática" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Bicicleta estática</h3>
-            <p class="category-count">26.812 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Elíptica" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Elíptica</h3>
-            <p class="category-count">16.015 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Mancuernas" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Mancuernas</h3>
-            <p class="category-count">9.115 anuncios</p>
-          </div>
-        </div>
-        <div class="category-card" (click)="filtrarPorCategoria('Deportes')">
-          <img src="/placeholder.svg?height=180&width=180" alt="Pesas" class="category-image">
-          <div class="category-info">
-            <h3 class="category-title">Pesas</h3>
-            <p class="category-count">49.258 anuncios</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  
 </main>
 
 <!-- Footer -->
@@ -490,7 +487,7 @@
         <h3 class="footer-title">Soporte</h3>
         <ul class="footer-links">
           <li><a href="#" class="footer-link">Centro de ayuda</a></li>
-          <li><a href="#" class="footer-link">Contacto</a></li>
+          <li><a href="/contact" class="footer-link">Contáctanos</a></li>
           <li><a href="#" class="footer-link">Reglas de publicación</a></li>
         </ul>
       </div>

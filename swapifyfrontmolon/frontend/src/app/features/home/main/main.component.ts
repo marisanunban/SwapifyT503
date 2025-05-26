@@ -12,11 +12,11 @@ import { UserProfile, UserDto } from '../../../models/user.model';
 declare const google: any;
 
 @Component({
-  selector: 'app-main',
+  selector: "app-main",
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './main.component.html',
-  styleUrls: ['./main.component.css']
+  templateUrl: "./main.component.html",
+  styleUrls: ["./main.component.css"],
 })
 export class MainComponent implements OnInit {
   searchKeyword: string = '';
@@ -31,25 +31,13 @@ export class MainComponent implements OnInit {
   isLocationModalOpen: boolean = false;
   radius: number = 10;
   latitude: number = 40.416775;
-  longitude: number = -3.703790;
   recentlyViewed: Product[] = [];
   similarProducts: Product[] = [];
   map: any;
   marker: any;
-
-  constructor(
-    private productService: ProductService,
-    private authService: AuthService,
-    private negotiationService: NegotiationService,
-    private userService: UserService,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    this.authService.user$.subscribe(user => {
-      this.user = user as UserDto | null;
       if (!this.user) {
-        this.router.navigate(['/login']);
+        // No redirigir automáticamente al login
+        // this.router.navigate(['/login']);
       } else {
         const token = localStorage.getItem('token') ?? undefined;
         if (token) {
@@ -66,7 +54,7 @@ export class MainComponent implements OnInit {
           this.loadFavorites(token);
         }
       }
-    });
+    })
 
     this.loadProducts();
     this.loadTrendingProducts();
@@ -287,8 +275,8 @@ export class MainComponent implements OnInit {
   }
 
   loadProducts(): void {
-    this.isLoading = true;
-    const token = localStorage.getItem('token') ?? undefined;
+    this.isLoading = true
+    const token = localStorage.getItem("token") ?? undefined
     this.productService.getAllProducts(token).subscribe({
       next: (products) => {
         this.products = products;
@@ -299,17 +287,69 @@ export class MainComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al cargar productos:', error);
-        this.isLoading = false;
-      }
-    });
+        console.error("Error al cargar productos:", error)
+        this.isLoading = false
+      },
+    })
   }
 
   buscarProductos(): void {
     if (!this.searchKeyword.trim()) {
-      this.search = false;
-      this.loadProducts();
-      return;
+      this.search = false
+      this.loadProducts()
+      return
+    }
+    this.isLoading = true
+    this.search = true
+    this.searchCategory = false
+
+    console.log("Buscando productos con:", {
+      keyword: this.searchKeyword,
+      category: this.selectedCategory,
+      location: this.latitude && this.longitude ? `${this.latitude},${this.longitude}` : null,
+      radius: this.radius,
+    })
+
+    // Si tenemos coordenadas, usar búsqueda por coordenadas
+    if (this.latitude && this.longitude) {
+      this.productService
+        .searchProductsByCoordinates(
+          this.latitude,
+          this.longitude,
+          this.radius,
+          this.selectedCategory,
+          this.searchKeyword,
+        )
+        .subscribe({
+          next: (products) => {
+            this.products = products
+            this.isLoading = false
+            this.updateProductConversations()
+            this.showSearchSidebar = false
+            console.log(`Encontrados ${products.length} productos por coordenadas`)
+          },
+          error: (error) => {
+            console.error("Error al buscar por coordenadas:", error)
+            this.isLoading = false
+          },
+        })
+    } else {
+      // Si no tenemos coordenadas, usar búsqueda normal
+      this.productService
+        .searchProducts(this.searchKeyword, undefined, undefined, this.radius, this.selectedCategory)
+        .subscribe({
+          next: (products) => {
+            this.products = products
+            this.isLoading = false
+            this.updateProductConversations()
+            this.showSearchSidebar = false
+            console.log(`Encontrados ${products.length} productos por keyword/categoría`)
+          },
+          error: (error) => {
+            console.error("Error al buscar productos:", error)
+            this.isLoading = false
+          },
+        })
     }
     this.isLoading = true;
     this.search = true;
@@ -334,9 +374,10 @@ export class MainComponent implements OnInit {
   }
 
   filtrarPorCategoria(category: string): void {
-    this.searchCategory = true;
-    this.search = false;
-    this.isLoading = true;
+    this.searchCategory = true
+    this.search = false
+    this.isLoading = true
+    this.selectedCategory = category
     this.productService.getProductsByCategory(category).subscribe({
       next: (products) => {
         this.products = products;
@@ -348,36 +389,36 @@ export class MainComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al filtrar por categoría:', error);
-        this.isLoading = false;
-      }
-    });
+        console.error("Error al filtrar por categoría:", error)
+        this.isLoading = false
+      },
+    })
   }
 
   loadUserConversations(): void {
-    if (!this.user) return;
+    if (!this.user) return
     this.negotiationService.getUserConversations().subscribe({
       next: (conversations) => {
-        this.updateProductConversations(conversations);
+        this.updateProductConversations(conversations)
       },
       error: (error) => {
-        console.error('Error al cargar conversaciones:', error);
-      }
-    });
+        console.error("Error al cargar conversaciones:", error)
+      },
+    })
   }
 
   updateProductConversations(conversations?: Conversation[]): void {
     if (!conversations) {
       this.negotiationService.getUserConversations().subscribe({
         next: (conv) => {
-          this.applyConversationsToProducts(conv);
+          this.applyConversationsToProducts(conv)
         },
         error: (error) => {
-          console.error('Error al actualizar conversaciones:', error);
-        }
-      });
+          console.error("Error al actualizar conversaciones:", error)
+        },
+      })
     } else {
-      this.applyConversationsToProducts(conversations);
+      this.applyConversationsToProducts(conversations)
     }
   }
 
@@ -401,54 +442,142 @@ export class MainComponent implements OnInit {
   }
 
   irACrear(): void {
-    this.router.navigate(['/create-product']);
+    this.router.navigate(["/create-product"])
   }
 
   irALogin(): void {
-    this.router.navigate(['/login']);
+    this.router.navigate(["/login"])
   }
 
   irAProfile(): void {
-    this.isProfileMenuOpen = false;
-    this.router.navigate(['/profile']);
+    this.isProfileMenuOpen = false
+    this.router.navigate(["/profile"])
   }
 
   irAMisChats(): void {
-    this.isProfileMenuOpen = false;
-    this.router.navigate(['/chats']);
+    this.isProfileMenuOpen = false
+    this.router.navigate(["/chats"])
   }
 
   irAFavoritos(): void {
-    this.isProfileMenuOpen = false;
-    this.router.navigate(['/favorites']);
+    this.isProfileMenuOpen = false
+    this.router.navigate(["/favorites"])
   }
 
   irAContacta(): void {
-    this.router.navigate(['/contact']);
+    this.router.navigate(["/contact"])
   }
 
   logout(): void {
-    this.authService.logout();
-    this.isProfileMenuOpen = false;
-    this.router.navigate(['/login']);
+    this.authService.logout()
+    this.isProfileMenuOpen = false
+    this.router.navigate(["/login"])
   }
 
   toggleProfileMenu(): void {
-    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+    this.isProfileMenuOpen = !this.isProfileMenuOpen
+  }
+
+  // Alternar la barra lateral de búsqueda
+  toggleSearchSidebar(): void {
+    this.showSearchSidebar = !this.showSearchSidebar
+  }
+
+  // Abrir la barra lateral específicamente para la sección de ubicación
+  openLocationSidebar(): void {
+    this.showSearchSidebar = true
+    // Aquí podrías añadir lógica para desplazarse automáticamente a la sección de ubicación
+    setTimeout(() => {
+      const locationSection = document.querySelector(".sidebar-section:nth-child(2)")
+      if (locationSection) {
+        locationSection.scrollIntoView({ behavior: "smooth" })
+      }
+    }, 100)
+  }
+
+  // Cerrar la barra lateral de búsqueda
+  closeSearchSidebar(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.showSearchSidebar = false
+    }
+  }
+
+  // Centrar el mapa en la ubicación
+  centerMapOnLocation(source = "sidebar"): void {
+    const input = source === "sidebar" ? this.locationInput : ""
+
+    // Aquí deberías integrar una API de geocodificación (como Google Maps Geocoding API)
+    // Por ahora, simularemos las coordenadas (Madrid como ejemplo)
+    if (input.toLowerCase().includes("madrid")) {
+      this.latitude = 40.416775
+      this.longitude = -3.70379
+    } else if (input.toLowerCase().includes("barcelona")) {
+      this.latitude = 41.385064
+      this.longitude = 2.173404
+    } else if (input.toLowerCase().includes("valencia")) {
+      this.latitude = 39.469907
+      this.longitude = -0.376288
+    } else if (input.toLowerCase().includes("sevilla")) {
+      this.latitude = 37.389092
+      this.longitude = -5.984459
+    } else {
+      // Si no se reconoce la ubicación, usar una ubicación por defecto (Madrid)
+      this.latitude = 40.416775
+      this.longitude = -3.70379
+    }
+
+    console.log("Centrando mapa en:", input, { lat: this.latitude, lng: this.longitude })
+
+    // Aquí deberías actualizar el mapa visual con las nuevas coordenadas
+    // Por ejemplo, si estás usando Google Maps:
+    // const map = new google.maps.Map(document.getElementById('sidebarMap'), {
+    //   center: { lat: this.latitude, lng: this.longitude },
+    //   zoom: 12
+    // });
+  }
+
+  // Actualizar el radio del mapa
+  updateRadius(): void {
+    console.log("Radio actualizado a:", this.radius)
+
+    // Actualizar la visualización del círculo del radio (simulación)
+    setTimeout(() => {
+      const circleElement = document.querySelector(".map-circle") as HTMLElement
+      if (circleElement) {
+        // Ajustar el tamaño del círculo según el radio (simulación visual)
+        const scaleFactor = 2 // Factor para convertir km a píxeles (simulación)
+        circleElement.style.width = `${this.radius * scaleFactor}px`
+        circleElement.style.height = `${this.radius * scaleFactor}px`
+      }
+    }, 100)
+  }
+
+  // Restablecer filtros
+  resetFilters(): void {
+    this.selectedCategory = ""
+    this.radius = 10
+    this.latitude = undefined
+    this.longitude = undefined
+    this.locationInput = ""
+  }
+
+  // Aplicar filtros y buscar
+  applyFiltersAndSearch(): void {
+    this.buscarProductos()
   }
 
   goToProductDetail(productId: string): void {
     const product = this.products.find(p => p.id === productId);
     if (product) {
-      this.addToRecentlyViewed(product);
+      this.addToRecentlyViewed(product)
     }
-    this.router.navigate([`/product/${productId}`]);
+    this.router.navigate([`/product/${productId}`])
   }
 
   startNegotiation(productId: string): void {
     if (!this.user) {
-      this.router.navigate(['/login']);
-      return;
+      this.router.navigate(["/login"])
+      return
     }
     this.negotiationService.startNegotiation(productId).subscribe({
       next: (conversation) => {
@@ -467,10 +596,10 @@ export class MainComponent implements OnInit {
         this.router.navigate(['/chat'], { state: { conversationId: conversation.id } });
       },
       error: (error) => {
-        console.error('Error al iniciar negociación:', error);
-        alert('Error al iniciar la conversación. Por favor, intenta de nuevo.');
-      }
-    });
+        console.error("Error al iniciar negociación:", error)
+        alert("Error al iniciar la conversación. Por favor, intenta de nuevo.")
+      },
+    })
   }
 
   goToChat(conversationId: number): void {
@@ -478,18 +607,18 @@ export class MainComponent implements OnInit {
   }
 
   addToRecentlyViewed(product: Product): void {
-    const index = this.recentlyViewed.findIndex(p => p.id === product.id);
+    const index = this.recentlyViewed.findIndex((p) => p.id === product.id)
     if (index === -1) {
-      this.recentlyViewed.unshift(product);
+      this.recentlyViewed.unshift(product)
       if (this.recentlyViewed.length > 5) {
-        this.recentlyViewed.pop();
+        this.recentlyViewed.pop()
       }
-      localStorage.setItem('recentlyViewed', JSON.stringify(this.recentlyViewed));
+      localStorage.setItem("recentlyViewed", JSON.stringify(this.recentlyViewed))
     }
   }
 
   loadRecentlyViewed(): void {
-    const saved = localStorage.getItem('recentlyViewed');
+    const saved = localStorage.getItem("recentlyViewed")
     if (saved) {
       this.recentlyViewed = JSON.parse(saved);
       this.updateProductConversations();
@@ -506,5 +635,16 @@ export class MainComponent implements OnInit {
     if (token) {
       this.loadFavorites(token);
     }
+  }
+
+  // Manejar cambio de categoría
+  onCategoryChange(category: string): void {
+    console.log("Categoría seleccionada:", category)
+    this.selectedCategory = category
+    // No aplicamos el filtro inmediatamente para permitir combinar con otros filtros
+  }
+
+  goToCreateProduct(): void {
+    this.router.navigate(["/create"])
   }
 }

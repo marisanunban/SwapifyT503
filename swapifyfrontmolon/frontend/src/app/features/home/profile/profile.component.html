@@ -343,18 +343,11 @@
             <p class="review-product-description">{{ product.description }}</p>
             <div class="review-product-actions">
               <button 
-                *ngIf="!product.reviewed" 
-                (click)="writeReview(product.id)" 
+                (click)="writeReview(product)" 
                 class="review-button"
               >
                 Escribir reseña
               </button>
-              <span *ngIf="product.reviewed" class="review-completed">
-                <svg xmlns="http://www.w3.org/2000/svg" class="review-check-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Reseña enviada
-              </span>
             </div>
           </div>
         </div>
