@@ -49,12 +49,19 @@ public class ReviewService {
         return reviewRepository.findByReviewedUserId(reviewedUserId);
     }
 
-    public double getAverageRatingForUser(Long reviewedUserId) {
-        List<Review> reviews = reviewRepository.findByReviewedUserId(reviewedUserId);
-        return reviews.stream()
+    public Double getAverageRatingForUser(Long userId) {
+        List<Review> reviews = reviewRepository.findByReviewedUserId(userId);
+
+        if (reviews.isEmpty()) {
+            return 0.0; // O podrías devolver null si prefieres no mostrar promedio
+        }
+
+        double average = reviews.stream()
                 .mapToInt(Review::getRating)
                 .average()
                 .orElse(0.0);
+
+        return average;
     }
 
     public long getPositiveReviewCount(Long reviewedUserId) {
