@@ -117,6 +117,7 @@ body {
 /* Corregir el estilo del botón Vender */
 .vender-button {
   background-color: rgb(132, 218, 160);
+  color: rgb(82, 78, 78);
   cursor: pointer;
   transition: background-color 0.3s;
   border: solid 0.2px;
