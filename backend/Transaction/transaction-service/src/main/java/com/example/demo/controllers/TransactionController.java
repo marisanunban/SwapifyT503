@@ -3,6 +3,7 @@
     import com.example.demo.clients.AuthClient;
     import com.example.demo.clients.UserClient;
     import com.example.demo.dtos.*;
+    import com.example.demo.entities.Status;
     import com.example.demo.entities.Transaction;
     import com.example.demo.repositories.TransactionRepository;
     import com.example.demo.services.TransactionServiceImpl;
@@ -134,6 +135,37 @@
 
             return ResponseEntity.ok(response);
         }
+
+
+        @GetMapping("/transactions/received-products/{userId}")
+        public List<String> getReceivedProductIds(@PathVariable Long userId) {
+            List<Transaction> completed = transactionRepository.findByBuyerIdAndStatus(userId, Status.COMPLETED);
+            return completed.stream()
+                    .map(Transaction::getProductOfferedId)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
+
+        @GetMapping("/completed/by-buyer/{buyerId}")
+        public ResponseEntity<List<TransactionDto>> getCompletedTransactionsByBuyer(@PathVariable Long buyerId) {
+            List<Transaction> transactions = transactionRepository.findByBuyerIdAndStatus(buyerId, Status.COMPLETED);
+            List<TransactionDto> dtos = transactions.stream()
+                    .map(this::toDto)
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(dtos);
+        }
+
+        @GetMapping("/completed/user/{userId}")
+        public ResponseEntity<List<TransactionDto>> getCompletedTransactionsByUser(@PathVariable Long userId) {
+            List<Transaction> transactions = transactionRepository.findByBuyerIdOrSellerIdAndStatus(userId, userId, Status.COMPLETED);
+            List<TransactionDto> dtos = transactions.stream()
+                    .map(this::toDto)
+                    .toList();
+
+            return ResponseEntity.ok(dtos);
+        }
+
 
         public TransactionDto toDto(Transaction t) {
             TransactionDto dto = new TransactionDto();

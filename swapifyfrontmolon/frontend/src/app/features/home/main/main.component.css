@@ -745,3 +745,36 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* main.component.css */
+.view-detail-button {
+  background: var(--wallapop-primary, #0f32a6);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.view-detail-button:hover {
+  background: var(--wallapop-primary-dark, #0c867a);
+}
+.view-product-button {
+  padding: 8px 16px;
+  background-color: #10B981; /* Verde consistente con otros botones */
+  color: white;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.view-product-button:hover {
+  background-color: #059669;
+}
+
+.view-product-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+}

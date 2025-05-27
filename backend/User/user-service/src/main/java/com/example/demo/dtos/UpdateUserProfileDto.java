@@ -8,7 +8,8 @@ public class UpdateUserProfileDto {
     private String profilePictureUrl;
     private String profilePictureId;
     private String nickname;
-
+    private Double averageRating;
+    private Integer reviewCount;
     public String getNickname() {
         return nickname;
     }
@@ -52,4 +53,21 @@ public class UpdateUserProfileDto {
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
     }
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Integer getReviewCount() {
+        return reviewCount;
+    }
+
+    public void setReviewCount(Integer reviewCount) {
+        this.reviewCount = reviewCount;
+    }
+
 }

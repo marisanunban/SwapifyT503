@@ -40,6 +40,7 @@ public class UserServiceImpl implements UserService {
                 user.getNickname(),
                 user.getProfilePictureUrl() != null ? user.getProfilePictureUrl() : "",
                 user.getProfilePictureId() != null ? user.getProfilePictureId() : ""
+
         );
         dto.setRating(user.getRating() != null ? user.getRating() : 0.0);
         dto.setReviewCount(user.getReviewCount() != null ? user.getReviewCount() : 0);
