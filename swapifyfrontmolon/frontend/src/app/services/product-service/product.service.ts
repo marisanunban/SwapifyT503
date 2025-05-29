@@ -30,11 +30,11 @@ export class ProductService {
   }
 
   getProductsByOwner(ownerId: number, token: string): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.apiUrl}/products/owner/${ownerId}`, { headers: this.getHeaders(token) })
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
+  return this.http.get<Product[]>(`${this.apiUrl}/products/ownerId/${ownerId}`, { headers: this.getHeaders(token) })
+    .pipe(
+      catchError(this.handleError)
+    );
+}
 
   getProductById(id: string, token: string): Observable<Product> {
     return this.http.get<Product>(`${this.apiUrl}/products/${id}`, { headers: this.getHeaders(token) })

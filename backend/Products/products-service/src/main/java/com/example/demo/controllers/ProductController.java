@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
@@ -83,8 +84,12 @@ public class ProductController {
         return ResponseEntity.ok(product);
     }
 
+
     @GetMapping("/ownerId/{ownerId}")
     public ResponseEntity<List<ProductDto>> getProductByOwnerId(@PathVariable long ownerId) {
+        if (ownerId == 0) {
+            return ResponseEntity.badRequest().build();
+        }
         List<ProductDto> products = productService.findByOwnerId(ownerId);
         return ResponseEntity.ok(products);
     }
@@ -151,10 +156,17 @@ public class ProductController {
         List<ProductDto> products = trending.stream()
                 .map(result -> {
                     String productId = result.getProductId();
-                    ProductDto dto = productService.getProductById(productId);
-                    dto.setFavoriteCount(result.getCount());
-                    return dto;
+                    if (productId == null || productId.trim().isEmpty()) return null;
+                    try {
+                        ProductDto dto = productService.getProductById(productId);
+                        dto.setFavoriteCount(result.getCount());
+                        return dto;
+                    } catch (Exception e) {
+                        // Si el producto no existe, lo ignoramos
+                        return null;
+                    }
                 })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(products);
     }

@@ -14,6 +14,10 @@ import { NegotiationService } from '../../../services/negotiation-service/negoti
 import { TransactionService } from '../../../services/transaction-service/transaction.service';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { UserProfile, UserDto } from '../../../models/user.model';
+import { RevieweableProductDto } from '../../../models/review.model';
+import { CreateReviewComponent } from '../create-review/create-review.component';
+import { ReviewsComponent } from '../reviews/reviews.component';
+import { ReviewService } from '../../../services/review-service/review.service';
 
 export interface Transaction {
   id: number;
@@ -35,14 +39,14 @@ export interface Transaction {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [FormsModule, RouterLink, CommonModule, NavbarComponent],
+  imports: [FormsModule, RouterLink, CommonModule, NavbarComponent, CreateReviewComponent, ReviewsComponent],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.css']
 })
 export class ProfileComponent implements OnInit {
-  user: UserDto | null = null; // Authenticated user
-  profile: UserProfile | null = null; // Displayed profile (own or other user)
-  isOwnProfile: boolean = true; // Indicates if it's the authenticated user's profile
+  user: UserDto | null = null;
+  profile: UserProfile | null = null;
+  isOwnProfile: boolean = true;
   nickname: string = '';
   aboutMe: string = '';
   profileImageUrl: string = '';
@@ -64,6 +68,14 @@ export class ProfileComponent implements OnInit {
   reviewableProducts: any[] = [];
   currentPage: number = 1;
   itemsPerPage: number = 4;
+  mostrarHistorialResenas: boolean = false;
+  activeTab: 'productos' | 'conversaciones' | 'resenas' = 'productos';
+  starCounts: number[] = [0, 0, 0, 0, 0]; // [5,4,3,2,1]
+  totalReviews: number = 0;
+  averageRating: number = 0;
+
+  selectedProductForReview: RevieweableProductDto | null = null;
+  showReviewForm = false;
 
   constructor(
     private router: Router,
@@ -74,21 +86,19 @@ export class ProfileComponent implements OnInit {
     private cloudinaryService: CloudinaryService,
     private http: HttpClient,
     private negotiationService: NegotiationService,
-    private transactionService: TransactionService
-  ) {}
+    private transactionService: TransactionService,
+    private reviewService: ReviewService,
+  ) { }
 
   ngOnInit() {
-    // Subscribe to user$ to get authenticated user's UserDto
     this.authService.user$.subscribe(user => {
       this.user = user || null;
     });
 
-    // Check for userId in route
     const userId = this.route.snapshot.paramMap.get('userId');
     const token = localStorage.getItem('token');
 
     if (userId && token) {
-      // Load other user's profile
       this.isOwnProfile = this.user?.id === +userId;
       this.userService.getUserById(+userId, token).subscribe({
         next: response => {
@@ -100,6 +110,7 @@ export class ProfileComponent implements OnInit {
           if (this.isOwnProfile) {
             this.loadReviewableProducts();
           }
+          this.cargarResumenValoraciones();
         },
         error: error => {
           console.error('Error fetching other user profile:', error);
@@ -107,7 +118,6 @@ export class ProfileComponent implements OnInit {
         }
       });
     } else if (token) {
-      // Load authenticated user's profile
       this.isOwnProfile = true;
       this.userService.getUserProfile(token).subscribe({
         next: response => {
@@ -117,6 +127,7 @@ export class ProfileComponent implements OnInit {
           this.profileImageUrl = response.profilePictureUrl || '';
           this.recuperarProductosPropietario();
           this.loadReviewableProducts();
+          this.cargarResumenValoraciones();
         },
         error: error => {
           console.error('Error fetching profile:', error);
@@ -149,11 +160,47 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  cargarResumenValoraciones() {
+    const token = localStorage.getItem('token');
+    if (this.user?.id && token) {
+      this.reviewService.getReviewsForUser(this.user.id.toString(), token).subscribe(reviews => {
+        this.totalReviews = reviews.length;
+        this.starCounts = [0, 0, 0, 0, 0];
+        let sum = 0;
+        reviews.forEach(r => {
+          if (r.rating >= 1 && r.rating <= 5) {
+            this.starCounts[5 - r.rating]++;
+            sum += r.rating;
+          }
+        });
+        this.averageRating = this.totalReviews > 0 ? sum / this.totalReviews : 0;
+      });
+    }
+  }
+
+  getStarPercentage(star: number): number {
+    const index = 5 - star; // starCounts[0] = 5 estrellas, starCounts[1] = 4 estrellas, etc.
+    if (this.totalReviews === 0) return 0;
+    return (this.starCounts[index] / this.totalReviews) * 100;
+  }
+
   writeReview(productId: number) {
     if (this.isOwnProfile) {
       this.router.navigate(['/createReview/', productId]);
       console.log('Writing review for product ID:', productId);
     }
+  }
+
+  openReviewForm(product: RevieweableProductDto) {
+    this.selectedProductForReview = product;
+    this.showReviewForm = true;
+  }
+
+  closeReviewForm() {
+    this.selectedProductForReview = null;
+    this.showReviewForm = false;
+    this.loadReviewableProducts();
+    this.cargarResumenValoraciones();
   }
 
   openReviewModal() {
@@ -174,13 +221,20 @@ export class ProfileComponent implements OnInit {
     }
   }
 
+  mostrarTodasResenas() {
+    this.mostrarHistorialResenas = true;
+  }
+
+  cerrarHistorialResenas() {
+    this.mostrarHistorialResenas = false;
+  }
+
   recuperarConversaciones() {
     const token = localStorage.getItem('token');
     if (token && this.user?.id && this.isOwnProfile) {
       this.negotiationService.getUserConversations().subscribe({
         next: (response) => {
           this.conversations = response;
-          console.log('User conversations:', this.conversations);
           this.products = this.products.map(product => ({
             ...product,
             conversation: this.conversations.find(conv => conv.productId === product.id && conv.status === 'ACTIVE')
@@ -203,7 +257,6 @@ export class ProfileComponent implements OnInit {
     if (this.isOwnProfile && confirm('¿Estás seguro de que quieres eliminar esta conversación?')) {
       this.negotiationService.deleteConversation(conversationId).subscribe({
         next: () => {
-          console.log('Conversation deleted:', conversationId);
           this.conversations = this.conversations.filter(conv => conv.id !== conversationId);
           delete this.otherUserNames[conversationId];
           this.products = this.products.map(product => {
@@ -263,19 +316,16 @@ export class ProfileComponent implements OnInit {
       const payload = { latitude: this.latitude, longitude: this.longitude, locationName: this.municipio };
       this.userService.updateUserLocation(this.user.id, payload, token).subscribe({
         next: (response) => {
-          console.log('Location updated:', response);
           if (this.profile) {
             this.profile = { ...this.profile, locationName: this.municipio };
           }
           alert('Ubicación actualizada correctamente.');
         },
         error: (error) => {
-          console.error('Error updating location:', error);
           alert('No se pudo actualizar la ubicación. Inténtalo de nuevo.');
         }
       });
     } else {
-      console.error('Could not obtain complete location.');
       alert('No se pudo obtener la ubicación completa. Por favor, inténtalo de nuevo.');
     }
   }
@@ -306,7 +356,6 @@ export class ProfileComponent implements OnInit {
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token available.');
       return;
     }
 
@@ -317,7 +366,6 @@ export class ProfileComponent implements OnInit {
           this.updateProfile(token);
         },
         error: (error) => {
-          console.error('Error uploading image:', error);
           if (error.status === 403) {
             alert('Error 403: ' + error.error.error);
           }
@@ -335,7 +383,6 @@ export class ProfileComponent implements OnInit {
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
-        console.log('Profile updated:', response);
         if (this.profile) {
           this.profile = { ...this.profile, profilePictureUrl: this.profileImageUrl };
         }
@@ -348,7 +395,6 @@ export class ProfileComponent implements OnInit {
         }, 0);
       },
       error: error => {
-        console.error('Error updating profile:', error);
         setTimeout(() => {
           this.isEditing = false;
         }, 0);
@@ -361,7 +407,6 @@ export class ProfileComponent implements OnInit {
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token available.');
       return;
     }
 
@@ -372,7 +417,6 @@ export class ProfileComponent implements OnInit {
 
     this.userService.updateUserProfile(token, updatedProfile).subscribe({
       next: response => {
-        console.log('Profile updated:', response);
         if (this.profile) {
           this.profile = { ...this.profile, aboutMe: this.aboutMe };
         }
@@ -381,7 +425,6 @@ export class ProfileComponent implements OnInit {
         }, 0);
       },
       error: error => {
-        console.error('Error updating profile:', error);
         setTimeout(() => {
           this.isEditingMe = false;
         }, 0);
@@ -397,7 +440,6 @@ export class ProfileComponent implements OnInit {
           this.products = response;
         },
         error: error => {
-          console.error('Error fetching products:', error);
         }
       });
     }
@@ -419,7 +461,6 @@ export class ProfileComponent implements OnInit {
           }
         },
         error: (error) => {
-          console.error('Error fetching owner products:', error);
         }
       });
     }
@@ -430,7 +471,6 @@ export class ProfileComponent implements OnInit {
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token available.');
       return;
     }
 
@@ -441,12 +481,10 @@ export class ProfileComponent implements OnInit {
             this.recuperarProductosPropietario();
           },
           error: error => {
-            console.error('Error deleting product:', error);
           }
         });
       },
       error: error => {
-        console.error('Error deleting Cloudinary image:', error);
       }
     });
   }
@@ -461,22 +499,18 @@ export class ProfileComponent implements OnInit {
     if (!this.isOwnProfile) return;
 
     if (!this.nickname.trim()) {
-      console.warn('Username cannot be empty.');
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No authentication token found.');
       return;
     }
 
     const profileData = { nickname: this.nickname };
-    console.log('Profile data to update:', profileData);
 
     this.userService.updateUserProfile(token, profileData).subscribe({
       next: (response) => {
-        console.log('Username updated:', response);
         if (this.profile) {
           this.profile = { ...this.profile, nickname: this.nickname };
         }
@@ -487,7 +521,6 @@ export class ProfileComponent implements OnInit {
         this.isEditingUsername = false;
       },
       error: (error) => {
-        console.error('Error updating username:', error);
       }
     });
   }
@@ -529,13 +562,11 @@ export class ProfileComponent implements OnInit {
 
   loadReviewableProducts() {
     if (!this.isOwnProfile || !this.user || !this.user.id) {
-      console.error('Cannot load reviewable products: not own profile or no user.');
       return;
     }
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token available.');
       return;
     }
 
@@ -547,18 +578,29 @@ export class ProfileComponent implements OnInit {
         const completedTransactionsObservables = products.map((product: any) =>
           this.transactionService.getCompletedTransactionsBetweenUsers(userId, product.ownerId).pipe(
             map((transactions) => {
+              let reviewedUserId = null;
+              let found = false;
               transactions.forEach((transaction) => {
                 if (transaction.sellerId === userId && transaction.productRequestedId) {
                   productIdsToReview.push(transaction.productRequestedId);
+                  reviewedUserId = transaction.buyerId;
+                  found = found || (product.id.toString() === transaction.productRequestedId);
                 } else if (transaction.buyerId === userId && transaction.productOfferedId) {
                   productIdsToReview.push(transaction.productOfferedId);
+                  reviewedUserId = transaction.sellerId;
+                  found = found || (product.id.toString() === transaction.productOfferedId);
                 }
               });
-              const shouldReview = productIdsToReview.includes(product.id.toString());
-              return shouldReview ? product : null;
+              if (found) {
+                return {
+                  ...product,
+                  reviewedUserId: reviewedUserId,
+                  productId: product.id
+                };
+              }
+              return null;
             }),
             catchError((error) => {
-              console.error(`Error fetching transactions for product ${product.id}:`, error);
               return of(null);
             })
           )
@@ -567,15 +609,12 @@ export class ProfileComponent implements OnInit {
         forkJoin(completedTransactionsObservables).subscribe({
           next: (results) => {
             this.reviewableProducts = results.filter((product) => product !== null);
-            console.log('Reviewable products:', this.reviewableProducts);
           },
           error: (error) => {
-            console.error('Error checking completed transactions:', error);
           },
         });
       },
       error: (error) => {
-        console.error('Error loading products:', error);
       },
     });
   }

@@ -23,7 +23,6 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     price: 0,
     imageUrl: [],
     imageId: [],
-    ownerId: 0,
     attributes: {}
   };
   imageFiles: File[] = [];
@@ -54,16 +53,6 @@ export class CreateProductComponent implements OnInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
-
-    this.authService.user$.subscribe(user => {
-      if (user) {
-        this.productData.ownerId = user.id;
-      } else {
-        console.error('No se encontró el usuario autenticado');
-        alert('No se encontró el usuario autenticado. Por favor, inicia sesión.');
-        this.router.navigate(['/login']);
-      }
-    });
   }
 
   onFilesSelected(event: any): void {
@@ -124,16 +113,6 @@ export class CreateProductComponent implements OnInit, OnDestroy {
 
     if (this.imageFiles.length === 0) {
       alert('Debes seleccionar al menos una imagen.');
-      return;
-    }
-
-    if (!this.productData.ownerId) {
-      alert('No se pudo obtener el ID del usuario. Por favor, inicia sesión.');
-      return;
-    }
-
-    if (Object.keys(this.productData.attributes).length === 0) {
-      alert('Debes añadir al menos un atributo (por ejemplo, "Condición: Usado").');
       return;
     }
 

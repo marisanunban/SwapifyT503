@@ -39,5 +39,4 @@ export interface CreateProductDto {
   imageUrl: string[];
   imageId: string[];
   attributes: { [key: string]: string };
-  ownerId: number;
 }

@@ -51,6 +51,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDto createProduct(CreateProductDto dto, Long ownerId) {
+        System.out.println("Creando producto para ownerId: " + ownerId);
+        if (ownerId == null || ownerId == 0) {
+            throw new IllegalArgumentException("El ownerId no puede ser null o 0");
+        }
         Product product = new Product();
         product.setOwnerId(ownerId);
         product.setTitle(dto.getTitle());
@@ -62,6 +66,7 @@ public class ProductServiceImpl implements ProductService {
         product.setImageId(dto.getImageId());
 
         product = productRepository.save(product);
+        System.out.println("Producto guardado con id: " + product.getId());
         return mapToDto(product);
     }
 
@@ -84,6 +89,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDto getProductById(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("El id del producto no puede ser null o vacío");
+        }
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Product not found with id: " + id));
         return mapToDto(product);
@@ -145,6 +153,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductDto> findByOwnerId(long ownerId) {
+        System.out.println("Buscando productos para ownerId: " + ownerId);
+        if (ownerId == 0) {
+            throw new IllegalArgumentException("El ownerId no puede ser 0");
+        }
         List<Product> products = productRepository.findByOwnerId(ownerId);
         return products.stream().map(this::mapToDto).toList();
     }

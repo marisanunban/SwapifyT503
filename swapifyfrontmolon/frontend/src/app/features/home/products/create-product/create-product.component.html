@@ -124,66 +124,6 @@
         </div>
       </div>
 
-      <!-- Atributos -->
-      <div class="mb-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b pb-2">Atributos *</h2>
-        <div class="mb-4">
-          <div class="flex flex-col sm:flex-row gap-4 mb-2">
-            <div class="flex-1">
-              <label for="attributeKey" class="block text-sm font-medium text-gray-700 mb-1">Clave</label>
-              <input 
-                type="text" 
-                id="attributeKey" 
-                [(ngModel)]="newAttributeKey" 
-                name="attributeKey" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Ej: Condición"
-              >
-            </div>
-            <div class="flex-1">
-              <label for="attributeValue" class="block text-sm font-medium text-gray-700 mb-1">Valor</label>
-              <input 
-                type="text" 
-                id="attributeValue" 
-                [(ngModel)]="newAttributeValue" 
-                name="attributeValue" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="Ej: Usado"
-              >
-            </div>
-          </div>
-          <button 
-            type="button" 
-            (click)="addAttribute()" 
-            class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-          >
-            Añadir atributo
-          </button>
-          <p *ngIf="attributeError" class="text-sm text-red-600 mt-2">{{ attributeError }}</p>
-          <p class="text-sm text-gray-600 mt-2">
-            Añade al menos un atributo, como "Condición: Usado" o "Marca: Nike".
-          </p>
-        </div>
-        <div *ngIf="objectKeys(productData.attributes).length > 0" class="mb-4">
-          <h3 class="text-sm font-medium text-gray-700 mb-2">Atributos añadidos:</h3>
-          <div class="space-y-2">
-            <div *ngFor="let key of objectKeys(productData.attributes)" class="flex items-center justify-between p-2 bg-gray-100 rounded-md">
-              <span class="text-sm text-gray-700">{{ key }}: {{ productData.attributes[key] }}</span>
-              <button 
-                type="button" 
-                (click)="removeAttribute(key)" 
-                class="text-red-600 hover:text-red-700"
-                title="Eliminar atributo"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Indicador de carga -->
       <div *ngIf="isUploading" class="mb-4 text-center">
         <p class="text-gray-600">Subiendo imágenes, por favor espera...</p>
