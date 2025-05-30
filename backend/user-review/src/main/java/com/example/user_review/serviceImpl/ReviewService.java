@@ -98,6 +98,11 @@ public class ReviewService {
                 continue; // no es parte de la transacción
             }
 
+            // --- AÑADE ESTA COMPROBACIÓN ---
+            if (alreadyReviewed(userId, reviewedUserId, productId)) {
+                continue; // Ya reseñado, no lo añadas
+            }
+
             ProductDto product = productClient.getProductById(productId);
 
             if (product != null) {
@@ -106,14 +111,12 @@ public class ReviewService {
                 dto.setTitle(product.getTitle());
                 dto.setDescription(product.getDescription());
                 dto.setImageUrl(product.getImageUrl().isEmpty() ? null : product.getImageUrl().get(0));
-
                 dto.setReviewerId(userId);
                 dto.setReviewedUserId(reviewedUserId);
 
                 reviewableProducts.add(dto);
             }
         }
-
 
         return reviewableProducts;
     }

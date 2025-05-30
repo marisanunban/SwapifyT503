@@ -561,61 +561,23 @@ export class ProfileComponent implements OnInit {
   }
 
   loadReviewableProducts() {
-    if (!this.isOwnProfile || !this.user || !this.user.id) {
-      return;
-    }
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return;
-    }
-
-    const userId = this.user.id;
-    const productIdsToReview: string[] = [];
-
-    this.productService.getAllProducts(token).subscribe({
-      next: (products) => {
-        const completedTransactionsObservables = products.map((product: any) =>
-          this.transactionService.getCompletedTransactionsBetweenUsers(userId, product.ownerId).pipe(
-            map((transactions) => {
-              let reviewedUserId = null;
-              let found = false;
-              transactions.forEach((transaction) => {
-                if (transaction.sellerId === userId && transaction.productRequestedId) {
-                  productIdsToReview.push(transaction.productRequestedId);
-                  reviewedUserId = transaction.buyerId;
-                  found = found || (product.id.toString() === transaction.productRequestedId);
-                } else if (transaction.buyerId === userId && transaction.productOfferedId) {
-                  productIdsToReview.push(transaction.productOfferedId);
-                  reviewedUserId = transaction.sellerId;
-                  found = found || (product.id.toString() === transaction.productOfferedId);
-                }
-              });
-              if (found) {
-                return {
-                  ...product,
-                  reviewedUserId: reviewedUserId,
-                  productId: product.id
-                };
-              }
-              return null;
-            }),
-            catchError((error) => {
-              return of(null);
-            })
-          )
-        );
-
-        forkJoin(completedTransactionsObservables).subscribe({
-          next: (results) => {
-            this.reviewableProducts = results.filter((product) => product !== null);
-          },
-          error: (error) => {
-          },
-        });
-      },
-      error: (error) => {
-      },
-    });
+  if (!this.isOwnProfile || !this.user || !this.user.id) {
+    return;
   }
+
+  const token = localStorage.getItem('token');
+  if (!token) {
+    return;
+  }
+
+  this.reviewService.getReviewableProducts(this.user.id.toString(), token).subscribe({
+    next: (products) => {
+      this.reviewableProducts = products;
+    },
+    error: (error) => {
+      console.error('Error al cargar productos para reseñar:', error);
+      this.reviewableProducts = [];
+    }
+  });
+}
 }
