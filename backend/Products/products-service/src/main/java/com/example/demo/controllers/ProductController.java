@@ -202,7 +202,15 @@ public class ProductController {
         Long userId = getOwnerIdFromToken(token);
         List<Favorite> favorites = favoriteRepository.findByUserId(userId);
         List<ProductDto> products = favorites.stream()
-                .map(f -> productService.getProductById(f.getProductId()))
+                .map(f -> {
+                    try {
+                        return productService.getProductById(f.getProductId());
+                    } catch (NoSuchElementException e) {
+                        // Producto borrado, ignorar este favorito
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(products);
     }
