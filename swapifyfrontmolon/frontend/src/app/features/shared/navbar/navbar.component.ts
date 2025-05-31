@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/auth-service/auth.service';
@@ -8,6 +8,7 @@ import { NegotiationService } from '../../../services/negotiation-service/negoti
 import { UserService } from '../../../services/user-service/user.service';
 import { Product } from '../../../models/product.model';
 import { UserDto, UserProfile } from '../../../models/user.model';
+
 
 declare var google: any;
 

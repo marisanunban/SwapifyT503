@@ -77,7 +77,6 @@ export class WebsocketService {
     }
   }
 
-  // Suscripción a mensajes de una conversación
   subscribeToConversation(conversationId: number): Observable<any> {
     if (!this.isConnected) {
       console.warn(`Cannot subscribe to /topic/conversations/${conversationId}: WebSocket not connected`);
@@ -114,7 +113,6 @@ export class WebsocketService {
     }
   }
 
-  // Nuevo método para suscribirse a notificaciones del usuario
   subscribeToUserNotifications(userId: number): Observable<any> {
     if (!this.isConnected) {
       console.warn(`Cannot subscribe to /user/${userId}/notifications: WebSocket not connected`);

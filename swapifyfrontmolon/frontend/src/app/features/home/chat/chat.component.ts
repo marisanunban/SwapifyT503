@@ -45,7 +45,7 @@ interface ConversationSummary {
 }
 
 interface Message {
-  id: number | string; // Cambiado para soportar IDs temporales como strings
+  id: number | string;
   conversationId: number;
   senderId: number;
   text: string;
@@ -69,7 +69,7 @@ interface Transaction {
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule,  ReactiveFormsModule],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
 })
@@ -431,11 +431,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   subscribeToMessages(conversationId: number) {
-    if (this.subscribedConversationId === conversationId) {
+    // Asegurarse de que no haya múltiples suscripciones al mismo canal
+    if (this.subscribedConversationId === conversationId && this.wsSubscription) {
       console.log(`[WebSocket] Ya está suscrito al canal /topic/conversations/${conversationId}`);
       return;
     }
 
+    // Cancelar suscripción previa si existe
     if (this.wsSubscription) {
       this.wsSubscription.unsubscribe();
       console.log(`[WebSocket] Suscripción anterior al canal /topic/conversations/${this.subscribedConversationId} cancelada`);
@@ -513,19 +515,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private addOrUpdateMessage(message: any, content: string, conversationId: number) {
+    // Verificar que el mensaje tenga un ID válido
     if (!message.id) {
       console.warn('[WebSocket] Mensaje sin ID recibido, omitiendo:', message);
       return;
     }
 
-    // Verificar si el mensaje ya existe por ID
-    const existingMessage = this.messages.find((msg) => msg.id === message.id);
-    if (existingMessage) {
-      console.log('[WebSocket] Mensaje ya existe, omitiendo:', message);
+    // Buscar mensaje temporal que coincida con el contenido y el senderId para reemplazarlo
+    const tempMessageIndex = this.messages.findIndex(
+      (msg) => msg.isLocal && msg.text === content && msg.senderId === message.senderId
+    );
+    if (tempMessageIndex !== -1) {
+      this.messages.splice(tempMessageIndex, 1); // Eliminar el mensaje temporal
+      console.log('[WebSocket] Mensaje temporal reemplazado:', content);
+    }
+
+    // Verificar duplicados estrictamente por ID
+    const isDuplicate = this.messages.some((msg) => msg.id === message.id);
+    if (isDuplicate) {
+      console.log('[WebSocket] Mensaje duplicado detectado y omitido:', message);
       return;
     }
 
-    // Crear el nuevo mensaje
     const newMessage: Message = {
       id: message.id,
       conversationId: message.conversationId || conversationId,
@@ -539,49 +550,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       isLocal: false,
     };
 
-    // Verificar si es un mensaje del usuario actual que corresponde a un mensaje temporal
-    if (newMessage.senderId === this.currentUser?.id) {
-      const tempMessage = this.messages.find(
-        (msg) =>
-          msg.senderId === newMessage.senderId &&
-          msg.text === newMessage.text &&
-          msg.isLocal === true &&
-          msg.time > new Date(Date.now() - 60000).toLocaleTimeString() // Mensajes recientes (último minuto)
-      );
-      if (tempMessage) {
-        console.log('[WebSocket] Actualizando mensaje temporal con ID oficial:', tempMessage, newMessage);
-        const index = this.messages.indexOf(tempMessage);
-        this.messages[index] = newMessage;
-        this.messages = [...this.messages];
-        this.updateConversationSummary(conversationId);
-        this.scrollToBottom();
-        this.cdr.detectChanges();
-        return;
-      }
-    }
+    console.log('[WebSocket] Nuevo mensaje procesado y añadido:', newMessage);
 
-    // Procesar mensajes del sistema
     if (newMessage.isSystem) {
       const transactionId = this.getTransactionId(content);
       if (transactionId) {
-        if (content.includes('creada con') || content.includes('ha aceptado') || content.includes('ha rechazado')) {
-          // Verificar si ya existe un mensaje del sistema con el mismo transactionId y contenido similar
-          const existingSystemMessage = this.messages.find(
-            (msg) => msg.isSystem && this.getTransactionId(msg.text) === transactionId && msg.text === newMessage.text
-          );
-          if (existingSystemMessage) {
-            console.log('[WebSocket] Mensaje del sistema duplicado, omitiendo:', newMessage);
-            return;
-          }
-          this.lastTransactionMessage[transactionId] = newMessage;
-          newMessage.text = this.cleanSystemMessage(content);
-          this.messages.push(newMessage);
-          console.log(`[WebSocket] Mensaje del sistema añadido para transacción ${transactionId}:`, newMessage);
-          this.loadTransactionState(transactionId);
-        } else {
-          console.log(`[WebSocket] Ignorando mensaje del sistema no relevante para transacción ${transactionId}:`, content);
-          return;
-        }
+        this.messages.push(newMessage);
+        console.log('[WebSocket] Mensaje del sistema añadido:', newMessage);
+        this.loadTransactionState(transactionId);
+      } else {
+        console.log('[WebSocket] Ignorando mensaje del sistema sin transactionId:', content);
+        return;
       }
     } else {
       this.messages.push(newMessage);
@@ -667,7 +646,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    const tempId = `temp-${Date.now()}`; // Usar un ID temporal único
+    const tempId = `temp-${Date.now()}`;
     const tempMessage: Message = {
       id: tempId,
       conversationId: this.conversation.id,
@@ -682,19 +661,31 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.messages.push(tempMessage);
     this.scrollToBottom();
     const messageToSend = this.newMessage;
-    this.newMessage = '';
+    this.newMessage = ''; // Limpiar el campo inmediatamente
+
+    // Deshabilitar el botón de envío para evitar múltiples envíos
+    const sendButton = document.querySelector('.btn-send') as HTMLButtonElement;
+    if (sendButton) {
+      sendButton.disabled = true;
+    }
 
     this.negotiationService
       .sendMessage(this.conversation.id, messageToSend, 'TEXT')
       .subscribe({
         next: (response) => {
           console.log('[sendMessage] Mensaje enviado al servidor, esperando WebSocket para actualización:', response);
+          if (sendButton) {
+            sendButton.disabled = false;
+          }
           this.cdr.detectChanges();
         },
         error: () => {
           this.messages = this.messages.filter((msg) => msg.id !== tempId);
           this.newMessage = messageToSend;
           this.toastr.error('Error al enviar el mensaje');
+          if (sendButton) {
+            sendButton.disabled = false;
+          }
           this.cdr.detectChanges();
         },
       });
