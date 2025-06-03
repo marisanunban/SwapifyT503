@@ -124,7 +124,6 @@ public class NegotiationServiceImpl implements NegotiationService {
         }
 
         Message message = new Message();
-        // Usar IdGeneratorService para generar un ID único y persistente
         message.setId(idGeneratorService.generateSequence("message_sequence"));
         message.setSenderId(senderId);
         message.setContent(content);
@@ -142,7 +141,6 @@ public class NegotiationServiceImpl implements NegotiationService {
                 .orElse(message);
 
         MessageDto dto = mapToMessageDto(savedMessage, conversationId);
-        // Añadir log para depurar el envío del mensaje
         System.out.println("Enviando mensaje al canal /topic/conversations/" + conversationId + ": " + dto.getContent());
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, dto);
         return dto;
@@ -200,7 +198,6 @@ public class NegotiationServiceImpl implements NegotiationService {
                 (creditsOffered != null && creditsOffered > 0 ? ", " + creditsOffered + " créditos" : "");
 
         Message message = new Message();
-        // Usar IdGeneratorService para generar un ID único y persistente
         message.setId(idGeneratorService.generateSequence("message_sequence"));
         message.setSenderId(senderId);
         message.setContent(content);
@@ -213,7 +210,6 @@ public class NegotiationServiceImpl implements NegotiationService {
         Conversation updatedConversation = conversationRepository.save(conversation);
 
         MessageDto dto = mapToMessageDto(message, id);
-        // Añadir log para depurar el envío del mensaje
         System.out.println("Enviando mensaje al canal /topic/conversations/" + id + ": " + dto.getContent());
         messagingTemplate.convertAndSend("/topic/conversations/" + id, dto);
         return mapToDto(updatedConversation);
@@ -283,13 +279,11 @@ public class NegotiationServiceImpl implements NegotiationService {
             throw new IllegalArgumentException("Solo los participantes pueden crear transacciones");
         }
 
-        // Buscar la propuesta original (PROPOSAL)
         Message proposal = conversation.getMessages().stream()
                 .filter(m -> m.getType() == MessageType.PROPOSAL)
                 .reduce((first, second) -> second)
                 .orElseThrow(() -> new IllegalStateException("No se encontró una propuesta original"));
 
-        // Buscar la respuesta a la propuesta (PROPOSAL_RESPONSE)
         Message response = conversation.getMessages().stream()
                 .filter(m -> m.getType() == MessageType.PROPOSAL_RESPONSE)
                 .reduce((first, second) -> second)
@@ -317,7 +311,6 @@ public class NegotiationServiceImpl implements NegotiationService {
         TransactionDto createdTransaction = transactionClient.createTransaction(transactionDto, authToken);
 
         Message systemMessage = new Message();
-        // Usar IdGeneratorService para generar un ID único y persistente
         systemMessage.setId(idGeneratorService.generateSequence("message_sequence"));
         systemMessage.setContent("Transacción creada con ID: " + createdTransaction.getId());
         systemMessage.setTimestamp(LocalDateTime.now());
@@ -326,7 +319,6 @@ public class NegotiationServiceImpl implements NegotiationService {
         conversationRepository.save(conversation);
 
         MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
-        // Añadir log para depurar el envío del mensaje
         System.out.println("Enviando mensaje al canal /topic/conversations/" + conversationId + ": " + systemMessageDto.getContent());
         messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
 
@@ -357,22 +349,42 @@ public class NegotiationServiceImpl implements NegotiationService {
 
         TransactionDto updatedTransaction = transactionClient.updateTransactionStatus(transactionId, statusDto, authToken);
 
-        if (updatedTransaction.getStatus().equals("COMPLETED") || updatedTransaction.getStatus().equals("REJECTED")) {
-            Message systemMessage = new Message();
-            // Usar IdGeneratorService para generar un ID único y persistente
-            systemMessage.setId(idGeneratorService.generateSequence("message_sequence"));
-            systemMessage.setContent(updatedTransaction.getStatus().equals("COMPLETED") ?
-                    "Transacción completada ID: " + transactionId :
-                    "Transacción rechazada ID: " + transactionId);
-            systemMessage.setTimestamp(LocalDateTime.now());
-            systemMessage.setType(MessageType.SYSTEM);
-            conversation.getMessages().add(systemMessage);
-            conversationRepository.save(conversation);
+        // Solo enviar mensaje si ambos han aceptado y el estado es COMPLETED
+        if ("COMPLETED".equalsIgnoreCase(updatedTransaction.getStatus())
+                && updatedTransaction.isBuyerAccepted()
+                && updatedTransaction.isSellerAccepted()) {
+            boolean alreadyExists = conversation.getMessages().stream()
+                    .anyMatch(m -> m.getType() == MessageType.SYSTEM && m.getContent().contains("ID: " + transactionId));
+            if (!alreadyExists) {
+                Message systemMessage = new Message();
+                systemMessage.setId(idGeneratorService.generateSequence("message_sequence"));
+                systemMessage.setContent("Transacción completada ID: " + transactionId);
+                systemMessage.setTimestamp(LocalDateTime.now());
+                systemMessage.setType(MessageType.SYSTEM);
+                conversation.getMessages().add(systemMessage);
+                conversationRepository.save(conversation);
 
-            MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
-            // Añadir log para depurar el envío del mensaje
-            System.out.println("Enviando mensaje al canal /topic/conversations/" + conversationId + ": " + systemMessageDto.getContent());
-            messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+                MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
+                System.out.println("Enviando mensaje al canal /topic/conversations/" + conversationId + ": " + systemMessageDto.getContent());
+                messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+            }
+        } else if ("REJECTED".equalsIgnoreCase(updatedTransaction.getStatus())) {
+            // Lógica para mensaje de rechazo (opcional)
+            boolean alreadyExists = conversation.getMessages().stream()
+                    .anyMatch(m -> m.getType() == MessageType.SYSTEM && m.getContent().contains("ID: " + transactionId));
+            if (!alreadyExists) {
+                Message systemMessage = new Message();
+                systemMessage.setId(idGeneratorService.generateSequence("message_sequence"));
+                systemMessage.setContent("Transacción rechazada ID: " + transactionId);
+                systemMessage.setTimestamp(LocalDateTime.now());
+                systemMessage.setType(MessageType.SYSTEM);
+                conversation.getMessages().add(systemMessage);
+                conversationRepository.save(conversation);
+
+                MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
+                System.out.println("Enviando mensaje al canal /topic/conversations/" + conversationId + ": " + systemMessageDto.getContent());
+                messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
+            }
         }
 
         return updatedTransaction;
@@ -386,8 +398,14 @@ public class NegotiationServiceImpl implements NegotiationService {
 
         String content = (String) message.get("content");
         if (content != null && (content.contains("Transacción completada") || content.contains("Transacción rechazada"))) {
+            boolean alreadyExists = conversation.getMessages().stream()
+                    .anyMatch(m -> m.getType() == MessageType.SYSTEM && content.equals(m.getContent()));
+            if (alreadyExists) {
+                System.out.println("Mensaje de sistema ya existe, no se envía duplicado: " + content);
+                return;
+            }
+
             Message systemMessage = new Message();
-            // Usar IdGeneratorService para generar un ID único y persistente
             systemMessage.setId(idGeneratorService.generateSequence("message_sequence"));
             systemMessage.setSenderId(0L);
             systemMessage.setContent(content);
@@ -398,7 +416,6 @@ public class NegotiationServiceImpl implements NegotiationService {
             conversationRepository.save(conversation);
 
             MessageDto systemMessageDto = mapToMessageDto(systemMessage, conversationId);
-            // Añadir log para depurar el envío del mensaje
             System.out.println("Enviando mensaje al canal /topic/conversations/" + conversationId + ": " + systemMessageDto.getContent());
             messagingTemplate.convertAndSend("/topic/conversations/" + conversationId, systemMessageDto);
 
