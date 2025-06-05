@@ -12,6 +12,8 @@ public interface UserClient {
             @RequestHeader("Authorization") String token
     );
 
+    @GetMapping("/internal/{id}")
+    UserDto getUserInternal(@PathVariable("id") Long userId);
     @GetMapping("/by-email")
     UserDto getUserByEmail(
             @RequestParam("email") String email,

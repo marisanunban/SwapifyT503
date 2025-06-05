@@ -6,6 +6,7 @@
     import com.example.demo.entities.Status;
     import com.example.demo.entities.Transaction;
     import com.example.demo.repositories.TransactionRepository;
+    import com.example.demo.services.EmailService;
     import com.example.demo.services.TransactionServiceImpl;
     import jakarta.persistence.EntityNotFoundException;
     import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,8 @@
         private final UserClient userClient;
         @Autowired
         private TransactionRepository transactionRepository;
+        @Autowired
+        private EmailService emailService;
 
         public TransactionController(
                 TransactionServiceImpl transactionService,
@@ -59,24 +62,33 @@
                 @RequestHeader("Authorization") String token) {
             try {
                 String cleanToken = token.replace("Bearer ", "").trim();
-                UserInfoDto userInfo = authClient.validateUserToken("Bearer " + cleanToken, null);
+                System.out.println("[Controller] Token limpio: " + cleanToken);
 
+                UserInfoDto userInfo = authClient.validateUserToken("Bearer " + cleanToken, null);
                 if (userInfo == null) {
+                    System.out.println("[Controller] Usuario no autorizado");
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
                 }
+
+                System.out.println("[Controller] Usuario validado: " + userInfo.getEmail());
 
                 TransactionDto updatedTransaction = transactionService.updateTransactionStatus(
                         id,
                         dto,
                         "Bearer " + cleanToken
                 );
+
+                System.out.println("[Controller] Transacción actualizada con status: " + dto.getStatus());
+
                 return ResponseEntity.ok(updatedTransaction);
 
             } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                System.out.println("[Controller] Error al actualizar transacción: " + e.getMessage());
+                e.printStackTrace(); // Más útil que solo el mensaje
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
             }
         }
+
 
         @GetMapping("/{id}")
         public ResponseEntity<TransactionDto> getTransaction(

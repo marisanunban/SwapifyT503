@@ -4,11 +4,7 @@ import com.example.demo.clients.AuthClient;
 import com.example.demo.clients.ChatClient;
 import com.example.demo.clients.ProductClient;
 import com.example.demo.clients.UserClient;
-import com.example.demo.dtos.CreateTransactionDto;
-import com.example.demo.dtos.ProductDto;
-import com.example.demo.dtos.TransactionDto;
-import com.example.demo.dtos.UpdateTransactionStatusDto;
-import com.example.demo.dtos.UserInfoDto;
+import com.example.demo.dtos.*;
 import com.example.demo.entities.Status;
 import com.example.demo.entities.Transaction;
 
@@ -51,6 +47,9 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Autowired
     private ChatClient chatClient;
+
+    @Autowired
+    private EmailService emailService;
 
     private final Map<Long, TransactionTokens> transactionTokensMap = new ConcurrentHashMap<>();
     private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -134,6 +133,7 @@ public class TransactionServiceImpl implements TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found: " + id));
 
+
         if (transaction.getStatus() == Status.COMPLETED || transaction.getStatus() == Status.REJECTED) {
             System.out.println("Transacción con ID " + id + " ya ha sido procesada con estado: " + transaction.getStatus());
             return mapToDto(transaction);
@@ -214,6 +214,24 @@ public class TransactionServiceImpl implements TransactionService {
                     transaction.setStatus(Status.COMPLETED);
                     transaction.setUpdatedAt(LocalDateTime.now());
                     transactionRepository.save(transaction);
+                    try {
+                        UserDto buyer = userClient.getUserInternal(transaction.getBuyerId());
+                        UserDto seller = userClient.getUserInternal(transaction.getSellerId());
+
+                        String content = "¡Gracias por usar Swapify!\n\n" +
+                                "Tu intercambio se ha completado.\n" +
+                                "Producto ofrecido: " + transaction.getProductOfferedId() + "\n" +
+                                "Producto solicitado: " + transaction.getProductRequestedId() + "\n" +
+                                "Fecha: " + transaction.getUpdatedAt();
+
+                        emailService.sendReceiptEmail(buyer.getUsermail(), "Recibo de intercambio", content);
+                        emailService.sendReceiptEmail(seller.getUsermail(), "Recibo de intercambio", content);
+
+                        System.out.println("[TransactionService] Correos de recibo enviados a ambas partes.");
+                    } catch (Exception e) {
+                        System.out.println("[TransactionService] Error al enviar correo de recibo: " + e.getMessage());
+                        e.printStackTrace();
+                    }
 
                     try {
                         if (transaction.getProductOfferedId() != null) {

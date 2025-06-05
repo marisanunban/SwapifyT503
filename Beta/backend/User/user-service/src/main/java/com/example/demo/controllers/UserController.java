@@ -29,6 +29,16 @@ public class UserController {
         this.authClient = authClient;
     }
 
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<UserDto> getUserInternal(@PathVariable Long id) {
+        try {
+            UserDto dto = userService.getUser(id);  // Ajusta según tu DTO
+            return ResponseEntity.ok(dto);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> getUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
         try {
