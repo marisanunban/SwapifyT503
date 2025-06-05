@@ -220,8 +220,8 @@ public class TransactionServiceImpl implements TransactionService {
 
                         String content = "¡Gracias por usar Swapify!\n\n" +
                                 "Tu intercambio se ha completado.\n" +
-                                "Producto ofrecido: " + transaction.getProductOfferedId() + "\n" +
-                                "Producto solicitado: " + transaction.getProductRequestedId() + "\n" +
+                                "Producto ofrecido: " + productClient.getProduct(transaction.getProductOfferedId()).getTitle() + " con id: "+ transaction.getProductOfferedId() + "\n" +
+                                "Producto solicitado: " + productClient.getProduct(transaction.getProductRequestedId()).getTitle() + " con id: " + transaction.getProductRequestedId() +"\n" +
                                 "Fecha: " + transaction.getUpdatedAt();
 
                         emailService.sendReceiptEmail(buyer.getUsermail(), "Recibo de intercambio", content);
