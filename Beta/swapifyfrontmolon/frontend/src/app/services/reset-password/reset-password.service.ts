@@ -13,8 +13,8 @@ private apiUrl = 'http://localhost:8081/auth';
   /**
    * Envia la solicitud para iniciar el reseteo de contraseña.
    */
-  requestPasswordReset(email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/reset-password`, { email });
+  requestPasswordReset(useremail: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/reset-password`, { useremail });
   }
 
   /**
