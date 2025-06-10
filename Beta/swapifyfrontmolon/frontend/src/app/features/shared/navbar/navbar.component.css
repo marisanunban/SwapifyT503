@@ -109,6 +109,12 @@
 .search-icon:hover {
   color: var(--wallapop-primary);
 }
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
 
 .category-select {
   margin-left: 0;
@@ -399,11 +405,12 @@
 /* Responsive */
 @media (max-width: 768px) {
   .navbar-content {
-    flex-direction: column;
-    height: auto;
-    padding: 16px 0;
-    gap: 16px;
-  }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 75px;
+  gap: 20px;
+}
 
   .search-container {
     max-width: 100%;
