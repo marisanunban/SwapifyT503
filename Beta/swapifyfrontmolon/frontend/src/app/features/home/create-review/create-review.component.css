@@ -69,16 +69,53 @@
 }
 
 .cancel-button {
-  background: #f0f0f0;
-  color: #333;
+  background: var(--wallapop-gray);
+  color: var(--wallapop-text);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all 0.2s;
+}
+.cancel-button:hover,
+.cancel-button:focus {
+  background: var(--wallapop-border);
+  color: var(--wallapop-primary);
+  transform: translateY(-1px);
 }
 
 .submit-button {
-  background: #4CAF50;
-  color: white;
+  background: linear-gradient(135deg, var(--wallapop-primary), var(--wallapop-primary-dark));
+  color: var(--wallapop-white);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(19, 193, 172, 0.18);
+  transition: all 0.2s;
+  outline: none;
+  position: relative;
+  z-index: 1;
+}
+.submit-button:hover,
+.submit-button:focus {
+  background: linear-gradient(135deg, var(--wallapop-primary-dark), var(--wallapop-primary));
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 8px 25px rgba(19, 193, 172, 0.25);
+  color: var(--wallapop-white);
 }
 
 .submit-button:disabled {
   background: #cccccc;
   cursor: not-allowed;
+  color: #fff;
 }
